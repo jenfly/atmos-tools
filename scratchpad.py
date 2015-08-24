@@ -7,6 +7,10 @@ import pandas as pd
 from mpl_toolkits.basemap import Basemap
 import xray
 
+# ----------------------------------------------------------------------
+# Read compressed data from NCEP2 website, unpack, reshape, save
+# ----------------------------------------------------------------------
+
 def unpack(dataset, missing_name=u'missing_value', offset_name=u'add_offset',
     scale_name=u'scale_factor', debug=False):
     '''Unpack data from netCDF dataset, converting compressed int data to
@@ -113,9 +117,41 @@ plt.subplot(212)
 plt.pcolormesh(xi,yi, data2, cmap='jet')
 plt.colorbar()
 
+# Create a new dataset with the reshaped monthly data and save to netcdf
+outfile = 'data/ncep2_monthly_'
+title = '1979-2014 Monthly Means from NCEP-DOE AMIP-II Reanalysis'
+ds = xray.Dataset()
+ds.attrs['title'] = title
+ds.coords['lat'] = ('y', lat)
+ds.coords['lon'] = ('x', lon)
+ds.coords['lev'] = ('z', lev)
+ds.coords['mon'] = ('mon', np.arange(1,13))
+ds.coords['yr'] = ('yr', np.arange(1979,2015))
+ds['u'] = ( ('yr', 'mon', 'z', 'y', 'x'), u)
+ds.to_netcdf(outfile + 'u.nc', mode='w')
+ds = ds.drop('u')
+ds['v'] = ( ('yr', 'mon', 'z', 'y', 'x'), v)
+ds.to_netcdf(outfile + 'v.nc', mode='w')
+ds = ds.drop('v')
+ds['T'] = ( ('yr', 'mon', 'z', 'y', 'x'), T)
+ds.to_netcdf(outfile + 'T.nc', mode='w')
+ds = ds.drop('T')
+ds['ps'] = ( ('yr', 'mon', 'y', 'x'), ps)
+ds.to_netcdf(outfile + 'ps.nc', mode='w')
 
-# Create a new dataset with the climatology
-outfile = 'data/ncep2_climatology.nc'
+# Monthly climatology
+outfile = 'data/ncep2_climatology_monthly.nc'
+title = '1979-2014 Monthly Mean Climatology from NCEP-DOE AMIP-II Reanalysis'
+ds.attrs['title'] = title
+ds = ds.drop('yr')
+ds['u'] = ( ('mon', 'z', 'y', 'x'), u.mean(axis=0))
+ds['v'] = ( ('mon', 'z', 'y', 'x'), v.mean(axis=0))
+ds['T'] = ( ('mon', 'z', 'y', 'x'), T.mean(axis=0))
+ds['ps'] = ( ('mon', 'y', 'x'), ps.mean(axis=0))
+ds.to_netcdf(outfile, mode='w')
+
+# Annual mean climatology
+outfile = 'data/ncep2_climatology_ann.nc'
 title = '1979-2014 Annual Mean Climatology from NCEP-DOE AMIP-II Reanalysis'
 ds = xray.Dataset()
 ds.attrs['title'] = title
@@ -126,6 +162,25 @@ ds['u'] = ( ('z', 'y', 'x'), ubar)
 ds['v'] = ( ('z', 'y', 'x'), vbar)
 ds['T'] = ( ('z', 'y', 'x'), Tbar)
 ds['ps'] = ( ('y', 'x'), psbar)
-
-# Save to netCDF file
 ds.to_netcdf(outfile, mode='w')
+
+# ----------------------------------------------------------------------
+# Read monthly mean climatologies and do some test calcs
+# ----------------------------------------------------------------------
+
+filename = 'data/ncep2_climatology_monthly.nc'
+with xray.open_dataset(filename) as ds:
+    lat = ds['lat'].values
+    lon = ds['lon'].values
+    lev = ds['lev'].values
+    mon = ds['mon'].values
+    u = ds['u'].values
+    v = ds['v'].values
+    T = ds['T'].values
+    ps = ds['ps'].values
+
+xi, yi = np.meshgrid(lon, lat)
+k, mon = 9, 7
+plt.figure()
+plt.pcolormesh(xi, yi, u[mon-1, k])
+plt.colorbar()
