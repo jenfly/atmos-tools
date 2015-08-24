@@ -1,61 +1,20 @@
-# Naming conventions for importing standard scientific modules:
+# Standard scientific modules:
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-
-# Additional modules useful for atmospheric science
 from mpl_toolkits.basemap import Basemap
 import xray
 
+# My modules:
+import xray_tools as xr
+
 # ----------------------------------------------------------------------
-# Read compressed data from NCEP2 website, unpack, reshape, save
 # ----------------------------------------------------------------------
-
-def unpack(dataset, missing_name=u'missing_value', offset_name=u'add_offset',
-    scale_name=u'scale_factor', debug=False):
-    '''Unpack data from netCDF dataset, converting compressed int data to
-    floats and missing values to NaN'''
-    ds = dataset
-    for var in ds.data_vars:
-        print(var)
-        vals = ds[var].values
-        attrs = ds[var].attrs
-        if debug: print(attrs)
-
-        # Flag missing values for further processing
-        if missing_name in attrs:
-            missing_val = attrs[missing_name]
-            imissing = vals == missing_val
-            print('missing_val ', str(missing_val))
-        else:
-            imissing = []
-
-        # Get offset and scaling factors, if any
-        if offset_name in attrs:
-            offset_val = attrs[offset_name]
-            print('offset val ', str(offset_val))
-        else:
-            offset_val = 0.0
-        if scale_name in attrs:
-            scale_val = attrs[scale_name]
-            print('scale val ', str(scale_val))
-        else:
-            scale_val = 1.0
-
-        # Convert from int to float with the offset and scaling
-        vals = vals * scale_val + offset_val
-
-        # Replace missing values with NaN
-        vals[imissing] = np.nan
-
-        # Replace the values in dataset with the converted ones
-        ds[var].values = vals
-
-    return ds
 
 # Read data from netcdf and unpack
 with xray.open_dataset('data/uwnd.mon.mean.nc', decode_cf=False) as ds1:
-    ds1 = unpack(ds1)
+    xr.ds_print(ds1)
+    ds1 = xr.ds_unpack(ds1)
     lat = ds1['lat'].values.astype(np.float64)
     lon = ds1['lon'].values.astype(np.float64)
     lev = ds1['level'].values
@@ -63,15 +22,18 @@ with xray.open_dataset('data/uwnd.mon.mean.nc', decode_cf=False) as ds1:
     u = ds1['uwnd'].values.astype(np.float64)
 
 with xray.open_dataset('data/vwnd.mon.mean.nc', decode_cf=False) as ds2:
-    ds2 = unpack(ds2)
+    xr.ds_print(ds2)
+    ds2 = xr.ds_unpack(ds2)
     v = ds2['vwnd'].values.astype(np.float64)
 
 with xray.open_dataset('data/air.mon.mean.nc', decode_cf=False) as ds3:
-    ds3 = unpack(ds3)
+    xr.ds_print(ds3)
+    ds3 = xr.ds_unpack(ds3)
     T = ds3['air'].values.astype(np.float64)
 
 with xray.open_dataset('data/pres.sfc.mon.mean.nc', decode_cf=False) as ds4:
-    ds4 = unpack(ds4)
+    xr.ds_print(ds4)
+    ds4 = xr.ds_unpack(ds4)
     ps = ds4['pres'].values.astype(np.float64)
 
 
@@ -122,21 +84,21 @@ outfile = 'data/ncep2_monthly_'
 title = '1979-2014 Monthly Means from NCEP-DOE AMIP-II Reanalysis'
 ds = xray.Dataset()
 ds.attrs['title'] = title
-ds.coords['lat'] = ('y', lat)
-ds.coords['lon'] = ('x', lon)
-ds.coords['lev'] = ('z', lev)
+ds.coords['lat'] = ('lat', lat)
+ds.coords['lon'] = ('lon', lon)
+ds.coords['lev'] = ('lev', lev)
 ds.coords['mon'] = ('mon', np.arange(1,13))
 ds.coords['yr'] = ('yr', np.arange(1979,2015))
-ds['u'] = ( ('yr', 'mon', 'z', 'y', 'x'), u)
+ds['u'] = ( ('yr', 'mon', 'lev', 'lat', 'lon'), u)
 ds.to_netcdf(outfile + 'u.nc', mode='w')
 ds = ds.drop('u')
-ds['v'] = ( ('yr', 'mon', 'z', 'y', 'x'), v)
+ds['v'] = ( ('yr', 'mon', 'lev', 'lat', 'lon'), v)
 ds.to_netcdf(outfile + 'v.nc', mode='w')
 ds = ds.drop('v')
-ds['T'] = ( ('yr', 'mon', 'z', 'y', 'x'), T)
+ds['T'] = ( ('yr', 'mon', 'lev', 'lat', 'lon'), T)
 ds.to_netcdf(outfile + 'T.nc', mode='w')
 ds = ds.drop('T')
-ds['ps'] = ( ('yr', 'mon', 'y', 'x'), ps)
+ds['ps'] = ( ('yr', 'mon', 'lat', 'lon'), ps)
 ds.to_netcdf(outfile + 'ps.nc', mode='w')
 
 # Monthly climatology
@@ -144,10 +106,10 @@ outfile = 'data/ncep2_climatology_monthly.nc'
 title = '1979-2014 Monthly Mean Climatology from NCEP-DOE AMIP-II Reanalysis'
 ds.attrs['title'] = title
 ds = ds.drop('yr')
-ds['u'] = ( ('mon', 'z', 'y', 'x'), u.mean(axis=0))
-ds['v'] = ( ('mon', 'z', 'y', 'x'), v.mean(axis=0))
-ds['T'] = ( ('mon', 'z', 'y', 'x'), T.mean(axis=0))
-ds['ps'] = ( ('mon', 'y', 'x'), ps.mean(axis=0))
+ds['u'] = ( ('mon', 'lev', 'lat', 'lon'), u.mean(axis=0))
+ds['v'] = ( ('mon', 'lev', 'lat', 'lon'), v.mean(axis=0))
+ds['T'] = ( ('mon', 'lev', 'lat', 'lon'), T.mean(axis=0))
+ds['ps'] = ( ('mon', 'lat', 'lon'), ps.mean(axis=0))
 ds.to_netcdf(outfile, mode='w')
 
 # Annual mean climatology
@@ -155,14 +117,15 @@ outfile = 'data/ncep2_climatology_ann.nc'
 title = '1979-2014 Annual Mean Climatology from NCEP-DOE AMIP-II Reanalysis'
 ds = xray.Dataset()
 ds.attrs['title'] = title
-ds.coords['lat'] = ('y', lat)
-ds.coords['lon'] = ('x', lon)
-ds.coords['lev'] = ('z', lev)
-ds['u'] = ( ('z', 'y', 'x'), ubar)
-ds['v'] = ( ('z', 'y', 'x'), vbar)
-ds['T'] = ( ('z', 'y', 'x'), Tbar)
-ds['ps'] = ( ('y', 'x'), psbar)
+ds.coords['lat'] = ('lat', lat)
+ds.coords['lon'] = ('lon', lon)
+ds.coords['lev'] = ('lev', lev)
+ds['u'] = ( ('lev', 'lat', 'lon'), ubar)
+ds['v'] = ( ('lev', 'lat', 'lon'), vbar)
+ds['T'] = ( ('lev', 'lat', 'lon'), Tbar)
+ds['ps'] = ( ('lat', 'lon'), psbar)
 ds.to_netcdf(outfile, mode='w')
+
 
 # ----------------------------------------------------------------------
 # Read monthly mean climatologies and do some test calcs
