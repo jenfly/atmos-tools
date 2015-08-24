@@ -72,35 +72,60 @@ with xray.open_dataset('data/pres.sfc.mon.mean.nc', decode_cf=False) as ds4:
 
 
 # Remove Jan-Jun of 2015
-time = time[:-7]
-u = u[:-7,:,:,:]
-v = v[:-7,:,:,:]
-T = T[:-7,:,:,:]
-ps = ps[:-7,:,:]
-
-# Reshape to add month as a dimension
-# Will come back to this later to deal with monthly data.
-# For now I'll just work with the annual mean
-# shape = (36,12,17,73,144)
-# u2 = u.reshape(shape, order='C')
+tlast = -7
+time = time[:tlast]
+u = u[:tlast]
+v = v[:tlast]
+T = T[:tlast]
+ps = ps[:tlast]
 
 # Take annual mean and climatology over all years
-u = u.mean(axis=0)
-v = v.mean(axis=0)
-T = T.mean(axis=0)
-ps = ps.mean(axis=0)
+ubar = u.mean(axis=0)
+vbar = v.mean(axis=0)
+Tbar = T.mean(axis=0)
+psbar = ps.mean(axis=0)
+
+# Reshape to add month as a dimension
+u1, v1, T1, ps1 = u, v, T, ps
+(nt,nz,ny,nx) = u.shape
+nmon = 12
+nyear = nt / 12
+shape = (nyear, nmon, nz, ny, nx)
+shape2 = (nyear, nmon, ny, nx)
+u = u.reshape(shape, order='C')
+v = v.reshape(shape, order='C')
+T = T.reshape(shape, order='C')
+ps = ps.reshape(shape2, order='C')
+
+# Check that reshaping worked properly
+m, y, k = 11, 20, 10
+data1 = u1[y*12 + m, k]
+data2 = u[y, m, k]
+print(np.array_equal(data1,data2))
+
+# Plot data to check
+xi, yi = np.meshgrid(lon, lat)
+plt.figure()
+plt.subplot(211)
+plt.pcolormesh(xi, yi, data1, cmap='jet')
+plt.colorbar()
+plt.subplot(212)
+plt.pcolormesh(xi,yi, data2, cmap='jet')
+plt.colorbar()
+
 
 # Create a new dataset with the climatology
+outfile = 'data/ncep2_climatology.nc'
 title = '1979-2014 Annual Mean Climatology from NCEP-DOE AMIP-II Reanalysis'
 ds = xray.Dataset()
 ds.attrs['title'] = title
 ds.coords['lat'] = ('y', lat)
 ds.coords['lon'] = ('x', lon)
 ds.coords['lev'] = ('z', lev)
-ds['u'] = ( ('z', 'y', 'x'), u)
-ds['v'] = ( ('z', 'y', 'x'), v)
-ds['T'] = ( ('z', 'y', 'x'), T)
-ds['ps'] = ( ('y', 'x'), ps)
+ds['u'] = ( ('z', 'y', 'x'), ubar)
+ds['v'] = ( ('z', 'y', 'x'), vbar)
+ds['T'] = ( ('z', 'y', 'x'), Tbar)
+ds['ps'] = ( ('y', 'x'), psbar)
 
 # Save to netCDF file
-ds.to_netcdf('data/ncep2_climatology.nc', mode='w')
+ds.to_netcdf(outfile, mode='w')
