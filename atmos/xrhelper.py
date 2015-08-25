@@ -123,4 +123,8 @@ def ncread(filename, verbose=True, unpack=True, missing_name=u'missing_value',
 
             ds = ds_unpack(ds, verbose=verbose, missing_name=missing_name,
                 offset_name=offset_name, scale_name=scale_name)
-        return ds.copy()
+
+        # Use the load() function so that the dataset is available after
+        # the file is closed
+        ds.load()
+        return ds
