@@ -4,18 +4,7 @@ Utility functions for working with xray datasets and netCDF files
 
 import numpy as np
 import xray
-
-# ----------------------------------------------------------------------
-def odict_print(od, indent=2, width=20):
-    '''Pretty print the contents of an ordered dictionary.'''
-    for key in od:
-        s = ' ' * indent + key
-        print(s.ljust(width) + str(od[key]))
-
-# ----------------------------------------------------------------------
-def print_if(msg, verbose):
-    if verbose:
-        print(msg)
+from atmos.utils import print_if, print_odict
 
 # ----------------------------------------------------------------------
 def ds_print(ds, indent=2, width=20):
@@ -32,13 +21,13 @@ def ds_print(ds, indent=2, width=20):
     print('\n' + line + '\nCOORDINATES\n' + line)
     for coord in ds.coords:
         print(coord)
-        odict_print(ds[coord].attrs, indent=indent, width=width)
+        print_odict(ds[coord].attrs, indent=indent, width=width)
 
     # Data variables attributes
     print('\n' + line + '\nDATA VARIABLES\n' + line)
     for var in ds.data_vars:
         print(var)
-        odict_print(ds[var].attrs, indent=indent, width=width)
+        print_odict(ds[var].attrs, indent=indent, width=width)
 
     print(line + '\n')
 
@@ -63,11 +52,10 @@ def ds_unpack(dataset, missing_name=u'missing_value', offset_name=u'add_offset',
     '''
     ds = dataset
     for var in ds.data_vars:
-        print(var)
+        print_if(var, verbose)
         vals = ds[var].values
         attrs = ds[var].attrs
-        if verbose:
-            odict_print(attrs)
+        print_if(attrs, verbose, printfunc=print_odict)
 
         # Flag missing values for further processing
         if missing_name in attrs:
@@ -115,12 +103,10 @@ def ncread(filename, verbose=True, unpack=True, missing_name=u'missing_value',
     missing values with NaN.
     '''
     with xray.open_dataset(filename, decode_cf=decode_cf) as ds:
-        if verbose:
-            print('Reading file: ' + filename)
-            ds_print(ds, indent=2, width=20)
+        print_if('****** Reading file: ' + filename + '********', verbose)
+        print_if(ds, verbose, printfunc=ds_print)
         if unpack:
-            print_if('Unpacking data', verbose)
-
+            print_if('****** Unpacking data *********', verbose)
             ds = ds_unpack(ds, verbose=verbose, missing_name=missing_name,
                 offset_name=offset_name, scale_name=scale_name)
 
