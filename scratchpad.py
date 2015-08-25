@@ -6,7 +6,7 @@ from mpl_toolkits.basemap import Basemap
 import xray
 
 # My modules:
-import xray_helper as xr
+import atmos.xrhelper as xr
 
 # ----------------------------------------------------------------------
 # ----------------------------------------------------------------------
