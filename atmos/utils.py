@@ -4,6 +4,30 @@ Some general purpose utility functions used by other modules in this package.
 
 import numpy as np
 
+# ======================================================================
+# EXCEPTION CLASSES
+# ======================================================================
+
+# ----------------------------------------------------------------------
+class InputError(Exception):
+    """Exception raised for errors in the input.
+
+    Attributes:
+        msg  -- explanation of the error
+    """
+
+    def __init__(self, msg):
+        self.msg = msg
+    def __str__(self):
+        return repr(self.msg)
+
+# ----------------------------------------------------------------------
+
+
+# ======================================================================
+# PRINTING
+# ======================================================================
+
 # ----------------------------------------------------------------------
 def print_if(msg, condition, printfunc=False):
     ''' Print msg if condition is True'''
@@ -20,9 +44,10 @@ def print_odict(od, indent=2, width=20):
         s = ' ' * indent + key
         print(s.ljust(width) + str(od[key]))
 
-# ----------------------------------------------------------------------
+
+# ======================================================================
 # MONTHS AND SEASONS
-# ----------------------------------------------------------------------
+# ======================================================================
 
 # ----------------------------------------------------------------------
 def month_str(month, upper=True):
@@ -35,7 +60,7 @@ def month_str(month, upper=True):
     if upper:
         mstr = mstr.upper()
     return mstr
-    
+
 # ----------------------------------------------------------------------
 def days_per_month(leap=False):
     '''Returns array with number of days per month.'''
@@ -67,9 +92,7 @@ def season_months(season):
     try:
         ifind = ssn.index(season.lower())
     except ValueError:
-        print('ERROR: Season not found! Valid seasons are:')
-        print(ssn)
-        raise
+        raise InputError('Season not found! Valid seasons: ' + ', '.join(ssn))
 
     return imon[ifind]
 
