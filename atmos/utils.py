@@ -25,6 +25,27 @@ def print_odict(od, indent=2, width=20):
 # ----------------------------------------------------------------------
 
 # ----------------------------------------------------------------------
+def month_str(month, upper=True):
+    '''Returns the string e.g. 'JAN' corresponding to month'''
+
+    months=['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug',
+            'sep', 'oct', 'nov', 'dec']
+
+    mstr = months[month - 1]
+    if upper:
+        mstr = mstr.upper()
+    return mstr
+    
+# ----------------------------------------------------------------------
+def days_per_month(leap=False):
+    '''Returns array with number of days per month.'''
+
+    ndays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    if leap:
+        ndays[1]+= 1
+    return ndays
+
+# ----------------------------------------------------------------------
 def season_months(season):
     '''
     Returns list of months (1-12) for the selected season.
@@ -53,16 +74,17 @@ def season_months(season):
     return imon[ifind]
 
 # ----------------------------------------------------------------------
-def season_days(season):
+def season_days(season, leap=False):
     '''
-    Returns indices (1-365) of days of the year for the selected season.
+    Returns indices (1-365 or 1-366) of days of the year for the input season.
 
     Valid input seasons are as defined in the function season_months().
-    Days are for a non-leap year.
     '''
 
     # Index of first day of each month
-    days=np.cumsum([1, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
+    ndays = days_per_month(leap=leap)
+    ndays.insert(0,1)
+    days = np.cumsum(ndays)
 
     # Index of months for this season
     imon = season_months(season)
