@@ -1,6 +1,9 @@
 '''
 Some general purpose utility functions used by other modules in this package.
 '''
+
+import numpy as np
+
 # ----------------------------------------------------------------------
 def print_if(msg, condition, printfunc=False):
     ''' Print msg if condition is True'''
@@ -18,7 +21,11 @@ def print_odict(od, indent=2, width=20):
         print(s.ljust(width) + str(od[key]))
 
 # ----------------------------------------------------------------------
-def season_index(season):
+# MONTHS AND SEASONS
+# ----------------------------------------------------------------------
+
+# ----------------------------------------------------------------------
+def season_months(season):
     '''
     Returns list of months (1-12) for the selected season.
 
@@ -46,17 +53,28 @@ def season_index(season):
     return imon[ifind]
 
 # ----------------------------------------------------------------------
-def days_index(season):
+def season_days(season):
     '''
     Returns indices (1-365) of days of the year for the selected season.
 
-    Valid input seasons are as defined in the function season_index().
+    Valid input seasons are as defined in the function season_months().
+    Days are for a non-leap year.
     '''
 
-% Index of first day of each month
-days=cumsum([1 31 28 31 30 31 30 31 31 30 31 30 31]);
+    # Index of first day of each month
+    days=np.cumsum([1, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
 
-idays=[];
-for j=1:length(imon)
-    idays=[idays (days(imon(j)):(days(imon(j)+1)-1))];
-end
+    # Index of months for this season
+    imon = season_months(season)
+
+    # Days of the year for this season
+    if isinstance(imon, list):
+        # Iterate over months in this season
+        idays=[]
+        for m in imon:
+            idays += range(days[m-1], days[m])
+    else:
+        # Single month
+        idays = range(days[imon-1], days[imon])
+
+    return idays
