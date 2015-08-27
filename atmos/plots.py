@@ -7,12 +7,37 @@ import numpy as np
 import matplotlib.pyplot as plt
 from atmos.utils import print_if
 
+'''
+TO DO:
+clevels - omit zero option
+
+latlon_ticks
+
+contour_latpres - format dictionaries for contours and topography,
+    - zero contours treated separately - omit or make different color/width
+'''
+
+
 # ----------------------------------------------------------------------
 def clevels(data, cint, posneg='both', symmetric=False):
-    '''Returns vector of contour levels spaced by cint.
+    '''
+    Return array of contour levels spaced by a given interval.
 
-    posneg = 'both', 'pos', or 'neg' to return all contours or only pos/neg
-    symmetric = True to return contour levels symmetric about zero
+    Parameters
+    ----------
+    data : ndarray
+        Data to be contoured
+    cint : float
+        Spacing of contour intervals
+    posneg : {'both', 'pos', 'neg'}, optional
+        Return all contours or only pos/neg
+    symmetric : bool, optional
+        Return contour levels symmetric about zero
+
+    Returns
+    -------
+    clev: ndarray
+        Array of contour levels
     '''
 
     # Define max and min contour levels
@@ -28,4 +53,45 @@ def clevels(data, cint, posneg='both', symmetric=False):
         cmax = 0
 
     # Define contour levels, making sure to include the endpoint
-    return np.arange(cmin, cmax + 0.1*cint, cint)
+    clev = np.arange(cmin, cmax + 0.1*cint, cint)
+    return clev
+
+# ----------------------------------------------------------------------
+def contour_latpres(lat, pres, data, clev, c_color='black', topo=None):
+    '''
+    Plot contour lines in latitude-pressure plane
+
+    Parameters
+    ----------
+    lat : ndarray
+        Latitude (degrees)
+    pres : ndarray
+        Pressure levels (hPa)
+    data : ndarray
+        Data to be contoured
+    clev : float or ndarray
+        Contour levels (ndarray) or spacing interval (float)
+    c_color: string or mpl_color, optional
+        Contour line color
+    topo : ndarray, optional
+        Topography to shade (average surface pressure in units of pres)
+    '''
+
+    # Contour levels
+    if not isinstance(clev, list) and not isinstance(clev, np.ndarray):
+        clev = clevels(data, clev)
+
+    # Grid for plotting
+    y, z = np.meshgrid(lat, pres)
+
+    # Plot contours
+    pmin, pmax = 0, 1000
+    if isinstance(topo, np.ndarray) or isinstance(topo, list):
+        plt.fill_between(lat, pmax, topo, color='black')
+    plt.contour(y, z, data, clev, colors=c_color)
+    plt.ylim(pmin, pmax)
+    plt.gca().invert_yaxis()
+    plt.xticks(np.arange(-90, 90, 30))
+    plt.xlabel('Latitude')
+    plt.ylabel('Pressure (hPa)')
+    plt.draw()

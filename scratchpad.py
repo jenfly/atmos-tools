@@ -163,11 +163,16 @@ ilon = (lon >= lon1) & (lon <= lon2)
 uplot = u[imon]
 uplot = uplot[:,:,:,ilon]
 uplot = uplot.mean(axis=3).mean(axis=0)
-clev = aplt.clevels(uplot, cint)
+#clev = aplt.clevels(uplot, cint)
 
 topo = ps.mean(axis=0) / 100
 topo = topo[:,ilon].mean(axis=1)
 
+plt.figure()
+aplt.contour_latpres(lat, lev, uplot, cint, topo=topo)
+
+
+'''
 ys,zs = np.meshgrid(lat, lev)
 plt.figure()
 plt.fill_between(lat,pmax,topo,color='black')
@@ -178,3 +183,4 @@ plt.xticks(np.arange(-90,90,30))
 plt.xlabel('Latitude')
 plt.ylabel('Pressure (mb)')
 plt.draw()
+'''
