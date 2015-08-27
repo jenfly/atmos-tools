@@ -1,6 +1,6 @@
 *~
 *.pyc
-*.nc
 *.npy
 *.eps
 matlab_utilities
+data/more

@@ -93,7 +93,7 @@ def ds_unpack(dataset, missing_name=u'missing_value', offset_name=u'add_offset',
     return ds
 
 # ----------------------------------------------------------------------
-def ncread(filename, verbose=True, unpack=True, missing_name=u'missing_value',
+def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
            offset_name=u'add_offset', scale_name=u'scale_factor',
            decode_cf=False):
     '''
