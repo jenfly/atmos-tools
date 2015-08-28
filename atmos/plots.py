@@ -5,8 +5,10 @@ Utility functions for plotting atmospheric data.
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.basemap import Basemap
+import xray
 from atmos.utils import print_if
-from atmos.exceptions import InputError
+
 '''
 TO DO:
 clevels - omit zero option
@@ -18,7 +20,7 @@ contour_latpres - format dictionaries for contours and topography,
 '''
 
 # ----------------------------------------------------------------------
-def autotick(axtype, axmin, axmax, width=None, nmax=8):
+def autoticks(axtype, axmin, axmax, width=None, nmax=8):
     '''
     Return an array of sensible automatic tick positions.
 
@@ -30,7 +32,7 @@ def autotick(axtype, axmin, axmax, width=None, nmax=8):
         Axis limits
     width : float, optional
         Spacing of ticks.  Omit to let the function set an auto value.
-    nmax = 8 : int, optional
+    nmax : int, optional
         Maximum number of ticks.  This is ignored if width is specified.
 
     Returns
@@ -47,7 +49,7 @@ def autotick(axtype, axmin, axmax, width=None, nmax=8):
         elif axtype.lower() == 'pres':
             wlist = [50, 100, 200]
         else:
-            raise InputError('Invalid axtype: ' + axtype)
+            raise ValueError('Invalid axtype: ' + axtype)
 
         for w in wlist:
             n1 = math.ceil(float(axmin)/w)
@@ -103,6 +105,28 @@ def clevels(data, cint, posneg='both', symmetric=False):
     # Define contour levels, making sure to include the endpoint
     clev = np.arange(cmin, cmax + 0.1*cint, cint)
     return clev
+
+
+# ----------------------------------------------------------------------
+def init_lonlat(lon1=0, lon2=360, lat1=-90, lat2=90):
+    """Initialize lon-lat plot"""
+
+    m = Basemap(llcrnrlon=lon1, llcrnrlat=lat1, urcrnrlon=lon2, urcrnrlat=lat2)
+    m.drawcoastlines()
+    xticks = autoticks('lon', lon1, lon2)
+    yticks = autoticks('lat', lat1, lat2)
+    ax = plt.gca()
+    ax.set_xticks(xticks)
+    ax.set_xticklabels([])
+    ax.set_yticks(yticks, [])
+    ax.set_yticklabels([])
+
+    m.drawmeridians(xticks, labels=[1,0,0,1], labelstyle='E/W',
+                    linewidth=0.0)
+    m.drawparallels(yticks, labels=[1,0,0,1], labelstyle='N/S',
+                    linewidth=0.0)
+    plt.draw()
+    return m
 
 # ----------------------------------------------------------------------
 def contour_latpres(lat, pres, data, clev, c_color='black', topo=None):

@@ -3,17 +3,16 @@ Some general purpose utility functions used by other modules in this package.
 '''
 
 import numpy as np
-from atmos.exceptions import InputError
 
 # ======================================================================
 # PRINTING
 # ======================================================================
 
 # ----------------------------------------------------------------------
-def print_if(msg, condition, printfunc=False):
+def print_if(msg, condition, printfunc=None):
     ''' Print msg if condition is True'''
     if condition:
-        if printfunc:
+        if printfunc is not None:
             printfunc(msg)
         else:
             print(msg)
@@ -73,7 +72,7 @@ def season_months(season):
     try:
         ifind = ssn.index(season.lower())
     except ValueError:
-        raise InputError('Season not found! Valid seasons: ' + ', '.join(ssn))
+        raise ValueError('Season not found! Valid seasons: ' + ', '.join(ssn))
 
     return imon[ifind]
 
