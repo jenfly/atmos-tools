@@ -18,7 +18,7 @@ contour_latpres - format dictionaries for contours and topography,
 '''
 
 # ----------------------------------------------------------------------
-def autotick(axtype, axmin, axmax, width=None):
+def autotick(axtype, axmin, axmax, width=None, nmax=8):
     '''
     Return an array of sensible automatic tick positions.
 
@@ -30,6 +30,8 @@ def autotick(axtype, axmin, axmax, width=None):
         Axis limits
     width : float, optional
         Spacing of ticks.  Omit to let the function set an auto value.
+    nmax = 8 : int, optional
+        Maximum number of ticks.  This is ignored if width is specified.
 
     Returns
     -------
@@ -41,23 +43,25 @@ def autotick(axtype, axmin, axmax, width=None):
         # Set the width between ticks
         diff = axmax - axmin
         if axtype.lower() == 'lon' or axtype.lower() == 'lat':
-            if diff > 270:
-                width = 60
-            elif diff > 120:
-                width = 30
-            else:
-                width = 15
+            wlist = [10, 15, 30, 60]
         elif axtype.lower() == 'pres':
-            if diff > 500:
-                width = 200
-            else:
-                width = 100
+            wlist = [50, 100, 200]
         else:
             raise InputError('Invalid axtype: ' + axtype)
 
+        for w in wlist:
+            n1 = math.ceil(float(axmin)/w)
+            n2 = math.floor(float(axmax)/w)
+            ntick = n2 - n1 + 1
+            if ntick <= nmax:
+                width = w
+                break
+    else:
+        # Use the width specified in input
+        n1 = math.ceil(float(axmin)/width)
+        n2 = math.floor(float(axmax)/width)
+
     # Set the ticks
-    n1 = math.ceil(float(axmin)/width)
-    n2 = math.floor(float(axmax)/width)
     ticks = np.arange(n1*width, (n2+0.1)*width, width)
     return ticks
 
