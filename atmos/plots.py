@@ -106,25 +106,34 @@ def clevels(data, cint, posneg='both', symmetric=False):
     clev = np.arange(cmin, cmax + 0.1*cint, cint)
     return clev
 
+# ----------------------------------------------------------------------
+def mapticks(m, xticks, yticks, labels=['left', 'bottom'],
+             gridlinewidth=0.0):
+    """Add nicely formatted ticks to basemap."""
+
+    label_dict = {'left' : 0, 'right' : 1, 'top' : 2, 'bottom' : 3}
+    lvec = [0, 0, 0, 0]
+    for nm in labels:
+        lvec[label_dict[nm]] = 1
+
+    plt.xticks(xticks, [])
+    plt.yticks(yticks, [])
+    m.drawmeridians(xticks, labels=lvec, labelstyle='E/W',
+                    linewidth=gridlinewidth)
+    m.drawparallels(yticks, labels=lvec, labelstyle='N/S',
+                    linewidth=gridlinewidth)
+
 
 # ----------------------------------------------------------------------
-def init_lonlat(lon1=0, lon2=360, lat1=-90, lat2=90):
+def init_lonlat(lon1=0, lon2=360, lat1=-90, lat2=90, gridlinewidth=0.0):
     """Initialize lon-lat plot"""
 
     m = Basemap(llcrnrlon=lon1, llcrnrlat=lat1, urcrnrlon=lon2, urcrnrlat=lat2)
     m.drawcoastlines()
     xticks = autoticks('lon', lon1, lon2)
     yticks = autoticks('lat', lat1, lat2)
-    ax = plt.gca()
-    ax.set_xticks(xticks)
-    ax.set_xticklabels([])
-    ax.set_yticks(yticks, [])
-    ax.set_yticklabels([])
-
-    m.drawmeridians(xticks, labels=[1,0,0,1], labelstyle='E/W',
-                    linewidth=0.0)
-    m.drawparallels(yticks, labels=[1,0,0,1], labelstyle='N/S',
-                    linewidth=0.0)
+    mapticks(m, xticks, yticks, labels=['left', 'bottom'],
+             gridlinewidth=gridlinewidth)
     plt.draw()
     return m
 
