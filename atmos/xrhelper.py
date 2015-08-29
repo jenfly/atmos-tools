@@ -4,6 +4,7 @@ Utility functions for working with xray datasets and netCDF files
 
 import numpy as np
 import xray
+from xray import Dataset
 from atmos.utils import print_if, print_odict
 
 # ----------------------------------------------------------------------
@@ -114,3 +115,9 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
         # the file is closed
         ds.load()
         return ds
+
+# ----------------------------------------------------------------------
+# Bind some handy functions to the Dataset class for convenience
+
+Dataset.disp = ds_print
+Dataset.unpack = ds_unpack
