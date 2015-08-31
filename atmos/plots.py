@@ -17,6 +17,9 @@ mapticks - change tick label formatting to 0-360E rather than 180W to 180E
         -> Define a function to return the formatted ticks and use fmt
            keyword argument in m.drawmeridians
 
+mapaxes(m, axlims, xticks, yticks) - adjust limits, ticks and tick labels of
+        existing map (might have to create new basemap object to do this)
+
 contour_latpres - format dictionaries for contours and topography,
     - zero contours treated separately - omit or make different color/width
 '''
@@ -142,25 +145,53 @@ def init_lonlat(lon1=0, lon2=360, lat1=-90, lat2=90, labels=['left', 'bottom'],
 
 
 # ----------------------------------------------------------------------
-def pcolor_lonlat(lon, lat, data, cmap='RdBu_r', axlims=(0, 360, -90, 90),
-                  axlabels=['left', 'bottom'], gridlinewidth=0.0):
+def pcolor_lonlat(lon, lat, data, m=None, cmap='RdBu_r',
+                  axlims=(0, 360, -90, 90), axlabels=['left', 'bottom'],
+                  gridlinewidth=0.0):
     """Create a pseudo-color plot of geo data."""
 
     lon1, lon2, lat1, lat2 = axlims
     x, y = np.meshgrid(lon, lat)
-    m = init_lonlat(lon1, lon2, lat1, lat2, labels=axlabels,
-                    gridlinewidth=gridlinewidth)
-    m.pcolormesh(x, y, data, cmap=cmap)
+    if m is None:
+        m = init_lonlat(lon1, lon2, lat1, lat2, labels=axlabels,
+                        gridlinewidth=gridlinewidth)
+    m.pcolormesh(x, y, data, cmap=cmap, latlon=True)
     m.colorbar()
     plt.draw()
     return m
 
 
 # ----------------------------------------------------------------------
-def contourf_lonlat(lon, lat, data, clev=None, cmap='RdBu_r',
-                  axlims=(0, 360, -90, 90), axlabels=['left', 'bottom'],
-                  gridlinewidth=0.0):
+def contourf_lonlat(lon, lat, data, clev=None, m=None, cmap='RdBu_r',
+                    symmetric=True, axlims=(0, 360, -90, 90),
+                    axlabels=['left', 'bottom'], gridlinewidth=0.0):
     """Create a filled contour plot of geo data."""
+
+    if isinstance(clev, float) or isinstance(clev, int):
+        # Define contour levels from selected interval spacing
+        clev = clevels(data, clev, symmetric=symmetric)
+
+    lon1, lon2, lat1, lat2 = axlims
+    x, y = np.meshgrid(lon, lat)
+
+    if m is None:
+        m = init_lonlat(lon1, lon2, lat1, lat2, labels=axlabels,
+                        gridlinewidth=gridlinewidth)
+    if clev is None:
+        m.contourf(x, y, data, cmap=cmap, latlon=True)
+    else:
+        m.contourf(x,y, data, clev, cmap=cmap, latlon=True)
+    m.colorbar()
+    plt.draw()
+    return m
+
+
+# ----------------------------------------------------------------------
+def contour_lonlat(lon, lat, data, clev=None, m=None,
+                   colors='black', linewidths=2.0,
+                   axlims=(0, 360, -90, 90), axlabels=['left', 'bottom'],
+                   gridlinewidth=0.0):
+    """Create a contour line plot of geo data."""
 
     if isinstance(clev, float) or isinstance(clev, int):
         # Define contour levels from selected interval spacing
@@ -168,14 +199,16 @@ def contourf_lonlat(lon, lat, data, clev=None, cmap='RdBu_r',
 
     lon1, lon2, lat1, lat2 = axlims
     x, y = np.meshgrid(lon, lat)
-    m = init_lonlat(lon1, lon2, lat1, lat2, labels=axlabels,
-                    gridlinewidth=gridlinewidth)
 
+    if m is None:
+        m = init_lonlat(lon1, lon2, lat1, lat2, labels=axlabels,
+                        gridlinewidth=gridlinewidth)
     if clev is None:
-        m.contourf(x, y, data, cmap=cmap)
+        m.contour(x, y, data, colors=colors, linewidths=linewidths,
+                  latlon=True)
     else:
-        m.contourf(x,y, data, clev, cmap=cmap)
-    m.colorbar()
+        m.contour(x,y, data, clev, colors=colors, linewidths=linewidths,
+                  latlon=True)
     plt.draw()
     return m
 
