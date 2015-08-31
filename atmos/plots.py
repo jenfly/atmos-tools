@@ -13,7 +13,9 @@ from atmos.utils import print_if
 TO DO:
 clevels - omit zero option
 
-latlon_ticks
+mapticks - change tick label formatting to 0-360E rather than 180W to 180E
+        -> Define a function to return the formatted ticks and use fmt
+           keyword argument in m.drawmeridians
 
 contour_latpres - format dictionaries for contours and topography,
     - zero contours treated separately - omit or make different color/width
@@ -22,7 +24,7 @@ contour_latpres - format dictionaries for contours and topography,
 # ----------------------------------------------------------------------
 def autoticks(axtype, axmin, axmax, width=None, nmax=8):
     '''
-    Return an array of sensible automatic tick positions.
+    Return an array of sensible automatic tick positions for geo data.
 
     Parameters
     ----------
@@ -69,6 +71,24 @@ def autoticks(axtype, axmin, axmax, width=None, nmax=8):
 
 
 # ----------------------------------------------------------------------
+def mapticks(m, xticks, yticks, labels=['left', 'bottom'],
+             gridlinewidth=0.0):
+    """Add nicely formatted ticks to basemap."""
+
+    label_dict = {'left' : 0, 'right' : 1, 'top' : 2, 'bottom' : 3}
+    lvec = [0, 0, 0, 0]
+    for nm in labels:
+        lvec[label_dict[nm]] = 1
+
+    plt.xticks(xticks, [])
+    plt.yticks(yticks, [])
+    m.drawmeridians(xticks, labels=lvec, labelstyle='E',
+                    linewidth=gridlinewidth)
+    m.drawparallels(yticks, labels=lvec, labelstyle='N/S',
+                    linewidth=gridlinewidth)
+
+
+# ----------------------------------------------------------------------
 def clevels(data, cint, posneg='both', symmetric=False):
     '''
     Return array of contour levels spaced by a given interval.
@@ -106,36 +126,59 @@ def clevels(data, cint, posneg='both', symmetric=False):
     clev = np.arange(cmin, cmax + 0.1*cint, cint)
     return clev
 
-# ----------------------------------------------------------------------
-def mapticks(m, xticks, yticks, labels=['left', 'bottom'],
-             gridlinewidth=0.0):
-    """Add nicely formatted ticks to basemap."""
-
-    label_dict = {'left' : 0, 'right' : 1, 'top' : 2, 'bottom' : 3}
-    lvec = [0, 0, 0, 0]
-    for nm in labels:
-        lvec[label_dict[nm]] = 1
-
-    plt.xticks(xticks, [])
-    plt.yticks(yticks, [])
-    m.drawmeridians(xticks, labels=lvec, labelstyle='E/W',
-                    linewidth=gridlinewidth)
-    m.drawparallels(yticks, labels=lvec, labelstyle='N/S',
-                    linewidth=gridlinewidth)
-
 
 # ----------------------------------------------------------------------
-def init_lonlat(lon1=0, lon2=360, lat1=-90, lat2=90, gridlinewidth=0.0):
-    """Initialize lon-lat plot"""
+def init_lonlat(lon1=0, lon2=360, lat1=-90, lat2=90, labels=['left', 'bottom'],
+                gridlinewidth=0.0):
+    """Initialize lon-lat plot."""
 
     m = Basemap(llcrnrlon=lon1, llcrnrlat=lat1, urcrnrlon=lon2, urcrnrlat=lat2)
     m.drawcoastlines()
     xticks = autoticks('lon', lon1, lon2)
     yticks = autoticks('lat', lat1, lat2)
-    mapticks(m, xticks, yticks, labels=['left', 'bottom'],
-             gridlinewidth=gridlinewidth)
+    mapticks(m, xticks, yticks, labels=labels, gridlinewidth=gridlinewidth)
     plt.draw()
     return m
+
+
+# ----------------------------------------------------------------------
+def pcolor_lonlat(lon, lat, data, cmap='RdBu_r', axlims=(0, 360, -90, 90),
+                  axlabels=['left', 'bottom'], gridlinewidth=0.0):
+    """Create a pseudo-color plot of geo data."""
+
+    lon1, lon2, lat1, lat2 = axlims
+    x, y = np.meshgrid(lon, lat)
+    m = init_lonlat(lon1, lon2, lat1, lat2, labels=axlabels,
+                    gridlinewidth=gridlinewidth)
+    m.pcolormesh(x, y, data, cmap=cmap)
+    m.colorbar()
+    plt.draw()
+    return m
+
+
+# ----------------------------------------------------------------------
+def contourf_lonlat(lon, lat, data, clev=None, cmap='RdBu_r',
+                  axlims=(0, 360, -90, 90), axlabels=['left', 'bottom'],
+                  gridlinewidth=0.0):
+    """Create a filled contour plot of geo data."""
+
+    if isinstance(clev, float) or isinstance(clev, int):
+        # Define contour levels from selected interval spacing
+        clev = clevels(data, clev)
+
+    lon1, lon2, lat1, lat2 = axlims
+    x, y = np.meshgrid(lon, lat)
+    m = init_lonlat(lon1, lon2, lat1, lat2, labels=axlabels,
+                    gridlinewidth=gridlinewidth)
+
+    if clev is None:
+        m.contourf(x, y, data, cmap=cmap)
+    else:
+        m.contourf(x,y, data, clev, cmap=cmap)
+    m.colorbar()
+    plt.draw()
+    return m
+
 
 # ----------------------------------------------------------------------
 def contour_latpres(lat, pres, data, clev, c_color='black', topo=None):

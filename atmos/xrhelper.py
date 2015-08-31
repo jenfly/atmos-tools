@@ -119,5 +119,5 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
 # ----------------------------------------------------------------------
 # Bind some handy functions to the Dataset class for convenience
 
-Dataset.disp = ds_print
-Dataset.unpack = ds_unpack
+#Dataset.disp = ds_print
+#Dataset.unpack = ds_unpack
