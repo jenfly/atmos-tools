@@ -31,7 +31,7 @@ def autoticks(axtype, axmin, axmax, width=None, nmax=8):
 
     Parameters
     ----------
-    axtype : {'lon', 'lat', 'pres'}
+    axtype : {'pres', 'lat', 'lon'}
         Type of axis - longitude, latitude or pressure level
     axmin, axmax : float or int
         Axis limits
@@ -131,7 +131,7 @@ def clevels(data, cint, posneg='both', symmetric=False):
 
 
 # ----------------------------------------------------------------------
-def init_latlon(lon1=0, lon2=360, lat1=-90, lat2=90, labels=['left', 'bottom'],
+def init_latlon(lat1=-90, lat2=90, lon1=0, lon2=360, labels=['left', 'bottom'],
                 gridlinewidth=0.0):
     """Initialize lon-lat plot."""
 
@@ -145,14 +145,14 @@ def init_latlon(lon1=0, lon2=360, lat1=-90, lat2=90, labels=['left', 'bottom'],
 
 
 # ----------------------------------------------------------------------
-def pcolor_latlon(lon, lat, data, m=None, cmap='RdBu_r',
-                  axlims=(0, 360, -90, 90)):
+def pcolor_latlon(lat, lon, data, m=None, cmap='RdBu_r',
+                  axlims=(-90, 90, 0, 360)):
     """Create a pseudo-color plot of geo data."""
 
-    lon1, lon2, lat1, lat2 = axlims
+    lat1, lat2, lon1, lon2 = axlims
     x, y = np.meshgrid(lon, lat)
     if m is None:
-        m = init_latlon(lon1, lon2, lat1, lat2)
+        m = init_latlon(lat1, lat2, lon1, lon2)
     m.pcolormesh(x, y, data, cmap=cmap, latlon=True)
     m.colorbar()
     plt.draw()
@@ -160,19 +160,19 @@ def pcolor_latlon(lon, lat, data, m=None, cmap='RdBu_r',
 
 
 # ----------------------------------------------------------------------
-def contourf_latlon(lon, lat, data, clev=None, m=None, cmap='RdBu_r',
-                    symmetric=True, axlims=(0, 360, -90, 90)):
+def contourf_latlon(lat, lon, data, clev=None, m=None, cmap='RdBu_r',
+                    symmetric=True, axlims=(-90, 90, 0, 360)):
     """Create a filled contour plot of geo data."""
 
     if isinstance(clev, float) or isinstance(clev, int):
         # Define contour levels from selected interval spacing
         clev = clevels(data, clev, symmetric=symmetric)
 
-    lon1, lon2, lat1, lat2 = axlims
+    lat1, lat2, lon1, lon2 = axlims
     x, y = np.meshgrid(lon, lat)
 
     if m is None:
-        m = init_latlon(lon1, lon2, lat1, lat2)
+        m = init_latlon(lat1, lat2, lon1, lon2)
     if clev is None:
         m.contourf(x, y, data, cmap=cmap, latlon=True)
     else:
@@ -183,19 +183,19 @@ def contourf_latlon(lon, lat, data, clev=None, m=None, cmap='RdBu_r',
 
 
 # ----------------------------------------------------------------------
-def contour_latlon(lon, lat, data, clev=None, m=None, colors='black',
-                   linewidths=2.0, axlims=(0, 360, -90, 90)):
+def contour_latlon(lat, lon, data, clev=None, m=None, colors='black',
+                   linewidths=2.0, axlims=(-90, 90, 0, 360)):
     """Create a contour line plot of geo data."""
 
     if isinstance(clev, float) or isinstance(clev, int):
         # Define contour levels from selected interval spacing
         clev = clevels(data, clev)
 
-    lon1, lon2, lat1, lat2 = axlims
+    lat1, lat2, lon1, lon2 = axlims
     x, y = np.meshgrid(lon, lat)
 
     if m is None:
-        m = init_latlon(lon1, lon2, lat1, lat2)
+        m = init_latlon(lat1, lat2, lon1, lon2)
     if clev is None:
         m.contour(x, y, data, colors=colors, linewidths=linewidths,
                   latlon=True)

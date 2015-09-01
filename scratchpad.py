@@ -29,8 +29,8 @@ ps = ds['ps'].values
 k, mon = 9, 7
 uplot = u[mon-1, k]
 plt.figure()
-m = ap.contourf_latlon(lon, lat, uplot, 10)
-ap.contour_latlon(lon,lat, ps[mon-1]/100, 50, m=m, colors='black')
+m = ap.contourf_latlon(lat, lon, uplot, 10)
+ap.contour_latlon(lat, lon, ps[mon-1]/100, 50, m=m, colors='black')
 
 #
 # plt.contourf(xi, yi, uplot)
@@ -58,7 +58,25 @@ plt.figure()
 ap.contour_latpres(lat, plev, uplot, cint, topo=topo)
 
 # ----------------------------------------------------------------------
+# Check longitude shifting utility
+data = ps.mean(axis=0)/100
+data_new, lon_new = set_lon(data, lon, lonmax=180)
+data_new2, lon_new2 = set_lon(data_new, lon_new, lonmax=360)
+
+plt.figure(figsize=(7,9))
+plt.subplot(3,1,1)
+ap.pcolor_latlon(lat, lon, data, cmap='hot')
+plt.subplot(3,1,2)
+ap.pcolor_latlon(lat, lon_new, data_new, cmap='hot')
+plt.subplot(3,1,3)
+ap.pcolor_latlon(lat, lon_new2, data_new2, cmap='hot')
+
+print(np.array_equal(data, data_new))
+print(np.array_equal(data, data_new2))
+
+# ----------------------------------------------------------------------
 # Topography
 
-newlat = np.arange(90,-90,-1.)
-newlon = np.arange(0.,360,1.)
+lat_new = np.arange(90,-90,-1.)
+lon_new = np.arange(0.,360,1.)
+data_new = interp_latlon(data, lat, lon, lat_new, lon_new)

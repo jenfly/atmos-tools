@@ -26,6 +26,34 @@ def print_odict(od, indent=2, width=20):
 
 
 # ======================================================================
+# INCREASING / DECREASING LISTS
+# ======================================================================
+
+# ----------------------------------------------------------------------
+def strictly_increasing(L):
+    """Return True if list L is strictly increasing."""
+    return all(x < y for x, y in zip(L, L[1:]))
+
+
+# ----------------------------------------------------------------------
+def strictly_decreasing(L):
+    """Return True if list L is strictly decreasing."""
+    return all(x > y for x, y in zip(L, L[1:]))
+
+
+# ----------------------------------------------------------------------
+def non_increasing(L):
+    """Return True if list L is non-increasing."""
+    return all(x >= y for x, y in zip(L, L[1:]))
+
+
+# ----------------------------------------------------------------------
+def non_decreasing(L):
+    """Return True if list L is non-decreasing."""
+    return all(x <= y for x, y in zip(L, L[1:]))
+
+
+# ======================================================================
 # MONTHS AND SEASONS
 # ======================================================================
 
