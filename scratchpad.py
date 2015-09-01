@@ -18,20 +18,24 @@ filename = 'data/more/ncep2_climatology_monthly.nc'
 ds = xr.ncload(filename)
 lat = ds['lat'].values
 lon = ds['lon'].values
-lev = ds['lev'].values
+plev = ds['plev'].values
 mon = ds['mon'].values
 u = ds['u'].values
 v = ds['v'].values
 T = ds['T'].values
 ps = ds['ps'].values
 
-xi, yi = np.meshgrid(lon, lat)
+#xi, yi = np.meshgrid(lon, lat)
 k, mon = 9, 7
 uplot = u[mon-1, k]
 plt.figure()
-plt.contourf(xi, yi, uplot)
-plt.colorbar()
-plt.contour(xi,yi, uplot, np.arange(-40,60,10), colors='black')
+m = ap.contourf_lonlat(lon, lat, uplot, 10)
+ap.contour_lonlat(lon,lat, ps[mon-1]/100, 50, m=m, colors='black')
+
+#
+# plt.contourf(xi, yi, uplot)
+# plt.colorbar()
+# plt.contour(xi,yi, uplot, np.arange(-40,60,10), colors='black')
 
 # Zonal mean zonal wind
 season='jjas'
@@ -51,7 +55,7 @@ topo = ps.mean(axis=0) / 100
 topo = topo[:,ilon].mean(axis=1)
 
 plt.figure()
-ap.contour_latpres(lat, lev, uplot, cint, topo=topo)
+ap.contour_latpres(lat, plev, uplot, cint, topo=topo)
 
 
 '''

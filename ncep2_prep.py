@@ -33,16 +33,16 @@ ds2 = xr.ncload('data/more/pres.sfc.mon.mean.nc', verbose=True, unpack=True,
     missing_name=miss, offset_name=offset, scale_name=scale, decode_cf=False)
 ds['ps'] = ds2['pres']
 
-ds.rename({'level' : 'lev'}, inplace=True)
+ds.rename({'level' : 'plev'}, inplace=True)
 lat = ds['lat'].values.astype(np.float64)
 lon = ds['lon'].values.astype(np.float64)
-lev = ds['lev'].values.astype(np.float64)
+plev = ds['plev'].values.astype(np.float64)
 time = ds['time'].values
 
 # Replace float32 with float64 so that everything is in float64
 ds['lat'].values = lat
 ds['lon'].values = lon
-ds['lev'].values = lev
+ds['plev'].values = plev
 
 # ----------------------------------------------------------------------
 # Data processing
@@ -116,9 +116,9 @@ ds1.attrs['title'] = title
 ds1.coords['mon'] = ('mon', np.arange(1,13))
 ds1.coords['yr'] = ('yr', np.arange(1979,2015))
 
-ds1['u'] = ( ('yr', 'mon', 'lev', 'lat', 'lon'), u)
-ds1['v'] = ( ('yr', 'mon', 'lev', 'lat', 'lon'), v)
-ds1['T'] = ( ('yr', 'mon', 'lev', 'lat', 'lon'), T)
+ds1['u'] = ( ('yr', 'mon', 'plev', 'lat', 'lon'), u)
+ds1['v'] = ( ('yr', 'mon', 'plev', 'lat', 'lon'), v)
+ds1['T'] = ( ('yr', 'mon', 'plev', 'lat', 'lon'), T)
 ds1['ps'] = ( ('yr', 'mon', 'lat', 'lon'), ps)
 
 for var in ['u', 'v', 'T', 'ps']:
@@ -147,9 +147,9 @@ ds1 = ds.drop(['time', 'nbnds'])
 ds1.attrs['title'] = title
 ds1.coords['mon'] = ('mon', np.arange(1,13))
 
-ds1['u'] = ( ('mon', 'lev', 'lat', 'lon'), u.mean(axis=0))
-ds1['v'] = ( ('mon', 'lev', 'lat', 'lon'), v.mean(axis=0))
-ds1['T'] = ( ('mon', 'lev', 'lat', 'lon'), T.mean(axis=0))
+ds1['u'] = ( ('mon', 'plev', 'lat', 'lon'), u.mean(axis=0))
+ds1['v'] = ( ('mon', 'plev', 'lat', 'lon'), v.mean(axis=0))
+ds1['T'] = ( ('mon', 'plev', 'lat', 'lon'), T.mean(axis=0))
 ds1['ps'] = ( ('mon', 'lat', 'lon'), ps.mean(axis=0))
 
 for var in ['u', 'v', 'T', 'ps']:
@@ -167,9 +167,9 @@ title = '1979-2014 Annual Mean Climatology NCEP/DOE Reanalysis 2'
 ds1 = ds.drop(['time', 'nbnds'])
 ds1.attrs['title'] = title
 
-ds1['u'] = ( ('lev', 'lat', 'lon'), ubar)
-ds1['v'] = ( ('lev', 'lat', 'lon'), vbar)
-ds1['T'] = ( ('lev', 'lat', 'lon'), Tbar)
+ds1['u'] = ( ('plev', 'lat', 'lon'), ubar)
+ds1['v'] = ( ('plev', 'lat', 'lon'), vbar)
+ds1['T'] = ( ('plev', 'lat', 'lon'), Tbar)
 ds1['ps'] = ( ('lat', 'lon'), psbar)
 
 for var in ['u', 'v', 'T', 'ps']:
@@ -185,5 +185,5 @@ ds1.to_netcdf(outfile, mode='w')
 # Save surface pressure climatology to topo file
 
 outfile = 'data/topo/ncep2_ps.nc'
-ds2 = ds1.drop(['u', 'v', 'T', 'lev'])
+ds2 = ds1.drop(['u', 'v', 'T', 'plev'])
 ds2.to_netcdf(outfile, mode='w')
