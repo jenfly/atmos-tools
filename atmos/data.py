@@ -9,7 +9,7 @@ from mpl_toolkits import basemap
 import xray
 
 import atmos.xrhelper as xr
-from atmos.utils import print_if
+from atmos.utils import print_if, strictly_decreasing
 
 # ----------------------------------------------------------------------
 def set_lon(data, lon, lonmax=360):
@@ -91,13 +91,25 @@ def interp_latlon(data, lat_in, lon_in, lat_out, lon_out, checkbounds=False,
         Data interpolated onto lat_out, lon_out grid
     """
 
+    # Check for the common case that lat_in and/or lat_out are decreasing
+    # and flip if necessary to work with basemap.interp()
+    flip = False
+    if strictly_decreasing(lat_in):
+        lat_in = lat_in[::-1]
+        data = data[::-1, :]
+    if strictly_decreasing(lat_out):
+        flip = True
+        lat_out = lat_out[::-1]
+
     x_out, y_out = np.meshgrid(lon_out, lat_out)
 
     data_out = basemap.interp(data, lon_in, lat_in, x_out, y_out,
                               checkbounds=checkbounds, masked=masked,
                               order=order)
-    return data_out
+    if flip:
+        data_out = data_out[::-1, :]
 
+    return data_out
 
 
 # ----------------------------------------------------------------------

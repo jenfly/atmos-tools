@@ -9,6 +9,7 @@ import xray
 import atmos.utils as utils
 import atmos.xrhelper as xr
 import atmos.plots as ap
+from atmos.data import set_lon, interp_latlon
 
 # ----------------------------------------------------------------------
 # Read monthly mean climatologies and do some test calcs
@@ -75,8 +76,29 @@ print(np.array_equal(data, data_new))
 print(np.array_equal(data, data_new2))
 
 # ----------------------------------------------------------------------
-# Topography
+# Interpolating onto new lat-lon grid
 
 lat_new = np.arange(90,-90,-1.)
 lon_new = np.arange(0.,360,1.)
 data_new = interp_latlon(data, lat, lon, lat_new, lon_new)
+
+plt.figure(figsize=(7,8))
+plt.subplot(2,1,1)
+ap.pcolor_latlon(lat,lon, data, cmap='hot')
+plt.subplot(2,1,2)
+ap.pcolor_latlon(lat_new, lon_new, data_new, cmap='hot')
+
+# ----------------------------------------------------------------------
+# Check sub-sampling
+
+lat_new = lat[::2]
+lon_new = lon[::2]
+data_new = interp_latlon(data, lat, lon, lat_new, lon_new)
+
+plt.figure(figsize=(7,8))
+plt.subplot(2,1,1)
+ap.pcolor_latlon(lat,lon, data, cmap='hot')
+plt.subplot(2,1,2)
+ap.pcolor_latlon(lat_new, lon_new, data_new, cmap='hot')
+
+print(np.array_equal(data[::2,::2], data_new))
