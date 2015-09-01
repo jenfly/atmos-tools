@@ -29,8 +29,8 @@ ps = ds['ps'].values
 k, mon = 9, 7
 uplot = u[mon-1, k]
 plt.figure()
-m = ap.contourf_lonlat(lon, lat, uplot, 10)
-ap.contour_lonlat(lon,lat, ps[mon-1]/100, 50, m=m, colors='black')
+m = ap.contourf_latlon(lon, lat, uplot, 10)
+ap.contour_latlon(lon,lat, ps[mon-1]/100, 50, m=m, colors='black')
 
 #
 # plt.contourf(xi, yi, uplot)
@@ -60,5 +60,5 @@ ap.contour_latpres(lat, plev, uplot, cint, topo=topo)
 # ----------------------------------------------------------------------
 # Topography
 
-lat = np.arange(90,-90,-1.)
-lon = np.arange(0.,360,1.)
+newlat = np.arange(90,-90,-1.)
+newlon = np.arange(0.,360,1.)
