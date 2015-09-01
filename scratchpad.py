@@ -102,3 +102,27 @@ plt.subplot(2,1,2)
 ap.pcolor_latlon(lat_new, lon_new, data_new, cmap='hot')
 
 print(np.array_equal(data[::2,::2], data_new))
+
+# ----------------------------------------------------------------------
+# Getting topography
+
+lat_new = lat
+data_new, lon_new = set_lon(data, lon, lonmax=180)
+
+topo, ds_attrs, ps_attrs = get_topo(lat_new, lon_new)
+
+plt.figure(figsize=(7,8))
+plt.subplot(2,1,1)
+ap.pcolor_latlon(lat,lon, data, cmap='hot')
+plt.subplot(2,1,2)
+ap.pcolor_latlon(lat_new, lon_new,topo, cmap='hot')
+
+# ----------------------------------------------------------------------
+# Topography test 2
+
+lat_new = np.arange(-90,90,0.5)
+lon_new = np.arange(0,360,0.5)
+topo = get_topo(lat_new, lon_new)
+
+plt.figure()
+ap.pcolor_latlon(lat_new, lon_new, topo, cmap='hot')

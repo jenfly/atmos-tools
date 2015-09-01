@@ -113,7 +113,27 @@ def interp_latlon(data, lat_in, lon_in, lat_out, lon_out, checkbounds=False,
 
 
 # ----------------------------------------------------------------------
-def get_topo(lon, lat, datafile='data/topo/ncep2_ps.nc'):
-    """Read surface pressure climatology and interpolate to latlon grid."""
+def get_topo(lat, lon, datafile='data/topo/ncep2_ps.nc'):
+    """Return surface pressure climatology on selected latlon grid."""
 
     ds = xr.ncload(datafile)
+    lon_ps = ds['lon'].values
+    lat_ps = ds['lat'].values
+    ps = ds['ps'].values
+
+    # Check what longitude convention is used in the surface pressure
+    # climatology and switch if necessary
+    if lon_convention(lon_ps) != lon_convention(lon):
+        ps, lon_ps = set_lon(ps, lon_ps, lonmax=lon_convention(lon))
+
+    # Interpolate ps onto lat-lon grid
+    ps = interp_latlon(ps, lat_ps, lon_ps, lat, lon)
+
+    # Pack data and metadata into a DataArray
+    topo = ds['ps']
+    topo.values = ps
+    topo['lat'].values = lat
+    topo['lon'].values = lon
+    topo.attrs['title'] = ds.attrs['title']
+
+    return topo
