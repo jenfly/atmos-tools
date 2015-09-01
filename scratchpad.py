@@ -9,6 +9,7 @@ import xray
 import atmos.utils as utils
 import atmos.xrhelper as xr
 import atmos.plots as ap
+
 # ----------------------------------------------------------------------
 # Read monthly mean climatologies and do some test calcs
 # ----------------------------------------------------------------------

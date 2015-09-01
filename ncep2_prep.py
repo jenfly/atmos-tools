@@ -176,5 +176,14 @@ for var in ['u', 'v', 'T', 'ps']:
     ds1[var].attrs = ds[var].attrs
     ds1[var].attrs[u'actual_range'] = [ds1[var].values.min(),
         ds1[var].values.max()]
+    s = ds1[var].attrs[u'long_name']
+    ds1[var].attrs[u'long_name'] = s.replace('Monthly ', '')
 
 ds1.to_netcdf(outfile, mode='w')
+
+# ----------------------------------------------------------------------
+# Save surface pressure climatology to topo file
+
+outfile = 'data/topo/ncep2_ps.nc'
+ds2 = ds1.drop(['u', 'v', 'T', 'lev'])
+ds2.to_netcdf(outfile, mode='w')
