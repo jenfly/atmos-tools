@@ -57,16 +57,8 @@ topo = topo[:,ilon].mean(axis=1)
 plt.figure()
 ap.contour_latpres(lat, plev, uplot, cint, topo=topo)
 
+# ----------------------------------------------------------------------
+# Topography
 
-'''
-ys,zs = np.meshgrid(lat, lev)
-plt.figure()
-plt.fill_between(lat,pmax,topo,color='black')
-plt.contour(ys,zs,uplot,clev,colors='black')
-plt.ylim(0, 1000)
-plt.gca().invert_yaxis()
-plt.xticks(np.arange(-90,90,30))
-plt.xlabel('Latitude')
-plt.ylabel('Pressure (mb)')
-plt.draw()
-'''
+lat = np.arange(90,-90,-1.)
+lon = np.arange(0.,360,1.)
