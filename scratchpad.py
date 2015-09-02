@@ -9,7 +9,7 @@ import xray
 import atmos.utils as utils
 import atmos.xrhelper as xr
 import atmos.plots as ap
-from atmos.data import set_lon, interp_latlon
+import atmos.data as dat
 
 # ----------------------------------------------------------------------
 # Read monthly mean climatologies and do some test calcs
@@ -30,8 +30,8 @@ ps = ds['ps'].values
 k, mon = 9, 7
 uplot = u[mon-1, k]
 plt.figure()
-m = ap.contourf_latlon(lat, lon, uplot, 10)
-ap.contour_latlon(lat, lon, ps[mon-1]/100, 50, m=m, colors='black')
+m = ap.contourf_latlon(uplot, lat, lon, 10)
+ap.contour_latlon(ps[mon-1]/100, lat, lon,  50, m=m, colors='black')
 
 #
 # plt.contourf(xi, yi, uplot)
@@ -61,8 +61,8 @@ ap.contour_latpres(lat, plev, uplot, cint, topo=topo)
 # ----------------------------------------------------------------------
 # Check longitude shifting utility
 data = ds['ps'].copy().mean(axis=0)/100
-data_new = set_lon(data, lonmax=180)
-data_new2 = set_lon(data_new, lonmax=360)
+data_new = dat.set_lon(data, lonmax=180)
+data_new2 = dat.set_lon(data_new, lonmax=360)
 
 plt.figure(figsize=(7,9))
 plt.subplot(3,1,1)
@@ -80,48 +80,40 @@ print(np.array_equal(data, data_new2))
 
 lat_new = np.arange(90,-90,-1.)
 lon_new = np.arange(0.,360,1.)
-data_new = interp_latlon(data, lat, lon, lat_new, lon_new)
+data_new = dat.interp_latlon(data, lat_new, lon_new)
 
 plt.figure(figsize=(7,8))
 plt.subplot(2,1,1)
-ap.pcolor_latlon(lat,lon, data, cmap='hot')
+ap.pcolor_latlon(data, cmap='hot')
 plt.subplot(2,1,2)
-ap.pcolor_latlon(lat_new, lon_new, data_new, cmap='hot')
+ap.pcolor_latlon(data_new, cmap='hot')
 
 # ----------------------------------------------------------------------
 # Check sub-sampling
 
 lat_new = lat[::2]
 lon_new = lon[::2]
-data_new = interp_latlon(data, lat, lon, lat_new, lon_new)
+data_new = dat.interp_latlon(data, lat_new, lon_new)
 
 plt.figure(figsize=(7,8))
 plt.subplot(2,1,1)
-ap.pcolor_latlon(lat,lon, data, cmap='hot')
+ap.pcolor_latlon(data, cmap='hot')
 plt.subplot(2,1,2)
-ap.pcolor_latlon(lat_new, lon_new, data_new, cmap='hot')
+ap.pcolor_latlon( data_new, cmap='hot')
 
 print(np.array_equal(data[::2,::2], data_new))
+
 # ----------------------------------------------------------------------
 # Getting topography
 
-lat_new = lat
-data_new, lon_new = set_lon(data, lon, lonmax=180)
+topo = dat.get_topo(lat, lon)
 
-topo = get_topo(lat_new, lon_new)
+lat_new = np.arange(-90,90,0.5)
+lon_new = np.arange(-180,180,0.5)
+topo2 = dat.get_topo(lat_new, lon_new)
 
 plt.figure(figsize=(7,8))
 plt.subplot(2,1,1)
-ap.pcolor_latlon(lat,lon, data, cmap='hot')
+ap.pcolor_latlon(topo, cmap='hot')
 plt.subplot(2,1,2)
-ap.pcolor_latlon(lat_new, lon_new,topo, cmap='hot')
-
-# ----------------------------------------------------------------------
-# Topography test 2
-
-lat_new = np.arange(-90,90,0.5)
-lon_new = np.arange(0,360,0.5)
-topo = get_topo(lat_new, lon_new)
-
-plt.figure()
-ap.pcolor_latlon(lat_new, lon_new, topo, cmap='hot')
+ap.pcolor_latlon(topo2, cmap='hot')

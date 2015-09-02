@@ -154,24 +154,22 @@ def get_topo(lat, lon, datafile='data/topo/ncep2_ps.nc'):
     """Return surface pressure climatology on selected latlon grid."""
 
     ds = xr.ncload(datafile)
-    lon_ps = ds['lon'].values
-    lat_ps = ds['lat'].values
-    ps = ds['ps'].values
+    ps = ds['ps']
 
     # Check what longitude convention is used in the surface pressure
     # climatology and switch if necessary
-    if lon_convention(lon_ps) != lon_convention(lon):
-        ps, lon_ps = set_lon(ps, lon_ps, lonmax=lon_convention(lon))
+    lonmax = lon_convention(lon)
+    if lon_convention(ps['lon'].values) != lonmax:
+        ps = set_lon(ps, lonmax)
 
     # Interpolate ps onto lat-lon grid
-    ps = interp_latlon(ps, lat_ps, lon_ps, lat, lon)
+    ps = interp_latlon(ps, lat, lon)
 
-    # Pack data and metadata into a DataArray
-    topo = xray.DataArray(ps, coords={'lat': lat, 'lon': lon})
-    topo.attrs = ds['ps'].attrs
-    topo.attrs['title'] = ds.attrs['title']
+    # Add metadata to output DataArray
+    ps.attrs = ds['ps'].attrs
+    ps.attrs['title'] = ds.attrs['title']
 
-    return topo
+    return ps
 
 # ----------------------------------------------------------------------
 def mask_below_topography():
