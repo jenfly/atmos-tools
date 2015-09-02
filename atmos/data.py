@@ -40,6 +40,9 @@ def set_lon(data, lonmax=360, lon=None):
 
     if isinstance(data, xray.DataArray):
         lon = data['lon']
+        vals = data.values
+    else:
+        vals = data
 
     lonmin = lonmax - 360
     if lonmin >= lon.min() and lonmin <= lon.max():
@@ -49,15 +52,15 @@ def set_lon(data, lonmax=360, lon=None):
         lon0 = lonmax
         start = False
 
-    vals, lon_out = basemap.shiftgrid(lon0, data, lon, start=start)
+    vals_out, lon_out = basemap.shiftgrid(lon0, vals, lon, start=start)
 
     if isinstance(data, xray.DataArray):
-        data_out = data
+        data_out = data.copy()
         data_out['lon'].values = lon_out
-        data_out.values = vals
+        data_out.values = vals_out
         return data_out
     else:
-        return vals, lon_out
+        return vals_out, lon_out
 
 
 # ----------------------------------------------------------------------
@@ -112,7 +115,7 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
     """
 
     if isinstance(data, xray.DataArray):
-        lat_in, lon_in = data['lat'], data['lon']
+        lat_in, lon_in = data['lat'].values, data['lon'].values
         vals = data.values
     else:
         vals = data
@@ -129,21 +132,19 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
 
     x_out, y_out = np.meshgrid(lon_out, lat_out)
 
-    data_vals = basemap.interp(vals, lon_in, lat_in, x_out, y_out,
+    vals_out = basemap.interp(vals, lon_in, lat_in, x_out, y_out,
                               checkbounds=checkbounds, masked=masked,
                               order=order)
     if flip:
         # Flip everything back to previous order
-        data_vals = data_vals[::-1, :]
+        vals_out = vals_out[::-1, :]
         lat_out = lat_out[::-1]
 
     if isinstance(data, xray.DataArray):
-        data_out = data
-        data_out['lat'] = lat_out
-        data_out['lon'] = lon_out
-        data_out.values = data_vals
+        data_out = xray.DataArray(vals_out, name=data.name,
+                                  coords=[('lat', lat_out), ('lon', lon_out)])
     else:
-        data_out = data_vals
+        data_out = vals_out
 
     return data_out
 

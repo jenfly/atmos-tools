@@ -60,17 +60,17 @@ ap.contour_latpres(lat, plev, uplot, cint, topo=topo)
 
 # ----------------------------------------------------------------------
 # Check longitude shifting utility
-data = ps.mean(axis=0)/100
-data_new, lon_new = set_lon(data, lon, lonmax=180)
-data_new2, lon_new2 = set_lon(data_new, lon_new, lonmax=360)
+data = ds['ps'].copy().mean(axis=0)/100
+data_new = set_lon(data, lonmax=180)
+data_new2 = set_lon(data_new, lonmax=360)
 
 plt.figure(figsize=(7,9))
 plt.subplot(3,1,1)
-ap.pcolor_latlon(lat, lon, data, cmap='hot')
+ap.pcolor_latlon(data, cmap='hot')
 plt.subplot(3,1,2)
-ap.pcolor_latlon(lat, lon_new, data_new, cmap='hot')
+ap.pcolor_latlon(data_new, cmap='hot')
 plt.subplot(3,1,3)
-ap.pcolor_latlon(lat, lon_new2, data_new2, cmap='hot')
+ap.pcolor_latlon(data_new2, cmap='hot')
 
 print(np.array_equal(data, data_new))
 print(np.array_equal(data, data_new2))
