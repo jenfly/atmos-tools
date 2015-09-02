@@ -135,3 +135,10 @@ def get_topo(lat, lon, datafile='data/topo/ncep2_ps.nc'):
     topo.attrs['title'] = ds.attrs['title']
 
     return topo
+
+# ----------------------------------------------------------------------
+def mask_below_topography():
+    """Mask pressure level data below topography."""
+
+# ----------------------------------------------------------------------
+# Wrapper function to add topo field to a dataset
