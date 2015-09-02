@@ -2,7 +2,7 @@
 Utility functions for atmospheric data wrangling / preparation.
 
 - xray datasets and netCDF files
-- Lat-lon wrangling
+- Lat-lon grids
 - Topography
 """
 
@@ -133,7 +133,7 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
 
 
 # ======================================================================
-# LAT-LON WRANGLING
+# LAT-LON GRIDS
 # ======================================================================
 
 # ----------------------------------------------------------------------
@@ -274,9 +274,66 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
     return data_out
 
 
+# ----------------------------------------------------------------------
+def latlon(data, latname='lat', lonname='lon'):
+    """Returns lat, lon arrays from DataArray data."""
+    return data[latname].values, data[lonname].values
+
+
+# ----------------------------------------------------------------------
+def latlon_equal(data1, data2, latname1='lat', lonname1='lon',
+                 latname2='lat', lonname2='lon'):
+    """Return True if input DataArrays have the same lat-lon coordinates."""
+
+    lat1, lon1 = latlon(data1, latname=latname1, lonname=lonname1)
+    lat2, lon2 = latlon(data2, latname=latname2, lonname=lonname2)
+    is_equal = np.array_equal(lat1, lat2) and np.array_equal(lon1, lon2)
+    return is_equal
+
+
 # ======================================================================
 # TOPOGRAPHY
 # ======================================================================
+
+# ----------------------------------------------------------------------
+def pres_units(units):
+    """
+    Return a standardized name (hPa or Pa) for the input pressure unit.
+    """
+    hpa = ['mb', 'millibar', 'millibars', 'hpa', 'hectopascal', 'hectopascals']
+    pa = ['pascal', 'pascals', 'pa']
+
+    if units.lower() in hpa:
+        return 'hPa'
+    elif units.lower() in pa:
+        return 'Pa'
+    else:
+        raise ValueError('Unknown input unit: %s' % units)
+
+
+# ----------------------------------------------------------------------
+def pres_pa(data, units):
+    """Returns pressure data (ndarray) in units of Pascals."""
+    if pres_units(units) == 'hPa':
+        data_out = data * 100
+    elif pres_units(units) == 'Pa':
+        data_out = data
+    else:
+        raise ValueError('Unknown units ' + units)
+    return data_out
+
+
+# ----------------------------------------------------------------------
+def pres_hpa(data, units):
+    """Returns pressure data (ndarray) in units of hPa."""
+    if pres_units(units) == 'hPa':
+        data_out = data
+    elif pres_units(units) == 'Pa':
+        data_out = data / 100
+    else:
+        raise ValueError('Unknown units ' + units)
+    return data_out
+
 
 # ----------------------------------------------------------------------
 def get_topo(lat, lon, datafile='data/topo/ncep2_ps.nc'):
@@ -300,9 +357,42 @@ def get_topo(lat, lon, datafile='data/topo/ncep2_ps.nc'):
 
     return ps
 
+
 # ----------------------------------------------------------------------
-def mask_below_topography():
+def mask_below_topography(data, topo_ps, plev=None, lat=None, lon=None,
+                          fillval=np.nan):
     """Mask pressure level data below topography."""
+
+    if isinstance(data, xray.Dataset):
+        lat = data['lat'].values
+        lon = data['lon'].values
+        vals = data.values
+
+        # Pressure levels in Pascals
+        plev = data['plev'].values
+        plev = pres_pa(plev, pres_units(data['plev'].units))
+    else:
+        vals = data
+
+    if isinstance(topo_ps, xray.Dataset):
+        if not latlon_equal(data, topo_ps):
+            msg = 'Inputs data and topo_ps are not on same latlon grid.'
+            raise ValueError(msg)
+
+        # Surface pressure values in Pascals:
+        ps_vals = topo_ps.values
+        ps_vals = pres_pa(ps_vals, pres_units(topo_ps.units))
+    else:
+        ps_vals = topo_ps
+
+    # For each vertical level, mask with NaN any point below topography
+    for k, p in enumerate(plev):
+        mask = np.ones(ps_vals.shape, dtype=float)
+        mask[ps_vals < p] = np.nan
+        vals[...,k,:,:] = vals[...,k,:,:] * mask
+
+    # Replace NaNs with fill value
+    vals[np.isnan(vals)] = fillval
 
 # ----------------------------------------------------------------------
 # Wrapper function to add topo field to a dataset
