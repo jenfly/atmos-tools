@@ -133,7 +133,7 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
                               checkbounds=checkbounds, masked=masked,
                               order=order)
     if flip:
-        # Flip everything back to order defined by user
+        # Flip everything back to previous order
         data_vals = data_vals[::-1, :]
         lat_out = lat_out[::-1]
 
