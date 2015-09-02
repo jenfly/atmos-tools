@@ -7,7 +7,6 @@ import xray
 
 # My modules:
 import atmos.utils as utils
-import atmos.xrhelper as xr
 import atmos.plots as ap
 import atmos.data as dat
 
@@ -16,7 +15,7 @@ import atmos.data as dat
 # ----------------------------------------------------------------------
 
 filename = 'data/more/ncep2_climatology_monthly.nc'
-ds = xr.ncload(filename)
+ds = dat.ncload(filename)
 lat = ds['lat'].values
 lon = ds['lon'].values
 plev = ds['plev'].values

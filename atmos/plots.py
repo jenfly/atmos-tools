@@ -1,6 +1,6 @@
-'''
+"""
 Utility functions for plotting atmospheric data.
-'''
+"""
 
 import math
 import numpy as np
@@ -9,7 +9,7 @@ from mpl_toolkits.basemap import Basemap
 import xray
 from atmos.utils import print_if
 
-'''
+"""
 TO DO:
 clevels - omit zero option
 
@@ -22,11 +22,11 @@ mapaxes(m, axlims, xticks, yticks) - adjust limits, ticks and tick labels of
 
 contour_latpres - format dictionaries for contours and topography,
     - zero contours treated separately - omit or make different color/width
-'''
+"""
 
 # ----------------------------------------------------------------------
 def autoticks(axtype, axmin, axmax, width=None, nmax=8):
-    '''
+    """
     Return an array of sensible automatic tick positions for geo data.
 
     Parameters
@@ -44,7 +44,7 @@ def autoticks(axtype, axmin, axmax, width=None, nmax=8):
     -------
     ticks : ndarray
         Array of tick positions
-    '''
+    """
 
     if not width:
         # Set the width between ticks
@@ -93,7 +93,7 @@ def mapticks(m, xticks, yticks, labels=['left', 'bottom'],
 
 # ----------------------------------------------------------------------
 def clevels(data, cint, posneg='both', symmetric=False):
-    '''
+    """
     Return array of contour levels spaced by a given interval.
 
     Parameters
@@ -111,7 +111,7 @@ def clevels(data, cint, posneg='both', symmetric=False):
     -------
     clev: ndarray
         Array of contour levels
-    '''
+    """
 
     # Define max and min contour levels
     if symmetric:
@@ -260,7 +260,7 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
 
     if isinstance(data, xray.DataArray):
         lat, lon = data['lat'], data['lon']
-        
+
     if isinstance(clev, float) or isinstance(clev, int):
         # Define contour levels from selected interval spacing
         clev = clevels(data, clev)
@@ -282,7 +282,7 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
 
 # ----------------------------------------------------------------------
 def contour_latpres(lat, pres, data, clev, c_color='black', topo=None):
-    '''
+    """
     Plot contour lines in latitude-pressure plane
 
     Parameters
@@ -299,7 +299,7 @@ def contour_latpres(lat, pres, data, clev, c_color='black', topo=None):
         Contour line color
     topo : ndarray, optional
         Topography to shade (average surface pressure in units of pres)
-    '''
+    """
 
     # Contour levels
     if not isinstance(clev, list) and not isinstance(clev, np.ndarray):
