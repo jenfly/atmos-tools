@@ -145,12 +145,37 @@ def init_latlon(lat1=-90, lat2=90, lon1=0, lon2=360, labels=['left', 'bottom'],
 
 
 # ----------------------------------------------------------------------
-def pcolor_latlon(lat, lon, data, m=None, cmap='RdBu_r',
+def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
                   axlims=(-90, 90, 0, 360)):
-    """Create a pseudo-color plot of geo data."""
+    """Create a pseudo-color plot of geo data.
 
-    lat1, lat2, lon1, lon2 = axlims
+    Parameters
+    ----------
+    data : ndarray or xray.DataArray
+        Data to be plotted.
+    lat, lon : ndarray, optional
+        Latitude and longitude arrays.  Only used if data is an ndarray.
+        If data is an xray.DataArray then lat = data['lat'] and
+        lon = data['lon']
+    m : Basemap object, optional
+        Basemap to plot on.  If omitted, then a map is created with
+        init_latlon().
+    cmap : string or colormap object, optional
+        Colormap to use.
+    axlims : 4-tuple of ints or floats
+        Lat-lon limits for map.
+
+    Returns
+    -------
+    m : Basemap object
+    """
+
+    if isinstance(data, xray.DataArray):
+        lat, lon = data['lat'], data['lon']
+
     x, y = np.meshgrid(lon, lat)
+    lat1, lat2, lon1, lon2 = axlims
+
     if m is None:
         m = init_latlon(lat1, lat2, lon1, lon2)
     m.pcolormesh(x, y, data, cmap=cmap, latlon=True)
@@ -160,9 +185,33 @@ def pcolor_latlon(lat, lon, data, m=None, cmap='RdBu_r',
 
 
 # ----------------------------------------------------------------------
-def contourf_latlon(lat, lon, data, clev=None, m=None, cmap='RdBu_r',
+def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
                     symmetric=True, axlims=(-90, 90, 0, 360)):
-    """Create a filled contour plot of geo data."""
+    """Create a filled contour plot of geo data.
+
+    Parameters
+    ----------
+    data : ndarray or xray.DataArray
+        Data to be plotted.
+    lat, lon : ndarray, optional
+        Latitude and longitude arrays.  Only used if data is an ndarray.
+        If data is an xray.DataArray then lat = data['lat'] and
+        lon = data['lon']
+    clev : scalar or array of ints or floats, optional
+        Contour spacing (scalar) or contour levels (array).
+    m : Basemap object, optional
+        Basemap to plot on.  If omitted, then a map is created with
+        init_latlon().
+    cmap : string or colormap object, optional
+        Colormap to use.
+    symmetric : bool, optional
+        Set contour levels to be symmetric about zero.
+    axlims : 4-tuple of ints or floats
+        Lat-lon limits for map.
+    """
+
+    if isinstance(data, xray.DataArray):
+        lat, lon = data['lat'], data['lon']
 
     if isinstance(clev, float) or isinstance(clev, int):
         # Define contour levels from selected interval spacing
@@ -183,10 +232,35 @@ def contourf_latlon(lat, lon, data, clev=None, m=None, cmap='RdBu_r',
 
 
 # ----------------------------------------------------------------------
-def contour_latlon(lat, lon, data, clev=None, m=None, colors='black',
+def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
                    linewidths=2.0, axlims=(-90, 90, 0, 360)):
-    """Create a contour line plot of geo data."""
+    """Create a contour line plot of geo data.
 
+    Parameters
+    ----------
+    data : ndarray or xray.DataArray
+        Data to be plotted.
+    lat, lon : ndarray, optional
+        Latitude and longitude arrays.  Only used if data is an ndarray.
+        If data is an xray.DataArray then lat = data['lat'] and
+        lon = data['lon']
+    clev : scalar or array of ints or floats, optional
+        Contour spacing (scalar) or contour levels (array).
+    m : Basemap object, optional
+        Basemap to plot on.  If omitted, then a map is created with
+        init_latlon().
+    colors : string or mpl_color, optional
+        Contour line color(s).
+    linewidths : int or float, optional
+        Line width for contour lines
+    axlims : 4-tuple of ints or floats
+        Lat-lon limits for map.
+
+    """
+
+    if isinstance(data, xray.DataArray):
+        lat, lon = data['lat'], data['lon']
+        
     if isinstance(clev, float) or isinstance(clev, int):
         # Define contour levels from selected interval spacing
         clev = clevels(data, clev)
