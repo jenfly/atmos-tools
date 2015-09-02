@@ -130,10 +130,8 @@ def get_topo(lat, lon, datafile='data/topo/ncep2_ps.nc'):
     ps = interp_latlon(ps, lat_ps, lon_ps, lat, lon)
 
     # Pack data and metadata into a DataArray
-    topo = ds['ps']
-    topo.values = ps
-    topo['lat'].values = lat
-    topo['lon'].values = lon
+    topo = xray.DataArray(ps, coords={'lat': lat, 'lon': lon})
+    topo.attrs = ds['ps'].attrs
     topo.attrs['title'] = ds.attrs['title']
 
     return topo
