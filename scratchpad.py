@@ -105,11 +105,11 @@ print(np.array_equal(data[::2,::2], data_new))
 # ----------------------------------------------------------------------
 # Getting topography
 
-topo = dat.get_topo(lat, lon)
+topo = dat.get_ps_clim(lat, lon)
 
 lat_new = np.arange(-90,90,0.5)
 lon_new = np.arange(-180,180,0.5)
-topo2 = dat.get_topo(lat_new, lon_new)
+topo2 = dat.get_ps_clim(lat_new, lon_new)
 
 plt.figure(figsize=(7,8))
 plt.subplot(2,1,1)
@@ -118,3 +118,15 @@ plt.subplot(2,1,2)
 ap.pcolor_latlon(topo2, cmap='hot')
 
 # ----------------------------------------------------------------------
+# Correct for topography
+
+u = ds['u']
+ucor = dat.correct_for_topography(u, topo)
+
+m, k = 3, 1
+
+plt.figure(figsize=(7,8))
+plt.subplot(211)
+ap.pcolor_latlon(u[m,k], cmap='jet')
+plt.subplot(212)
+ap.pcolor_latlon(ucor[m,k], cmap='jet')

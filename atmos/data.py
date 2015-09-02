@@ -6,9 +6,12 @@ Utility functions for atmospheric data wrangling / preparation.
 - Topography
 """
 
+"""
+TO DO:
+- Edit interp_latlon so that it can handle data with additional dimensions.
+"""
+
 import numpy as np
-#import matplotlib.pyplot as plt
-#import pandas as pd
 from mpl_toolkits import basemap
 import xray
 from xray import Dataset
@@ -21,9 +24,7 @@ from atmos.utils import print_if, print_odict, strictly_decreasing
 
 # ----------------------------------------------------------------------
 def ds_print(ds, indent=2, width=20):
-    """
-    Print metadata for xray dataset and for each variable.
-    """
+    """Print attributes of xray dataset and each of its variables."""
     line = '-' * 60
 
     # Attributes for dataset as a whole
@@ -47,9 +48,7 @@ def ds_print(ds, indent=2, width=20):
 
 # ----------------------------------------------------------------------
 def ncdisp(filename, verbose=True, decode_cf=False, indent=2, width=20):
-    """
-    Display the attributes of data in a netcdf file.
-    """
+    """Display the attributes of data in a netcdf file."""
     with xray.open_dataset(filename, decode_cf=decode_cf) as ds:
         if verbose:
             ds_print(ds, indent, width)
@@ -61,9 +60,10 @@ def ncdisp(filename, verbose=True, decode_cf=False, indent=2, width=20):
 def ds_unpack(dataset, missing_name=u'missing_value', offset_name=u'add_offset',
               scale_name=u'scale_factor', verbose=False, dtype=np.float64):
     """
-    Unpack data from netcdf file as read with xray.open_dataset().
+    Unpack compressed data from an xray.Dataset object.
 
     Converts compressed int data to floats and missing values to NaN.
+    Returns the results in an xray.Dataset object.
     """
     ds = dataset
     for var in ds.data_vars:
@@ -116,7 +116,7 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
     Read data from netcdf file into xray dataset.
 
     If options are selected, unpacks from compressed form and/or replaces
-    missing values with NaN.
+    missing values with NaN.  Returns data as an xray.Dataset object.
     """
     with xray.open_dataset(filename, decode_cf=decode_cf) as ds:
         print_if('****** Reading file: ' + filename + '********', verbose)
@@ -204,7 +204,7 @@ def lon_convention(lon):
 # ----------------------------------------------------------------------
 def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
                   checkbounds=False, masked=False, order=1):
-    """Interpolate data array onto a new lat-lon grid.
+    """Interpolate data onto a new lat-lon grid.
 
     Parameters
     ----------
@@ -240,8 +240,9 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
     """
 
     if isinstance(data, xray.DataArray):
-        lat_in, lon_in = data['lat'].values, data['lon'].values
-        vals = data.values
+        lat_in = data['lat'].values.copy()
+        lon_in = data['lon'].values.copy()
+        vals = data.values.copy()
     else:
         vals = data
 
@@ -276,7 +277,7 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
 
 # ----------------------------------------------------------------------
 def latlon(data, latname='lat', lonname='lon'):
-    """Return lat, lon arrays from DataArray data."""
+    """Return lat, lon ndarrays from DataArray."""
     return data[latname].values, data[lonname].values
 
 
@@ -298,7 +299,7 @@ def latlon_equal(data1, data2, latname1='lat', lonname1='lon',
 # ----------------------------------------------------------------------
 def pres_units(units):
     """
-    Return a standardized name (hPa or Pa) for the input pressure unit.
+    Return a standardized name (hPa or Pa) for the input pressure units.
     """
     hpa = ['mb', 'millibar', 'millibars', 'hpa', 'hectopascal', 'hectopascals']
     pa = ['pascal', 'pascals', 'pa']
@@ -308,7 +309,7 @@ def pres_units(units):
     elif units.lower() in pa:
         return 'Pa'
     else:
-        raise ValueError('Unknown input unit: %s' % units)
+        raise ValueError('Unknown units ' + units)
 
 
 # ----------------------------------------------------------------------
@@ -325,7 +326,7 @@ def pres_pa(data, units):
 
 # ----------------------------------------------------------------------
 def pres_hpa(data, units):
-    """Returns pressure data (ndarray) in units of hPa."""
+    """Return pressure data (ndarray) in units of hPa."""
     if pres_units(units) == 'hPa':
         data_out = data
     elif pres_units(units) == 'Pa':
@@ -336,8 +337,23 @@ def pres_hpa(data, units):
 
 
 # ----------------------------------------------------------------------
-def get_topo(lat, lon, datafile='data/topo/ncep2_ps.nc'):
-    """Return surface pressure climatology on selected latlon grid."""
+def get_ps_clim(lat, lon, datafile='data/topo/ncep2_ps.nc'):
+    """Return surface pressure climatology on selected lat-lon grid.
+
+    Parameters
+    ----------
+    lat, lon : 1-D float array
+        Latitude and longitude grid to interpolate surface pressure
+        climatology onto.
+    datafile : string, optional
+        Name of file to read for surface pressure climatology.
+
+    Returns
+    -------
+    ps : xray.DataArray
+        DataArray of surface pressure climatology interpolated onto
+        lat-lon grid.
+    """
 
     ds = ncload(datafile)
     ps = ds['ps']
@@ -360,15 +376,34 @@ def get_topo(lat, lon, datafile='data/topo/ncep2_ps.nc'):
 
 # ----------------------------------------------------------------------
 def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
-    """Set pressure level data below topography to NaN."""
+    """Set pressure level data below topography to NaN.
+
+    Parameters
+    ----------
+    data : ndarray or xray.DataArray
+        Data to correct, with pressure, latitude, longitude as the
+        last three dimensions.
+    topo_ps : ndarray or xray.DataArray
+        Climatological surface pressure to use for topography, on same
+        lat-lon grid as data.
+    plev, lat, lon : 1-D float array, optional
+        Pressure levels, latitudes and longitudes of input data.
+        Only used if data is an ndarray. If data is an xray.DataArray
+        then plev, lat and lon are extracted from data.coords.
+
+    Returns
+    -------
+    data_out : ndarray or xray.DataArray
+        Data with grid points below topography set to NaN.
+    """
 
     if isinstance(data, xray.DataArray):
-        lat = data['lat'].values
-        lon = data['lon'].values
-        vals = data.values
+        lat = data['lat'].values.copy()
+        lon = data['lon'].values.copy()
+        vals = data.values.copy()
 
         # Pressure levels in Pascals
-        plev = data['plev'].values
+        plev = data['plev'].values.copy()
         plev = pres_pa(plev, pres_units(data['plev'].units))
     else:
         vals = data

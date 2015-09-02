@@ -133,7 +133,7 @@ def clevels(data, cint, posneg='both', symmetric=False):
 # ----------------------------------------------------------------------
 def init_latlon(lat1=-90, lat2=90, lon1=0, lon2=360, labels=['left', 'bottom'],
                 gridlinewidth=0.0):
-    """Initialize lon-lat plot."""
+    """Initialize lon-lat plot and return as a Basemap object."""
 
     m = Basemap(llcrnrlon=lon1, llcrnrlat=lat1, urcrnrlon=lon2, urcrnrlat=lat2)
     m.drawcoastlines()
@@ -214,6 +214,10 @@ def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
         Set contour levels to be symmetric about zero.
     axlims : 4-tuple of ints or floats
         Lat-lon limits for map.
+
+    Returns
+    -------
+    m : Basemap object
     """
 
     if isinstance(data, xray.DataArray):
@@ -262,6 +266,9 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
     axlims : 4-tuple of ints or floats
         Lat-lon limits for map.
 
+    Returns
+    -------
+    m : Basemap object
     """
 
     if isinstance(data, xray.DataArray):
