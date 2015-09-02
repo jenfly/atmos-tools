@@ -294,7 +294,21 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
 
 
 # ----------------------------------------------------------------------
-def contour_latpres(lat, pres, data, clev, c_color='black', topo=None):
+def init_latpres(lat, plev, topo=None, pmin=0, pmax=1000):
+    """Initialize a latitude-pressure plot."""
+
+    if isinstance(topo, np.ndarray) or isinstance(topo, list):
+        plt.fill_between(lat, pmax, topo, color='black')
+    plt.ylim(pmin, pmax)
+    plt.gca().invert_yaxis()
+    plt.xticks(np.arange(-90, 90, 30))
+    plt.xlabel('Latitude')
+    plt.ylabel('Pressure (hPa)')
+    plt.draw()
+
+# ----------------------------------------------------------------------
+def contour_latpres(lat, plev, data, clev, colors='black', topo=None,
+                    pmin=0, pmax=1000):
     """
     Plot contour lines in latitude-pressure plane
 
@@ -302,16 +316,16 @@ def contour_latpres(lat, pres, data, clev, c_color='black', topo=None):
     ----------
     lat : ndarray
         Latitude (degrees)
-    pres : ndarray
+    plev : ndarray
         Pressure levels (hPa)
     data : ndarray
         Data to be contoured
     clev : float or ndarray
         Contour levels (ndarray) or spacing interval (float)
-    c_color: string or mpl_color, optional
+    colors: string or mpl_color, optional
         Contour line color
     topo : ndarray, optional
-        Topography to shade (average surface pressure in units of pres)
+        Topography to shade (average surface pressure in units of plev)
     """
 
     # Contour levels
@@ -319,16 +333,9 @@ def contour_latpres(lat, pres, data, clev, c_color='black', topo=None):
         clev = clevels(data, clev)
 
     # Grid for plotting
-    y, z = np.meshgrid(lat, pres)
+    y, z = np.meshgrid(lat, plev)
 
     # Plot contours
-    pmin, pmax = 0, 1000
-    if isinstance(topo, np.ndarray) or isinstance(topo, list):
-        plt.fill_between(lat, pmax, topo, color='black')
-    plt.contour(y, z, data, clev, colors=c_color)
-    plt.ylim(pmin, pmax)
-    plt.gca().invert_yaxis()
-    plt.xticks(np.arange(-90, 90, 30))
-    plt.xlabel('Latitude')
-    plt.ylabel('Pressure (hPa)')
+    init_latpres(lat, plev, topo=topo, pmin=pmin, pmax=pmax)
+    plt.contour(y, z, data, clev, colors=colors)
     plt.draw()
