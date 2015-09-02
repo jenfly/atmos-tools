@@ -172,13 +172,19 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
 
     if isinstance(data, xray.DataArray):
         lat, lon = data['lat'], data['lon']
+        vals = data.values
+    else:
+        vals = data
+
+    # Use a masked array so that pcolormesh displays NaNs properly
+    vals_plot = np.ma.array(vals, mask=np.isnan(vals))
 
     x, y = np.meshgrid(lon, lat)
     lat1, lat2, lon1, lon2 = axlims
 
     if m is None:
         m = init_latlon(lat1, lat2, lon1, lon2)
-    m.pcolormesh(x, y, data, cmap=cmap, latlon=True)
+    m.pcolormesh(x, y, vals_plot, cmap=cmap, latlon=True)
     m.colorbar()
     plt.draw()
     return m

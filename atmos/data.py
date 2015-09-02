@@ -210,7 +210,7 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
     ----------
     data : ndarray or xray.DataArray
         Data to interpolate, with latitude as first dimension,
-        longitude second
+        longitude second.
     lat_out, lon_out : 1-D float array
         Latitude and longitudes to interpolate onto.
     lat_in, lon_in : ndarray, optional
@@ -276,7 +276,7 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
 
 # ----------------------------------------------------------------------
 def latlon(data, latname='lat', lonname='lon'):
-    """Returns lat, lon arrays from DataArray data."""
+    """Return lat, lon arrays from DataArray data."""
     return data[latname].values, data[lonname].values
 
 
@@ -313,7 +313,7 @@ def pres_units(units):
 
 # ----------------------------------------------------------------------
 def pres_pa(data, units):
-    """Returns pressure data (ndarray) in units of Pascals."""
+    """Return pressure data (ndarray) in units of Pascals."""
     if pres_units(units) == 'hPa':
         data_out = data * 100
     elif pres_units(units) == 'Pa':
@@ -359,11 +359,10 @@ def get_topo(lat, lon, datafile='data/topo/ncep2_ps.nc'):
 
 
 # ----------------------------------------------------------------------
-def mask_below_topography(data, topo_ps, plev=None, lat=None, lon=None,
-                          fillval=np.nan):
-    """Mask pressure level data below topography."""
+def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
+    """Set pressure level data below topography to NaN."""
 
-    if isinstance(data, xray.Dataset):
+    if isinstance(data, xray.DataArray):
         lat = data['lat'].values
         lon = data['lon'].values
         vals = data.values
@@ -374,7 +373,7 @@ def mask_below_topography(data, topo_ps, plev=None, lat=None, lon=None,
     else:
         vals = data
 
-    if isinstance(topo_ps, xray.Dataset):
+    if isinstance(topo_ps, xray.DataArray):
         if not latlon_equal(data, topo_ps):
             msg = 'Inputs data and topo_ps are not on same latlon grid.'
             raise ValueError(msg)
@@ -385,14 +384,19 @@ def mask_below_topography(data, topo_ps, plev=None, lat=None, lon=None,
     else:
         ps_vals = topo_ps
 
-    # For each vertical level, mask with NaN any point below topography
+    # For each vertical level, set any point below topography to NaN
     for k, p in enumerate(plev):
-        mask = np.ones(ps_vals.shape, dtype=float)
-        mask[ps_vals < p] = np.nan
-        vals[...,k,:,:] = vals[...,k,:,:] * mask
+        ibelow = ps_vals < p
+        vals[...,k,ibelow] = np.nan
 
-    # Replace NaNs with fill value
-    vals[np.isnan(vals)] = fillval
+    if isinstance(data, xray.DataArray):
+        data_out = data.copy()
+        data_out.values = vals
+    else:
+        data_out = vals
+
+    return data_out
+
 
 # ----------------------------------------------------------------------
 # Wrapper function to add topo field to a dataset
