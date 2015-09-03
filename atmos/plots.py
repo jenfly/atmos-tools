@@ -9,21 +9,6 @@ from mpl_toolkits.basemap import Basemap
 import xray
 from atmos.utils import print_if
 
-"""
-TO DO:
-clevels - omit zero option
-
-mapticks - change tick label formatting to 0-360E rather than 180W to 180E
-        -> Define a function to return the formatted ticks and use fmt
-           keyword argument in m.drawmeridians
-
-mapaxes(m, axlims, xticks, yticks) - adjust limits, ticks and tick labels of
-        existing map (might have to create new basemap object to do this)
-
-contour_latpres - format dictionaries for contours and topography,
-    - zero contours treated separately - omit or make different color/width
-"""
-
 # ----------------------------------------------------------------------
 def autoticks(axtype, axmin, axmax, width=None, nmax=8):
     """
@@ -339,3 +324,38 @@ def contour_latpres(lat, plev, data, clev, colors='black', topo=None,
     init_latpres(lat, plev, topo=topo, pmin=pmin, pmax=pmax)
     plt.contour(y, z, data, clev, colors=colors)
     plt.draw()
+
+# ----------------------------------------------------------------------
+
+def show_topo_profile():
+    """Plot shaded topo profile in latitude-pressure plane."""
+
+def pcolor_latpres():
+    """Plot pseudo-color of data in latitude-pressure plane."""
+
+def contourf_latpres():
+    """Plot filled contours of data in latitude-pressure plane."""
+
+def deg_symbol():
+    """Return a degree symbol for LaTeX interpreter."""
+
+def latlon_str():
+    """Return a label string for latitude or longitude."""
+
+def contourf_timelat():
+    """Plot filled contours of data in time-latitude plane."""
+
+"""
+TO DO:
+clevels - omit zero option
+
+mapticks - change tick label formatting to 0-360E rather than 180W to 180E
+        -> Define a function to return the formatted ticks and use fmt
+           keyword argument in m.drawmeridians
+
+mapaxes(m, axlims, xticks, yticks) - adjust limits, ticks and tick labels of
+        existing map (might have to create new basemap object to do this)
+
+contour_latpres - format dictionaries for contours and topography,
+    - zero contours treated separately - omit or make different color/width
+"""

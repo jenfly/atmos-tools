@@ -2,13 +2,8 @@
 Utility functions for atmospheric data wrangling / preparation.
 
 - xray datasets and netCDF files
-- Lat-lon grids
+- Lat-lon geophysical data
 - Topography
-"""
-
-"""
-TO DO:
-- Edit interp_latlon so that it can handle data with additional dimensions.
 """
 
 import numpy as np
@@ -133,7 +128,7 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
 
 
 # ======================================================================
-# LAT-LON GRIDS
+# LAT-LON GEOPHYSICAL DATA
 # ======================================================================
 
 # ----------------------------------------------------------------------
@@ -434,4 +429,39 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
 
 
 # ----------------------------------------------------------------------
-# Wrapper function to add topo field to a dataset
+
+# LAT-LON GEO
+def average_over_box():
+    """Return the data field averaged over a lat-lon box."""
+
+def average_over_country():
+    """Return the data field averaged over a country."""
+
+def mask_ocean():
+    """Return the data with ocean masked out."""
+
+# PRESSURE / VERTICAL LEVELS
+
+def near_surface():
+    """Return the pressure-level data closest to surface."""
+
+def interp_plevels():
+    """Return the data interpolated onto new pressure level grid."""
+
+def pressure_grid():
+    """Return a grid of pressures from 1-D pressure level array."""
+
+def pressure_grid_eta():
+    """Return a grid of pressures for eta-level data."""
+
+def ps_grid():
+    """Return a grid of surface pressures."""
+
+def int_pres():
+    """Return the data integrated vertically by pressure."""
+    # Maybe this should go in analysis.py
+
+"""
+TO DO:
+- Edit interp_latlon so that it can handle data with additional dimensions.
+""" 
