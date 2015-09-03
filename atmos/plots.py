@@ -390,11 +390,30 @@ def pcolor_latpres():
 def contourf_latpres():
     """Plot filled contours of data in latitude-pressure plane."""
 
-def deg_symbol():
-    """Return a degree symbol for LaTeX interpreter."""
+def degree_sign():
+    """Return a degree sign for LaTeX interpreter."""
+    return '$^\circ$'
 
-def latlon_str():
-    """Return a label string for latitude or longitude."""
+def latlon_label(vals, latlon='lat'):
+    """Return a label string for list of latitudes or longitudes."""
+
+    if latlon.lower() == 'lat':
+        pos, neg = 'N', 'S'
+    elif latlon.lower() == 'lon':
+        pos, neg = 'E', 'W'
+    else:
+        raise ValueError('Invalid input latlon = ' + latlon)
+
+    labels = []
+    for num in vals:
+        x = '%d' % num
+        if num >= 0:
+            suffix = pos
+        else:
+            suffix = neg
+        labels.append(x + degree_sign() + suffix)
+    return labels
+    
 
 def contourf_timelat():
     """Plot filled contours of data in time-latitude plane."""
