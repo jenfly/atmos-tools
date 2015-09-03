@@ -392,9 +392,9 @@ def contourf_latpres():
 
 def degree_sign():
     """Return a degree sign for LaTeX interpreter."""
-    return '$^\circ$'
+    return r'$^\circ$'
 
-def latlon_label(vals, latlon='lat'):
+def latlon_labels(vals, latlon='lat', fmt='%.0f'):
     """Return a label string for list of latitudes or longitudes."""
 
     if latlon.lower() == 'lat':
@@ -406,14 +406,15 @@ def latlon_label(vals, latlon='lat'):
 
     labels = []
     for num in vals:
-        x = '%d' % num
         if num >= 0:
             suffix = pos
+            x = fmt % num
         else:
             suffix = neg
+            x = fmt % abs(num)
         labels.append(x + degree_sign() + suffix)
     return labels
-    
+
 
 def contourf_timelat():
     """Plot filled contours of data in time-latitude plane."""
