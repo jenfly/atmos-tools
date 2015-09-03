@@ -279,32 +279,39 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
 
 
 # ----------------------------------------------------------------------
-def init_latpres(lat, plev, topo=None, pmin=0, pmax=1000):
+def init_latpres(latmin=-90, latmax=90, pmin=0, pmax=1000, topo=None):
     """Initialize a latitude-pressure plot."""
+
+
 
     if isinstance(topo, np.ndarray) or isinstance(topo, list):
         plt.fill_between(lat, pmax, topo, color='black')
+
+    xticks = autoticks('lat', latmin, latmax)
+    yticks = autoticks('pres', pmin, pmax)
+    plt.xlim(latmin, latmax)
+    plt.xticks(xticks)
     plt.ylim(pmin, pmax)
+    plt.yticks(yticks)
     plt.gca().invert_yaxis()
-    plt.xticks(np.arange(-90, 90, 30))
     plt.xlabel('Latitude')
     plt.ylabel('Pressure (hPa)')
     plt.draw()
 
 # ----------------------------------------------------------------------
-def contour_latpres(lat, plev, data, clev, colors='black', topo=None,
-                    pmin=0, pmax=1000):
+def contour_latpres(data, lat=None, plev=None, clev=None, colors='black',
+                    topo=None, axlims=(-90, 90, 0, 1000)):
     """
     Plot contour lines in latitude-pressure plane
 
     Parameters
     ----------
+    data : ndarray
+        Data to be contoured
     lat : ndarray
         Latitude (degrees)
     plev : ndarray
         Pressure levels (hPa)
-    data : ndarray
-        Data to be contoured
     clev : float or ndarray
         Contour levels (ndarray) or spacing interval (float)
     colors: string or mpl_color, optional
@@ -314,15 +321,21 @@ def contour_latpres(lat, plev, data, clev, colors='black', topo=None,
     """
 
     # Contour levels
-    if not isinstance(clev, list) and not isinstance(clev, np.ndarray):
+    if isinstance(clev, float) or isinstance(clev, int):
+        # Define contour levels from selected interval spacing
         clev = clevels(data, clev)
 
     # Grid for plotting
     y, z = np.meshgrid(lat, plev)
 
     # Plot contours
-    init_latpres(lat, plev, topo=topo, pmin=pmin, pmax=pmax)
-    plt.contour(y, z, data, clev, colors=colors)
+    latmin, latmax, pmin, pmax = axlims
+    init_latpres(latmin, latmax, pmin, pmax, topo=topo)
+
+    if clev is None:
+        plt.contour(y, z, data, colors=colors)
+    else:
+        plt.contour(y, z, data, clev, colors=colors)
     plt.draw()
 
 # ----------------------------------------------------------------------
