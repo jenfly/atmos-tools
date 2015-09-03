@@ -29,7 +29,7 @@ ps = ds['ps'].values
 k, mon = 9, 7
 uplot = u[mon-1, k]
 plt.figure()
-m = ap.contourf_latlon(uplot, lat, lon, 10)
+m = ap.contourf_latlon(uplot, lat, lon, 5)
 ap.contour_latlon(ps[mon-1]/100, lat, lon,  50, m=m, colors='black')
 
 #

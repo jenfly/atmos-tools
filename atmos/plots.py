@@ -10,6 +10,42 @@ import xray
 from atmos.utils import print_if
 
 # ----------------------------------------------------------------------
+def degree_sign():
+    """Return a degree sign for LaTeX interpreter."""
+    return r'$^\circ$'
+
+
+# ----------------------------------------------------------------------
+def latlon_labels(vals, latlon='lat', fmt='%.0f'):
+    """Return a label string for list of latitudes or longitudes."""
+
+    if latlon.lower() == 'lat':
+        pos, neg = 'N', 'S'
+    elif latlon.lower() == 'lon':
+        pos, neg = 'E', 'W'
+    else:
+        raise ValueError('Invalid input latlon = ' + latlon)
+
+    labels = []
+    for num in vals:
+        if num >= 0:
+            suffix = pos
+            x = fmt % num
+        else:
+            suffix = neg
+            x = fmt % abs(num)
+        labels.append(x + degree_sign() + suffix)
+    return labels
+
+
+# ----------------------------------------------------------------------
+def mapticks(lon_ticks, lat_ticks):
+    """Add nicely formatted ticks to lat-lon map."""
+    plt.xticks(lon_ticks, latlon_labels(lon_ticks,'lon'))
+    plt.yticks(lat_ticks, latlon_labels(lat_ticks, 'lat'))
+
+
+# ----------------------------------------------------------------------
 def autoticks(axtype, axmin, axmax, width=None, nmax=8):
     """
     Return an array of sensible automatic tick positions for geo data.
@@ -56,24 +92,6 @@ def autoticks(axtype, axmin, axmax, width=None, nmax=8):
     # Set the ticks
     ticks = np.arange(n1*width, (n2+0.1)*width, width)
     return ticks
-
-
-# ----------------------------------------------------------------------
-def mapticks(m, xticks, yticks, labels=['left', 'bottom'],
-             gridlinewidth=0.0):
-    """Add nicely formatted ticks to basemap."""
-
-    label_dict = {'left' : 0, 'right' : 1, 'top' : 2, 'bottom' : 3}
-    lvec = [0, 0, 0, 0]
-    for nm in labels:
-        lvec[label_dict[nm]] = 1
-
-    plt.xticks(xticks, [])
-    plt.yticks(yticks, [])
-    m.drawmeridians(xticks, labels=lvec, labelstyle='E',
-                    linewidth=gridlinewidth)
-    m.drawparallels(yticks, labels=lvec, labelstyle='N/S',
-                    linewidth=gridlinewidth)
 
 
 # ----------------------------------------------------------------------
@@ -132,7 +150,7 @@ def init_latlon(lat1=-90, lat2=90, lon1=0, lon2=360, labels=['left', 'bottom'],
     m.drawcoastlines()
     xticks = autoticks('lon', lon1, lon2)
     yticks = autoticks('lat', lat1, lat2)
-    mapticks(m, xticks, yticks, labels=labels, gridlinewidth=gridlinewidth)
+    mapticks(xticks, yticks)
     plt.draw()
     return m
 
@@ -389,31 +407,6 @@ def pcolor_latpres():
 
 def contourf_latpres():
     """Plot filled contours of data in latitude-pressure plane."""
-
-def degree_sign():
-    """Return a degree sign for LaTeX interpreter."""
-    return r'$^\circ$'
-
-def latlon_labels(vals, latlon='lat', fmt='%.0f'):
-    """Return a label string for list of latitudes or longitudes."""
-
-    if latlon.lower() == 'lat':
-        pos, neg = 'N', 'S'
-    elif latlon.lower() == 'lon':
-        pos, neg = 'E', 'W'
-    else:
-        raise ValueError('Invalid input latlon = ' + latlon)
-
-    labels = []
-    for num in vals:
-        if num >= 0:
-            suffix = pos
-            x = fmt % num
-        else:
-            suffix = neg
-            x = fmt % abs(num)
-        labels.append(x + degree_sign() + suffix)
-    return labels
 
 
 def contourf_timelat():
