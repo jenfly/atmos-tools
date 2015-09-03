@@ -339,6 +339,7 @@ def init_latpres(latmin=-90, latmax=90, pmin=0, pmax=1000, topo_ps=None,
 
     plt.draw()
 
+
 # ----------------------------------------------------------------------
 def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
                     colors='black', topo=None, topo_clr='black', p_units='hPa',
@@ -421,6 +422,7 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
 
     plt.draw()
 
+
 # ----------------------------------------------------------------------
 
 def pcolor_latpres():
@@ -436,13 +438,7 @@ def contourf_timelat():
 """
 TO DO:
 
-mapticks - change tick label formatting to 0-360E rather than 180W to 180E
-        -> Define a function to return the formatted ticks and use fmt
-           keyword argument in m.drawmeridians
-
 mapaxes(m, axlims, xticks, yticks) - adjust limits, ticks and tick labels of
         existing map (might have to create new basemap object to do this)
 
-contour_latpres - format dictionaries for contours and topography,
-    - zero contours treated separately - omit or make different color/width
 """
