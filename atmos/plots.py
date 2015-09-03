@@ -306,7 +306,8 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
 
 # ----------------------------------------------------------------------
 def init_latpres(latmin=-90, latmax=90, pmin=0, pmax=1000, topo_ps=None,
-                 topo_lat=None, topo_clr='black', p_units='hPa'):
+                 topo_lat=None, topo_clr='black', p_units='hPa',
+                 lattick_width=None, ptick_width=None):
     """Initialize a latitude-pressure plot.
 
     Parameters
@@ -319,12 +320,14 @@ def init_latpres(latmin=-90, latmax=90, pmin=0, pmax=1000, topo_ps=None,
         Color to fill topographic profile.
     p_units : string, optional
         Units of pressure for y-axis and surface pressure profile.
+    lattick_width, ptick_width : int or float, optional
+        Spacing for latitude and pressure ticks.
     """
 
-    xticks = autoticks('lat', latmin, latmax)
-    yticks = autoticks('pres', pmin, pmax)
+    xticks = autoticks('lat', latmin, latmax, lattick_width)
+    yticks = autoticks('pres', pmin, pmax, ptick_width)
     plt.xlim(latmin, latmax)
-    plt.xticks(xticks)
+    plt.xticks(xticks, latlon_labels(xticks, latlon='lat', fmt='%.0f'))
     plt.ylim(pmin, pmax)
     plt.yticks(yticks)
     plt.gca().invert_yaxis()
@@ -337,9 +340,10 @@ def init_latpres(latmin=-90, latmax=90, pmin=0, pmax=1000, topo_ps=None,
     plt.draw()
 
 # ----------------------------------------------------------------------
-def contour_latpres(data, lat=None, plev=None, clev=None, colors='black',
-                    topo=None, topo_clr='black', p_units='hPa',
-                    axlims=(-90, 90, 0, 1000)):
+def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
+                    colors='black', topo=None, topo_clr='black', p_units='hPa',
+                    axlims=(-90, 90, 0, 1000), lattick_width=None,
+                    ptick_width=None, omitzero=False, zerolinewidth=2):
     """
     Plot contour lines in latitude-pressure plane
 
@@ -353,51 +357,68 @@ def contour_latpres(data, lat=None, plev=None, clev=None, colors='black',
     plev : ndarray, optional
         Pressure levels.  If data is an xray.DataArray, plev is
         extracted from data['plev'].
-    clev : float or ndarray
+    clev : float or ndarray, optional
         Contour levels (ndarray) or spacing interval (float)
+    init : bool, optional
+        If True, initialize plot axes and topography with init_latpres().
     colors: string or mpl_color, optional
         Contour line color.
     topo : ndarray or xray.DataArray, optional
         Topography to shade (average surface pressure in units of plev).
         If topo is an ndarray, it must be on the same latitude grid as
         data.  If topo is an xray.DataArray, its latitude grid is
-        extracted from topo['lat'].
+        extracted from topo['lat']. Only used if init is True.
     topo_clr : string or mpl_color, optional
-        Color to fill topographic profile.
+        Color to fill topographic profile. Only used if init is True.
     p_units : string, optional
-        Units for pressure axis.
+        Units for pressure axis label.  Only used if init is True.
     axlims : 4-tuple of floats or ints
-        Axis limits (latmin, latmax, pmin, pmax).
+        Axis limits (latmin, latmax, pmin, pmax).  Only used if init is True.
+    lattick_width, ptick_width : int or float, optional
+        Spacing for latitude and pressure ticks.  Only used if init is True.
+    omitzero : bool, optional
+        If True, omit zero contour.
+    zerolinewidth : int or float, optional
+        Include zero contour with specified line width.
     """
 
     # Data to be contoured
     if isinstance(data, xray.DataArray):
         lat, plev = data['lat'], data['plev']
 
-    # Topography
-    if isinstance(topo, np.ndarray) or isinstance(topo, list):
-        topo_ps, topo_lat = topo, lat
-    elif isinstance(topo, xray.DataArray):
-        topo_ps, topo_lat = topo.values, topo['lat']
-    else:
-        topo_ps, topo_lat = None
+    # Initialize plot
+    if init:
+
+        # Topography data
+        if isinstance(topo, np.ndarray) or isinstance(topo, list):
+            topo_ps, topo_lat = topo, lat
+        elif isinstance(topo, xray.DataArray):
+            topo_ps, topo_lat = topo.values, topo['lat']
+        else:
+            topo_ps, topo_lat = None
+
+        # Initialize axes and plot topography
+        latmin, latmax, pmin, pmax = axlims
+        init_latpres(latmin, latmax, pmin, pmax, topo_ps=topo_ps,
+                     topo_lat=topo_lat, topo_clr=topo_clr, p_units=p_units,
+                     lattick_width=lattick_width, ptick_width=ptick_width)
 
     # Contour levels
     if isinstance(clev, float) or isinstance(clev, int):
         # Define contour levels from selected interval spacing
-        clev = clevels(data, clev)
-
-    # Grid for plotting
-    y, z = np.meshgrid(lat, plev)
+        clev = clevels(data, clev, omitzero=omitzero)
 
     # Plot contours
-    latmin, latmax, pmin, pmax = axlims
-    init_latpres(latmin, latmax, pmin, pmax, topo_ps=topo_ps,
-                 topo_lat=topo_lat, topo_clr=topo_clr, p_units=p_units)
+    y, z = np.meshgrid(lat, plev)
     if clev is None:
         plt.contour(y, z, data, colors=colors)
     else:
         plt.contour(y, z, data, clev, colors=colors)
+
+    # Zero contour
+    if not omitzero and zerolinewidth > 0:
+        plt.contour(y, z, data, 0, colors=colors, linewidths=zerolinewidth)
+
     plt.draw()
 
 # ----------------------------------------------------------------------
