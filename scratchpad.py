@@ -55,7 +55,7 @@ topo = ps.mean(axis=0) / 100
 topo = topo[:,ilon].mean(axis=1)
 
 plt.figure()
-ap.contour_latpres(uplot, lat, pres, cint, topo=topo)
+ap.contour_latpres(uplot, lat, plev, cint, topo=topo)
 
 # ----------------------------------------------------------------------
 # Check longitude shifting utility

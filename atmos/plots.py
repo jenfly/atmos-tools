@@ -279,13 +279,21 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
 
 
 # ----------------------------------------------------------------------
-def init_latpres(latmin=-90, latmax=90, pmin=0, pmax=1000, topo=None):
-    """Initialize a latitude-pressure plot."""
+def init_latpres(latmin=-90, latmax=90, pmin=0, pmax=1000, topo_ps=None,
+                 topo_lat=None, topo_clr='black', p_units='hPa'):
+    """Initialize a latitude-pressure plot.
 
-
-
-    if isinstance(topo, np.ndarray) or isinstance(topo, list):
-        plt.fill_between(lat, pmax, topo, color='black')
+    Parameters
+    ----------
+    latmin, latmax, pmin, pmax : int or float, optional
+        Axes limits.
+    topo_ps, topo_lat : ndarray or list of floats, optional
+        Surface pressure profile to plot for topography.
+    topo_clr : string or mpl_color, optional
+        Color to fill topographic profile.
+    p_units : string, optional
+        Units of pressure for y-axis and surface pressure profile.
+    """
 
     xticks = autoticks('lat', latmin, latmax)
     yticks = autoticks('pres', pmin, pmax)
@@ -295,30 +303,58 @@ def init_latpres(latmin=-90, latmax=90, pmin=0, pmax=1000, topo=None):
     plt.yticks(yticks)
     plt.gca().invert_yaxis()
     plt.xlabel('Latitude')
-    plt.ylabel('Pressure (hPa)')
+    plt.ylabel('Pressure (' + p_units + ')')
+
+    if isinstance(topo_ps, np.ndarray) or isinstance(topo_ps, list):
+        plt.fill_between(topo_lat, pmax, topo_ps, color=topo_clr)
+
     plt.draw()
 
 # ----------------------------------------------------------------------
 def contour_latpres(data, lat=None, plev=None, clev=None, colors='black',
-                    topo=None, axlims=(-90, 90, 0, 1000)):
+                    topo=None, topo_clr='black', p_units='hPa',
+                    axlims=(-90, 90, 0, 1000)):
     """
     Plot contour lines in latitude-pressure plane
 
     Parameters
     ----------
-    data : ndarray
-        Data to be contoured
-    lat : ndarray
-        Latitude (degrees)
-    plev : ndarray
-        Pressure levels (hPa)
+    data : ndarray or xray.DataArray
+        Data to be contoured.
+    lat : ndarray, optional
+        Latitude (degrees).  If data is an xray.DataArray, lat is
+        extracted from data['lat'].
+    plev : ndarray, optional
+        Pressure levels.  If data is an xray.DataArray, plev is
+        extracted from data['plev'].
     clev : float or ndarray
         Contour levels (ndarray) or spacing interval (float)
     colors: string or mpl_color, optional
-        Contour line color
-    topo : ndarray, optional
-        Topography to shade (average surface pressure in units of plev)
+        Contour line color.
+    topo : ndarray or xray.DataArray, optional
+        Topography to shade (average surface pressure in units of plev).
+        If topo is an ndarray, it must be on the same latitude grid as
+        data.  If topo is an xray.DataArray, its latitude grid is
+        extracted from topo['lat'].
+    topo_clr : string or mpl_color, optional
+        Color to fill topographic profile.
+    p_units : string, optional
+        Units for pressure axis.
+    axlims : 4-tuple of floats or ints
+        Axis limits (latmin, latmax, pmin, pmax).
     """
+
+    # Data to be contoured
+    if isinstance(data, xray.DataArray):
+        lat, plev = data['lat'], data['plev']
+
+    # Topography
+    if isinstance(topo, np.ndarray) or isinstance(topo, list):
+        topo_ps, topo_lat = topo, lat
+    elif isinstance(topo, xray.DataArray):
+        topo_ps, topo_lat = topo.values, topo['lat']
+    else:
+        topo_ps, topo_lat = None
 
     # Contour levels
     if isinstance(clev, float) or isinstance(clev, int):
@@ -330,8 +366,8 @@ def contour_latpres(data, lat=None, plev=None, clev=None, colors='black',
 
     # Plot contours
     latmin, latmax, pmin, pmax = axlims
-    init_latpres(latmin, latmax, pmin, pmax, topo=topo)
-
+    init_latpres(latmin, latmax, pmin, pmax, topo_ps=topo_ps,
+                 topo_lat=topo_lat, topo_clr=topo_clr, p_units=p_units)
     if clev is None:
         plt.contour(y, z, data, colors=colors)
     else:
