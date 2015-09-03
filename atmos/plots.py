@@ -77,7 +77,7 @@ def mapticks(m, xticks, yticks, labels=['left', 'bottom'],
 
 
 # ----------------------------------------------------------------------
-def clevels(data, cint, posneg='both', symmetric=False):
+def clevels(data, cint, posneg='both', symmetric=False, omitzero=False):
     """
     Return array of contour levels spaced by a given interval.
 
@@ -91,6 +91,8 @@ def clevels(data, cint, posneg='both', symmetric=False):
         Return all contours or only pos/neg
     symmetric : bool, optional
         Return contour levels symmetric about zero
+    omitzero : bool, optional
+        Omit zero from the contour levels
 
     Returns
     -------
@@ -112,6 +114,12 @@ def clevels(data, cint, posneg='both', symmetric=False):
 
     # Define contour levels, making sure to include the endpoint
     clev = np.arange(cmin, cmax + 0.1*cint, cint)
+
+    # Omit zero, if selected
+    if omitzero:
+        ind = np.where(clev == 0)
+        clev = np.delete(clev, ind)
+
     return clev
 
 
@@ -376,9 +384,6 @@ def contour_latpres(data, lat=None, plev=None, clev=None, colors='black',
 
 # ----------------------------------------------------------------------
 
-def show_topo_profile():
-    """Plot shaded topo profile in latitude-pressure plane."""
-
 def pcolor_latpres():
     """Plot pseudo-color of data in latitude-pressure plane."""
 
@@ -396,7 +401,6 @@ def contourf_timelat():
 
 """
 TO DO:
-clevels - omit zero option
 
 mapticks - change tick label formatting to 0-360E rather than 180W to 180E
         -> Define a function to return the formatted ticks and use fmt
