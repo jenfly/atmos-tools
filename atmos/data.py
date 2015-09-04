@@ -224,9 +224,9 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
     data : ndarray or xray.DataArray
         Data to interpolate, with latitude as second-last dimension,
         longitude as last dimension.  Maximum array dimensions: 5-D.
-    lat_out, lon_out : 1-D float array
+    lat_out, lon_out : 1-D float or int array
         Latitude and longitudes to interpolate onto.
-    lat_in, lon_in : ndarray, optional
+    lat_in, lon_in : 1-D float or int array, optional
         Latitude and longitude arrays of input data.  Only used if data
         is an ndarray. If data is an xray.DataArray then
         lat_in = data['lat'] and lon_in = data['lon']
@@ -248,7 +248,7 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
 
     Returns
     -------
-    data_out : 2-D array or xray.DataArray
+    data_out : ndarray or xray.DataArray
         Data interpolated onto lat_out, lon_out grid
     """
 
