@@ -466,20 +466,30 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
 
 # ----------------------------------------------------------------------
 
-def _subset_1dim(data, dim_name, lower_or_list, upper=None):
+def _subset_1dim(data, dim_name, lower_or_list, upper=None,
+                 incl_lower=True, incl_upper=True):
     """Extract a subset of a DataArray along a named dimension."""
 
     vals = data[dim_name]
     if upper is None:
         valrange = lower_or_list
     else:
-        valrange = vals[(vals >= lower_or_list) & (vals <= upper)]
+        if incl_lower:
+            ind1 = vals >= lower_or_list
+        else:
+            ind1 = vals > lower_or_list
+        if incl_upper:
+            ind2 = vals <= upper
+        else:
+            ind2 = vals < upper
+        valrange = vals[ind1 & ind2]
 
     return data.sel(**{dim_name : valrange}).copy()
 
 
 def subset(data, dim_name, lower_or_list, upper=None,
-           dim_name2=None, lower_or_list2=None, upper2=None):
+           dim_name2=None, lower_or_list2=None, upper2=None,
+           incl_lower=True, incl_upper=True):
     """Extract a subset of a DataArray along 1 or 2 named dimensions.
 
     Returns a DataArray sub extracted from input data, such that:
@@ -494,23 +504,29 @@ def subset(data, dim_name, lower_or_list, upper=None,
     dim_name : string
         Name of dimension to extract from.
     lower_or_list : scalar or list of int or float
-        If scalar, then used as the inclusive lower bound for the
-        subset range.
+        If scalar, then used as the lower bound for the   subset range.
         If list, then the subset matching the list will be extracted.
     upper : int or float, optional
-        Inclusive upper bound for subset range.
+        Upper bound for subset range.
     dim_name2, lower_or_list2, upper2 : optional
         Parameters as described above for optional 2nd dimension.
+    incl_lower, incl_upper : bool, optional
+        If True lower / upper bound is inclusive, with >= or <=.
+        If False, lower / upper bound is exclusive with > or <.
+        If lower_or_list is a list, then the whole list is included
+        and these parameters are ignored.
 
     Returns
     -------
         sub : xray.DataArray
     """
 
-    sub = _subset_1dim(data, dim_name, lower_or_list, upper)
+    sub = _subset_1dim(data, dim_name, lower_or_list, upper, incl_lower,
+                       incl_upper)
 
     if dim_name2 is not None:
-        sub = _subset_1dim(sub, dim_name2, lower_or_list2, upper2)
+        sub = _subset_1dim(sub, dim_name2, lower_or_list2, upper2, incl_lower,
+                           incl_upper)
 
     return sub
 

@@ -50,13 +50,9 @@ cint = 5
 months = utils.season_months(season)
 
 uplot = dat.subset(u, 'lon', lon1, lon2, 'mon', months)
-#uplot = u.sel(lon=lon[(lon >= lon1) & (lon <= lon2)],
-#              mon=months).copy()
-
 uplot = uplot.mean(['lon', 'mon'])
 
 ps_plot = dat.subset(topo, 'lon', lon1, lon2)
-#ps_plot = topo.sel(lon=lon[(lon >= lon1) & (lon <= lon2)])
 ps_plot = ps_plot.mean('lon')
 
 plt.figure()
