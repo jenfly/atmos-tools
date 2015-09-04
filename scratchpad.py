@@ -130,3 +130,29 @@ plt.subplot(211)
 ap.pcolor_latlon(u[m,k], cmap='jet')
 plt.subplot(212)
 ap.pcolor_latlon(ucor[m,k], cmap='jet')
+
+
+# ----------------------------------------------------------------------
+
+# Zonal mean zonal wind
+season='jjas'
+lon1, lon2 = 60, 100
+pmax = 1100
+cint = 5
+
+imon = utils.season_months(season)
+ilon = (lon >= lon1) & (lon <= lon2)
+
+uplot = ds['u'][imon]
+uplot = uplot[:,:,:,ilon]
+uplot = uplot.mean(axis=3).mean(axis=0)
+
+topo = dat.get_ps_clim(lat, lon) / 100
+topo = topo[:,ilon]
+topo = topo.mean(axis=1)
+
+plt.figure()
+ap.contour_latpres(uplot, clev=cint, topo=topo)
+
+plt.figure()
+ap.pcolor_latpres(uplot,topo=topo)

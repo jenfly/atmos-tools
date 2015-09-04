@@ -142,8 +142,7 @@ def clevels(data, cint, posneg='both', symmetric=False, omitzero=False):
 
 
 # ----------------------------------------------------------------------
-def init_latlon(lat1=-90, lat2=90, lon1=0, lon2=360, labels=['left', 'bottom'],
-                gridlinewidth=0.0):
+def init_latlon(lat1=-90, lat2=90, lon1=0, lon2=360):
     """Initialize lon-lat plot and return as a Basemap object."""
 
     m = Basemap(llcrnrlon=lon1, llcrnrlat=lat1, urcrnrlon=lon2, urcrnrlat=lat2)
@@ -341,6 +340,150 @@ def init_latpres(latmin=-90, latmax=90, pmin=0, pmax=1000, topo_ps=None,
 
 
 # ----------------------------------------------------------------------
+def pcolor_latpres(data, lat=None, plev=None, init=True, cmap='RdBu_r',
+                   topo=None, topo_clr='black', p_units='hPa',
+                   axlims=(-90, 90, 0, 1000), lattick_width=None,
+                   ptick_width=None):
+    """Create pseudo-color plot of data in latitude-pressure plane.
+
+    Parameters
+    ----------
+    data : ndarray or xray.DataArray
+        Data to be contoured.
+    lat : ndarray, optional
+        Latitude (degrees).  If data is an xray.DataArray, lat is
+        extracted from data['lat'].
+    plev : ndarray, optional
+        Pressure levels.  If data is an xray.DataArray, plev is
+        extracted from data['plev'].
+    init : bool, optional
+        If True, initialize plot axes and topography with init_latpres().
+    cmap : string or colormap object, optional
+        Colormap to use.
+    topo : ndarray or xray.DataArray, optional
+        Topography to shade (average surface pressure in units of plev).
+        If topo is an ndarray, it must be on the same latitude grid as
+        data.  If topo is an xray.DataArray, its latitude grid is
+        extracted from topo['lat']. Only used if init is True.
+    topo_clr : string or mpl_color, optional
+        Color to fill topographic profile. Only used if init is True.
+    p_units : string, optional
+        Units for pressure axis label.  Only used if init is True.
+    axlims : 4-tuple of floats or ints
+        Axis limits (latmin, latmax, pmin, pmax).  Only used if init is True.
+    lattick_width, ptick_width : int or float, optional
+        Spacing for latitude and pressure ticks.  Only used if init is True.
+    """
+
+    # Data to be plotted
+    if isinstance(data, xray.DataArray):
+        lat, plev = data['lat'], data['plev']
+        vals = data.values
+    else:
+        vals = data
+
+    # Pseudo-color plot of data
+    y, z = np.meshgrid(lat, plev)
+    plt.pcolormesh(y, z, vals, cmap=cmap)
+    plt.colorbar()
+    plt.draw()
+
+    # Initialize plot
+    if init:
+
+        # Topography data
+        if isinstance(topo, np.ndarray) or isinstance(topo, list):
+            topo_ps, topo_lat = topo, lat
+        elif isinstance(topo, xray.DataArray):
+            topo_ps, topo_lat = topo.values, topo['lat']
+        else:
+            topo_ps, topo_lat = None
+
+        # Initialize axes and plot topography
+        latmin, latmax, pmin, pmax = axlims
+        init_latpres(latmin, latmax, pmin, pmax, topo_ps=topo_ps,
+                     topo_lat=topo_lat, topo_clr=topo_clr, p_units=p_units,
+                     lattick_width=lattick_width, ptick_width=ptick_width)
+
+
+# ----------------------------------------------------------------------
+def contourf_latpres(data, lat=None, plev=None, clev=None, init=True,
+                    cmap='RdBu_r', symmetric=True, topo=None, topo_clr='black',
+                    p_units='hPa', axlims=(-90, 90, 0, 1000),
+                    lattick_width=None, ptick_width=None):
+    """Plot filled contours of data in latitude-pressure plane.
+
+    Parameters
+    ----------
+    data : ndarray or xray.DataArray
+        Data to be contoured.
+    lat : ndarray, optional
+        Latitude (degrees).  If data is an xray.DataArray, lat is
+        extracted from data['lat'].
+    plev : ndarray, optional
+        Pressure levels.  If data is an xray.DataArray, plev is
+        extracted from data['plev'].
+    clev : float or ndarray, optional
+        Contour levels (ndarray) or spacing interval (float)
+    init : bool, optional
+        If True, initialize plot axes and topography with init_latpres().
+    cmap : string or colormap object, optional
+        Colormap to use.
+    symmetric : bool, optional
+        Set contour levels to be symmetric about zero.
+    topo : ndarray or xray.DataArray, optional
+        Topography to shade (average surface pressure in units of plev).
+        If topo is an ndarray, it must be on the same latitude grid as
+        data.  If topo is an xray.DataArray, its latitude grid is
+        extracted from topo['lat']. Only used if init is True.
+    topo_clr : string or mpl_color, optional
+        Color to fill topographic profile. Only used if init is True.
+    p_units : string, optional
+        Units for pressure axis label.  Only used if init is True.
+    axlims : 4-tuple of floats or ints
+        Axis limits (latmin, latmax, pmin, pmax).  Only used if init is True.
+    lattick_width, ptick_width : int or float, optional
+        Spacing for latitude and pressure ticks.  Only used if init is True.
+    """
+
+    # Data to be contoured
+    if isinstance(data, xray.DataArray):
+        lat, plev = data['lat'], data['plev']
+
+    # Contour levels
+    if isinstance(clev, float) or isinstance(clev, int):
+        # Define contour levels from selected interval spacing
+        clev = clevels(data, clev, symmetric=symmetric)
+
+    # Plot contours
+    y, z = np.meshgrid(lat, plev)
+    if clev is None:
+        plt.contourf(y, z, data, cmap=cmap)
+    else:
+        plt.contourf(y, z, data, clev, cmap=cmap)
+    plt.colorbar()
+
+    # Initialize plot
+    if init:
+
+        # Topography data
+        if isinstance(topo, np.ndarray) or isinstance(topo, list):
+            topo_ps, topo_lat = topo, lat
+        elif isinstance(topo, xray.DataArray):
+            topo_ps, topo_lat = topo.values, topo['lat']
+        else:
+            topo_ps, topo_lat = None, None
+
+        # Initialize axes and plot topography
+        latmin, latmax, pmin, pmax = axlims
+        init_latpres(latmin, latmax, pmin, pmax, topo_ps=topo_ps,
+                     topo_lat=topo_lat, topo_clr=topo_clr, p_units=p_units,
+                     lattick_width=lattick_width, ptick_width=ptick_width)
+
+    plt.draw()
+
+
+# ----------------------------------------------------------------------
 def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
                     colors='black', topo=None, topo_clr='black', p_units='hPa',
                     axlims=(-90, 90, 0, 1000), lattick_width=None,
@@ -396,7 +539,7 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
         elif isinstance(topo, xray.DataArray):
             topo_ps, topo_lat = topo.values, topo['lat']
         else:
-            topo_ps, topo_lat = None
+            topo_ps, topo_lat = None, None
 
         # Initialize axes and plot topography
         latmin, latmax, pmin, pmax = axlims
@@ -425,11 +568,6 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
 
 # ----------------------------------------------------------------------
 
-def pcolor_latpres():
-    """Plot pseudo-color of data in latitude-pressure plane."""
-
-def contourf_latpres():
-    """Plot filled contours of data in latitude-pressure plane."""
 
 
 def contourf_timelat():
