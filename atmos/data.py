@@ -248,7 +248,7 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
 
     Returns
     -------
-    data_out : 2-D array or xray.DataArray
+    data_out : ndarray or xray.DataArray
         Data interpolated onto lat_out, lon_out grid
     """
 
