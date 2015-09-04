@@ -382,9 +382,12 @@ def pcolor_latpres(data, lat=None, plev=None, init=True, cmap='RdBu_r',
     else:
         vals = data
 
+    # Use a masked array so that pcolormesh displays NaNs properly
+    vals_plot = np.ma.array(vals, mask=np.isnan(vals))
+
     # Pseudo-color plot of data
     y, z = np.meshgrid(lat, plev)
-    plt.pcolormesh(y, z, vals, cmap=cmap)
+    plt.pcolormesh(y, z, vals_plot, cmap=cmap)
     plt.colorbar()
     plt.draw()
 
