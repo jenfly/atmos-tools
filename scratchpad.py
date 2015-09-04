@@ -76,7 +76,7 @@ print(np.array_equal(data, data_new2))
 
 # ----------------------------------------------------------------------
 # Interpolating onto new lat-lon grid
-
+data = ds['ps'].copy().mean(axis=0)/100
 lat_new = np.arange(90,-90,-1.)
 lon_new = np.arange(0.,360,1.)
 data_new = dat.interp_latlon(data, lat_new, lon_new)

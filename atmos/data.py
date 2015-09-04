@@ -7,6 +7,7 @@ Utility functions for atmospheric data wrangling / preparation.
 """
 
 import numpy as np
+import collections
 from mpl_toolkits import basemap
 import xray
 from xray import Dataset
@@ -222,7 +223,7 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
     ----------
     data : ndarray or xray.DataArray
         Data to interpolate, with latitude as second-last dimension,
-        longitude as last dimension.
+        longitude as last dimension.  Maximum array dimensions: 5-D.
     lat_out, lon_out : 1-D float array
         Latitude and longitudes to interpolate onto.
     lat_in, lon_in : ndarray, optional
@@ -271,27 +272,51 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
     x_out, y_out = np.meshgrid(lon_out, lat_out)
 
     # Interp onto new lat-lon grid, iterating over all other dimensions
+    # -- Remove the lat-lon dimensions (last 2 dimensions)
     dims = vals.shape
-
-    # Remove the lat-lon dimensions (last 2 dimensions)
     dims = dims[:-2]
+    ndim = len(dims)
+    vals_out = np.empty(dims + x_out.shape)
 
-    # Tomorrow - find a way to iterate over a variable number of
-    # dimensions from the tuple dims
-    for i in range(len(dims)):
-        print(i)
+    # Iterate over up to 3 additional dimensions
+    if ndim > 3:
+        raise ValueError('Too many dimensions in data.  Max 5-D.')
+    if ndim == 3:
+        for i in range(dims[0]):
+            for j in range(dims[1]):
+                for k in range(dims[2]):
+                    vals_out[i, j, k] = basemap.interp(
+                        vals[i, j, k], lon_in, lat_in, x_out, y_out,
+                        order=order, checkbounds=checkbounds, masked=masked)
+    elif ndim == 2:
+        for i in range(dims[0]):
+            for j in range(dims[1]):
+                vals_out[i, j] = basemap.interp(
+                    vals[i, j], lon_in, lat_in, x_out, y_out, order=order,
+                    checkbounds=checkbounds, masked=masked)
+    elif ndim == 1:
+        for i in range(dims[0]):
+            vals_out[i] = basemap.interp(
+                vals[i], lon_in, lat_in, x_out, y_out, order=order,
+                checkbounds=checkbounds, masked=masked)
+    else:
+        vals_out = basemap.interp(
+            vals, lon_in, lat_in, x_out, y_out, order=order,
+            checkbounds=checkbounds, masked=masked)
 
-    vals_out = basemap.interp(vals, lon_in, lat_in, x_out, y_out,
-                              checkbounds=checkbounds, masked=masked,
-                              order=order)
     if flip:
         # Flip everything back to previous order
         vals_out = vals_out[...,::-1, :]
         lat_out = lat_out[::-1]
 
     if isinstance(data, xray.DataArray):
-        data_out = xray.DataArray(vals_out, name=data.name,
-                                  coords=[('lat', lat_out), ('lon', lon_out)])
+        coords = collections.OrderedDict()
+        for key in data.coords.dims:
+            if key != 'lat' and key != 'lon':
+                coords[key] = data[key].values
+        coords['lat'] = lat_out
+        coords['lon'] = lon_out
+        data_out = xray.DataArray(vals_out, name=data.name, coords=coords)
     else:
         data_out = vals_out
 
