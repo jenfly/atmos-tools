@@ -132,6 +132,36 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
 # ======================================================================
 
 # ----------------------------------------------------------------------
+def latlon(data, latname='lat', lonname='lon'):
+    """Return lat, lon ndarrays from DataArray."""
+    return data[latname].values.copy(), data[lonname].values.copy()
+
+
+# ----------------------------------------------------------------------
+def latlon_equal(data1, data2, latname1='lat', lonname1='lon',
+                 latname2='lat', lonname2='lon'):
+    """Return True if input DataArrays have the same lat-lon coordinates."""
+
+    lat1, lon1 = latlon(data1, latname=latname1, lonname=lonname1)
+    lat2, lon2 = latlon(data2, latname=latname2, lonname=lonname2)
+    is_equal = np.array_equal(lat1, lat2) and np.array_equal(lon1, lon2)
+    return is_equal
+
+
+# ----------------------------------------------------------------------
+def lon_convention(lon):
+    """Return 360 if longitudes are 0-360E, 180 if 180W-180E.
+
+    The output of this function can be used in the set_lon() function
+    to make two data arrays use a consistent longitude convention.
+    """
+    if lon.min() < 0:
+        return 180
+    else:
+        return 360
+
+
+# ----------------------------------------------------------------------
 def set_lon(data, lonmax=360, lon=None):
     """Set data longitudes to 0-360E or 180W-180E convention.
 
@@ -184,19 +214,6 @@ def set_lon(data, lonmax=360, lon=None):
 
 
 # ----------------------------------------------------------------------
-def lon_convention(lon):
-    """Return 360 if longitudes are 0-360E, 180 if 180W-180E.
-
-    The output of this function can be used in the set_lon() function
-    to make two data arrays use a consistent longitude convention.
-    """
-    if lon.min() < 0:
-        return 180
-    else:
-        return 360
-
-
-# ----------------------------------------------------------------------
 def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
                   checkbounds=False, masked=False, order=1):
     """Interpolate data onto a new lat-lon grid.
@@ -204,8 +221,8 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
     Parameters
     ----------
     data : ndarray or xray.DataArray
-        Data to interpolate, with latitude as first dimension,
-        longitude second.
+        Data to interpolate, with latitude as second-last dimension,
+        longitude as last dimension.
     lat_out, lon_out : 1-D float array
         Latitude and longitudes to interpolate onto.
     lat_in, lon_in : ndarray, optional
@@ -246,19 +263,30 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
     flip = False
     if strictly_decreasing(lat_in):
         lat_in = lat_in[::-1]
-        vals = vals[::-1, :]
+        vals = vals[...,::-1, :]
     if strictly_decreasing(lat_out):
         flip = True
         lat_out = lat_out[::-1]
 
     x_out, y_out = np.meshgrid(lon_out, lat_out)
 
+    # Interp onto new lat-lon grid, iterating over all other dimensions
+    dims = vals.shape
+
+    # Remove the lat-lon dimensions (last 2 dimensions)
+    dims = dims[:-2]
+
+    # Tomorrow - find a way to iterate over a variable number of
+    # dimensions from the tuple dims
+    for i in range(len(dims)):
+        print(i)
+
     vals_out = basemap.interp(vals, lon_in, lat_in, x_out, y_out,
                               checkbounds=checkbounds, masked=masked,
                               order=order)
     if flip:
         # Flip everything back to previous order
-        vals_out = vals_out[::-1, :]
+        vals_out = vals_out[...,::-1, :]
         lat_out = lat_out[::-1]
 
     if isinstance(data, xray.DataArray):
@@ -268,23 +296,6 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
         data_out = vals_out
 
     return data_out
-
-
-# ----------------------------------------------------------------------
-def latlon(data, latname='lat', lonname='lon'):
-    """Return lat, lon ndarrays from DataArray."""
-    return data[latname].values, data[lonname].values
-
-
-# ----------------------------------------------------------------------
-def latlon_equal(data1, data2, latname1='lat', lonname1='lon',
-                 latname2='lat', lonname2='lon'):
-    """Return True if input DataArrays have the same lat-lon coordinates."""
-
-    lat1, lon1 = latlon(data1, latname=latname1, lonname=lonname1)
-    lat2, lon2 = latlon(data2, latname=latname2, lonname=lonname2)
-    is_equal = np.array_equal(lat1, lat2) and np.array_equal(lon1, lon2)
-    return is_equal
 
 
 # ======================================================================
@@ -464,4 +475,4 @@ def int_pres():
 """
 TO DO:
 - Edit interp_latlon so that it can handle data with additional dimensions.
-""" 
+"""
