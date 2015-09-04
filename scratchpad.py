@@ -25,42 +25,42 @@ v = ds['v']
 T = ds['T']
 ps = ds['ps']
 
-topo = dat.get_ps_clim(lat, lon)
+topo = dat.get_ps_clim(lat, lon) / 100
+topo.units = 'hPa'
 
 # ----------------------------------------------------------------------
 # Correct for topography
 
-ucor = dat.correct_for_topography(u, topo)
+u_orig = u
+u = dat.correct_for_topography(u_orig, topo)
 
 m, k = 3, 1
-
 plt.figure(figsize=(7,8))
 plt.subplot(211)
-ap.pcolor_latlon(u[m,k], cmap='jet')
+ap.pcolor_latlon(u_orig[m,k], cmap='jet')
 plt.subplot(212)
-ap.pcolor_latlon(ucor[m,k], cmap='jet')
+ap.pcolor_latlon(u[m,k], cmap='jet')
 
 # ----------------------------------------------------------------------
 
 # Zonal mean zonal wind
 season='jjas'
 lon1, lon2 = 60, 100
-pmax = 1100
 cint = 5
+months = utils.season_months(season)
 
-imon = utils.season_months(season)
-ilon = (lon >= lon1) & (lon <= lon2)
+uplot = dat.subset(u, 'lon', lon1, lon2, 'mon', months)
+#uplot = u.sel(lon=lon[(lon >= lon1) & (lon <= lon2)],
+#              mon=months).copy()
 
-uplot = ucor[imon]
-uplot = uplot[:,:,:,ilon]
-uplot = uplot.mean(axis=3).mean(axis=0)
+uplot = uplot.mean(['lon', 'mon'])
 
-topo = dat.get_ps_clim(lat, lon) / 100
-topo = topo[:,ilon]
-topo = topo.mean(axis=1)
-
-plt.figure()
-ap.contour_latpres(uplot, clev=cint, topo=topo)
+ps_plot = dat.subset(topo, 'lon', lon1, lon2)
+#ps_plot = topo.sel(lon=lon[(lon >= lon1) & (lon <= lon2)])
+ps_plot = ps_plot.mean('lon')
 
 plt.figure()
-ap.pcolor_latpres(uplot,topo=topo)
+ap.contour_latpres(uplot, clev=cint, topo=ps_plot)
+
+plt.figure()
+ap.contourf_latpres(uplot,clev=cint, topo=ps_plot)

@@ -466,6 +466,57 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
 
 # ----------------------------------------------------------------------
 
+def _subset_1dim(data, dim_name, lower_or_list, upper=None):
+    """Extract a subset of a DataArray along a named dimension."""
+
+    vals = data[dim_name]
+    if upper is None:
+        valrange = lower_or_list
+    else:
+        valrange = vals[(vals >= lower_or_list) & (vals <= upper)]
+
+    return data.sel(**{dim_name : valrange}).copy()
+
+
+def subset(data, dim_name, lower_or_list, upper=None,
+           dim_name2=None, lower_or_list2=None, upper2=None):
+    """Extract a subset of a DataArray along 1 or 2 named dimensions.
+
+    Returns a DataArray sub extracted from input data, such that:
+        sub[dim_name] >= lower_or_list & sub[dim_name] <= upper,
+    OR  sub[dim_name] == lower_or_list (if lower_or_list is a list)
+    And similarly for dim_name2, if included.
+
+    Parameters
+    ----------
+    data : xray.DataArray
+        Data source for extraction.
+    dim_name : string
+        Name of dimension to extract from.
+    lower_or_list : scalar or list of int or float
+        If scalar, then used as the inclusive lower bound for the
+        subset range.
+        If list, then the subset matching the list will be extracted.
+    upper : int or float, optional
+        Inclusive upper bound for subset range.
+    dim_name2, lower_or_list2, upper2 : optional
+        Parameters as described above for optional 2nd dimension.
+
+    Returns
+    -------
+        sub : xray.DataArray
+    """
+
+    sub = _subset_1dim(data, dim_name, lower_or_list, upper)
+
+    if dim_name2 is not None:
+        sub = _subset_1dim(sub, dim_name2, lower_or_list2, upper2)
+
+    return sub
+
+
+# ----------------------------------------------------------------------
+
 # LAT-LON GEO
 def average_over_box():
     """Return the data field averaged over a lat-lon box."""
@@ -496,8 +547,3 @@ def ps_grid():
 def int_pres():
     """Return the data integrated vertically by pressure."""
     # Maybe this should go in analysis.py
-
-"""
-TO DO:
-- Edit interp_latlon so that it can handle data with additional dimensions.
-"""
