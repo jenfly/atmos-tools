@@ -63,27 +63,8 @@ ap.contourf_latpres(uplot,clev=cint, topo=ps_plot)
 
 
 # ======================================================================
-# # OpenDAP data access
-# url = ('http://goldsmr3.sci.gsfc.nasa.gov/opendap/MERRA_MONTHLY/'
-#     'MAIMCPASM.5.2.0/1979/MERRA100.prod.assim.instM_3d_asm_Cp.197901.hdf')
-# dataset = open_url(url)
-# dataset.keys()
-# lat = dataset['YDim'][...] # download from server with [...]
-# lon = dataset['XDim'][...]
-# ps = dataset['PS']
-# ps = np.squeeze(ps) # This also downloads from server
-# plt.figure()
-# ap.pcolor_latlon(ps,lat,lon,cmap='hot')
-#
-# u = dataset['U']
-# uplot = np.squeeze(u[0,1])
-# missing = u.attributes['missing_value']
-# uplot[uplot == missing] = np.nan
-# plt.figure()
-# ap.pcolor_latlon(np.squeeze(uplot),lat,lon)
+# OpenDAP
 
-
-# ----------------------------------------------------------------------
 # Use xray to open an HDF OpenDAP file!
 
 url = ('http://goldsmr3.sci.gsfc.nasa.gov/opendap/MERRA_MONTHLY/'
@@ -94,3 +75,14 @@ ps = ds['PS']
 ps.dims
 plt.figure()
 ap.pcolor_latlon(ps,cmap='hot')
+
+
+# ----------------------------------------------------------------------
+# Opening multiple OpenDAP files into xray dataset
+
+url_dir = ('http://goldsmr3.sci.gsfc.nasa.gov/opendap/MERRA/'
+    'MAI3CPASM.5.2.0/1979/01/')
+filestart = 'MERRA100.prod.assim.inst3_3d_asm_Cp.197901'
+paths = ['%s%s%02d.hdf' % (url_dir, filestart, i) for i in range(1,4)]
+
+ds = xray.open_mfdataset(paths)

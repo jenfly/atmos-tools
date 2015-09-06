@@ -198,48 +198,87 @@ def subset(data, dim_name, lower_or_list, upper=None,
 # ======================================================================
 
 # ----------------------------------------------------------------------
-def latlon(data, latname=None, lonname=None):
-    """Return lat, lon ndarrays from DataArray.
+def get_lat(data, latname=None):
+    """Return latitude array from DataArray.
 
     Parameters
     ----------
     data : xray.DataArray
-        Data array to search for lat-lon coords
-    latname, lonname : string, optional
-        Name of lat, lon coords in data.  If omitted, search through
+        Data array to search for latitude coords.
+    latname : string, optional
+        Name of latitude coord in data.  If omitted, search through
         a list of common names for a match.
 
     Returns
     -------
-    lat, lon : tuple of ndarrays
-        Latitude and longitude arrays
+    lat : ndarray
+        Latitude array
 
     Notes
     -----
-    The lat, lon dimension names searched for are:
-      latnames = ['lat', 'lats', 'latitude', 'XDim','X']
-      lonnames = ['lon', 'long', 'lons', 'longitude', 'YDim', 'Y']
+    The latitude dimension names searched for are:
+      latnames = ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
     """
 
-    latnames = ['lat', 'lats', 'latitude', 'YDim','Y']
-    lonnames = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X']
+    latnames = ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
 
     if latname is None:
-        # Look for lat-lon names in data coordinates
-        found1 = [i for i, s in enumerate(latnames) if s in data.coords]
-        found2 = [i for i, s in enumerate(lonnames) if s in data.coords]
+        # Look for lat names in data coordinates
+        found = [i for i, s in enumerate(latnames) if s in data.coords]
 
-        if len(found1) == 0 or len(found2) == 0:
-            raise ValueError("Can't find lat-lon names in data coords %s" %
+        if len(found) == 0:
+            raise ValueError("Can't find latitude names in data coords %s" %
                              data.coords.keys())
-        if len(found1) > 1 or len(found2) > 1:
-            raise ValueError('Conflicting possible lat-lon names in coords %s'
+        if len(found) > 1:
+            raise ValueError('Conflicting possible latitude names in coords %s'
                 % data.coords.keys())
         else:
-            latname, lonname = latnames[found1[0]], lonnames[found2[0]]
+            latname = latnames[found[0]]
 
-    lat, lon = data[latname].values.copy(), data[lonname].values.copy()
-    return lat, lon
+    lat = data[latname].values.copy()
+    return lat
+
+
+# ----------------------------------------------------------------------
+def get_lon(data, lonname=None):
+    """Return longitude array from DataArray.
+
+    Parameters
+    ----------
+    data : xray.DataArray
+        Data array to search for longitude coords.
+    lonname : string, optional
+        Name of longitude coords in data.  If omitted, search through
+        a list of common names for a match.
+
+    Returns
+    -------
+    lon : ndarray
+        Longitude array
+
+    Notes
+    -----
+    The longitude dimension names searched for are:
+      lonnames = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
+    """
+
+    lonnames = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
+
+    if lonname is None:
+        # Look for longitude names in data coordinates
+        found = [i for i, s in enumerate(lonnames) if s in data.coords]
+
+        if len(found) == 0:
+            raise ValueError("Can't find longitude names in data coords %s" %
+                             data.coords.keys())
+        if len(found) > 1:
+            raise ValueError('Conflicting possible longitude names in coords %s'
+                % data.coords.keys())
+        else:
+            lonname = lonnames[found[0]]
+
+    lon = data[lonname].values.copy()
+    return lon
 
 
 # ----------------------------------------------------------------------
@@ -247,8 +286,8 @@ def latlon_equal(data1, data2, latname1=None, lonname1=None,
                  latname2=None, lonname2=None):
     """Return True if input DataArrays have the same lat-lon coordinates."""
 
-    lat1, lon1 = latlon(data1, latname=latname1, lonname=lonname1)
-    lat2, lon2 = latlon(data2, latname=latname2, lonname=lonname2)
+    lat1, lon1 = get_lat(data1, latname1), get_lon(data1, lonname1)
+    lat2, lon2 = get_lat(data2, latname2), get_lon(data2, lonname2)
     is_equal = np.array_equal(lat1, lat2) and np.array_equal(lon1, lon2)
     return is_equal
 
@@ -359,7 +398,7 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
     """
 
     if isinstance(data, xray.DataArray):
-        lat_in, lon_in = latlon(data)
+        lat_in, lon_in = get_lat(data), get_lon(data)
         vals = data.values.copy()
     else:
         vals = data
@@ -449,27 +488,89 @@ def pres_units(units):
 
 
 # ----------------------------------------------------------------------
-def pres_pa(data, units):
-    """Return pressure data (ndarray) in units of Pascals."""
-    if pres_units(units) == 'hPa':
-        data_out = data * 100
-    elif pres_units(units) == 'Pa':
-        data_out = data
-    else:
-        raise ValueError('Unknown units ' + units)
-    return data_out
+def pres_convert(pres, units_in, units_out):
+    """Convert pressure array from units_in and return in units_out."""
 
+    if pres_units(units_in) == pres_units(units_out):
+        pres_out = pres
+    elif pres_units(units_in) == 'hPa' and pres_units(units_out) == 'Pa':
+        pres_out = pres * 100
+    elif pres_units(units_in) == 'Pa' and pres_units(units_out) == 'hPa':
+        pres_out = pres / 100
+    else:
+        raise ValueError('Problem with input/output units.')
+    return pres_out
 
 # ----------------------------------------------------------------------
-def pres_hpa(data, units):
-    """Return pressure data (ndarray) in units of hPa."""
-    if pres_units(units) == 'hPa':
-        data_out = data
-    elif pres_units(units) == 'Pa':
-        data_out = data / 100
-    else:
-        raise ValueError('Unknown units ' + units)
-    return data_out
+# def pres_pa(data, units):
+#     """Return pressure data (ndarray) in units of Pascals."""
+#     if pres_units(units) == 'hPa':
+#         data_out = data * 100
+#     elif pres_units(units) == 'Pa':
+#         data_out = data
+#     else:
+#         raise ValueError('Unknown units ' + units)
+#     return data_out
+#
+#
+# # ----------------------------------------------------------------------
+# def pres_hpa(data, units):
+#     """Return pressure data (ndarray) in units of hPa."""
+#     if pres_units(units) == 'hPa':
+#         data_out = data
+#     elif pres_units(units) == 'Pa':
+#         data_out = data / 100
+#     else:
+#         raise ValueError('Unknown units ' + units)
+#     return data_out
+#
+
+# ----------------------------------------------------------------------
+def get_plev(data, plevname=None, units='hPa'):
+    """Return pressure level array from DataArray.
+
+    Parameters
+    ----------
+    data : xray.DataArray
+        Data array to search for pressure level coords.
+    lonname : string, optional
+        Name of pressure level coords in data.  If omitted, search
+        through a list of common names for a match.
+    units: string, optional
+        Pressure units to use for output.
+
+    Returns
+    -------
+    plev : ndarray
+        Pressure level array
+
+    Notes
+    -----
+    The pressure level dimension names searched for are:
+      plevnames = ['plev', 'plevel', 'plevels', 'Height']
+    """
+
+    plevnames = ['plev', 'plevel', 'plevels', 'Height']
+
+    if plevname is None:
+        # Look for pressure level names in data coordinates
+        found = [i for i, s in enumerate(plevnames) if s in data.coords]
+
+        if len(found) == 0:
+            raise ValueError(
+                "Can't find presure level names in data coords %s" %
+                             data.coords.keys())
+        if len(found) > 1:
+            raise ValueError(
+                'Conflicting possible pressure level names in coords %s'
+                % data.coords.keys())
+        else:
+            plevname = plevnames[found[0]]
+
+    plev = data[plevname].values.copy()
+    plev = pres_convert(plev, data[plevname].units, units)
+
+    return plev
 
 
 # ----------------------------------------------------------------------
@@ -540,7 +641,7 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
 
         # Pressure levels in Pascals
         plev = data['plev'].values.copy()
-        plev = pres_pa(plev, pres_units(data['plev'].units))
+        plev = pres_convert(plev, data['plev'].units, 'Pa')
     else:
         vals = data
 
@@ -551,7 +652,7 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
 
         # Surface pressure values in Pascals:
         ps_vals = topo_ps.values
-        ps_vals = pres_pa(ps_vals, pres_units(topo_ps.units))
+        ps_vals = pres_convert(ps_vals, topo_ps.units, 'Pa')
     else:
         ps_vals = topo_ps
 

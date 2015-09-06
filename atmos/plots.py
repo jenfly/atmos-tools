@@ -182,7 +182,7 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
     """
 
     if isinstance(data, xray.DataArray):
-        lat, lon = dat.latlon(data)
+        lat, lon = dat.get_lat(data), dat.get_lon(data)
         vals = np.squeeze(data.values)
     else:
         vals = np.squeeze(data)
@@ -232,7 +232,7 @@ def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
     """
 
     if isinstance(data, xray.DataArray):
-        lat, lon = dat.latlon(data)
+        lat, lon = dat.get_lat(data), dat.get_lon(data)
 
     if isinstance(clev, float) or isinstance(clev, int):
         # Define contour levels from selected interval spacing
@@ -283,7 +283,7 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
     """
 
     if isinstance(data, xray.DataArray):
-        lat, lon = dat.latlon(data)
+        lat, lon = dat.get_lat(data), dat.get_lon(data)
 
     if isinstance(clev, float) or isinstance(clev, int):
         # Define contour levels from selected interval spacing
@@ -378,7 +378,7 @@ def pcolor_latpres(data, lat=None, plev=None, init=True, cmap='RdBu_r',
 
     # Data to be plotted
     if isinstance(data, xray.DataArray):
-        lat, plev = data['lat'], data['plev']
+        lat, plev = dat.get_lat(data), dat.get_plev(data)
         vals = np.squeeze(data.values)
     else:
         vals = np.squeeze(data)
@@ -452,7 +452,7 @@ def contourf_latpres(data, lat=None, plev=None, clev=None, init=True,
 
     # Data to be contoured
     if isinstance(data, xray.DataArray):
-        lat, plev = data['lat'], data['plev']
+        lat, plev = dat.get_lat(data), dat.get_plev(data)
 
     # Contour levels
     if isinstance(clev, float) or isinstance(clev, int):
@@ -532,7 +532,7 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
 
     # Data to be contoured
     if isinstance(data, xray.DataArray):
-        lat, plev = data['lat'], data['plev']
+        lat, plev = dat.get_lat(data), dat.get_plev(data)
 
     # Initialize plot
     if init:
