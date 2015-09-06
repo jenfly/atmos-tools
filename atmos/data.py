@@ -198,14 +198,53 @@ def subset(data, dim_name, lower_or_list, upper=None,
 # ======================================================================
 
 # ----------------------------------------------------------------------
-def latlon(data, latname='lat', lonname='lon'):
-    """Return lat, lon ndarrays from DataArray."""
-    return data[latname].values.copy(), data[lonname].values.copy()
+def latlon(data, latname=None, lonname=None):
+    """Return lat, lon ndarrays from DataArray.
+
+    Parameters
+    ----------
+    data : xray.DataArray
+        Data array to search for lat-lon coords
+    latname, lonname : string, optional
+        Name of lat, lon coords in data.  If omitted, search through
+        a list of common names for a match.
+
+    Returns
+    -------
+    lat, lon : tuple of ndarrays
+        Latitude and longitude arrays
+
+    Notes
+    -----
+    The lat, lon dimension names searched for are:
+      latnames = ['lat', 'lats', 'latitude', 'XDim','X']
+      lonnames = ['lon', 'long', 'lons', 'longitude', 'YDim', 'Y']
+    """
+
+    latnames = ['lat', 'lats', 'latitude', 'YDim','Y']
+    lonnames = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X']
+
+    if latname is None:
+        # Look for lat-lon names in data coordinates
+        found1 = [i for i, s in enumerate(latnames) if s in data.coords]
+        found2 = [i for i, s in enumerate(lonnames) if s in data.coords]
+
+        if len(found1) == 0 or len(found2) == 0:
+            raise ValueError("Can't find lat-lon names in data coords %s" %
+                             data.coords.keys())
+        if len(found1) > 1 or len(found2) > 1:
+            raise ValueError('Conflicting possible lat-lon names in coords %s'
+                % data.coords.keys())
+        else:
+            latname, lonname = latnames[found1[0]], lonnames[found2[0]]
+
+    lat, lon = data[latname].values.copy(), data[lonname].values.copy()
+    return lat, lon
 
 
 # ----------------------------------------------------------------------
-def latlon_equal(data1, data2, latname1='lat', lonname1='lon',
-                 latname2='lat', lonname2='lon'):
+def latlon_equal(data1, data2, latname1=None, lonname1=None,
+                 latname2=None, lonname2=None):
     """Return True if input DataArrays have the same lat-lon coordinates."""
 
     lat1, lon1 = latlon(data1, latname=latname1, lonname=lonname1)
@@ -228,7 +267,7 @@ def lon_convention(lon):
 
 
 # ----------------------------------------------------------------------
-def set_lon(data, lonmax=360, lon=None):
+def set_lon(data, lonmax=360, lon=None, lonname='lon'):
     """Set data longitudes to 0-360E or 180W-180E convention.
 
     Parameters
@@ -241,6 +280,8 @@ def set_lon(data, lonmax=360, lon=None):
     lon : 1-D ndarray or list, optional
         Longitudes of input data. Only used if data is an ndarray.
         If data is an xray.DataArray, then lon = data['lon']
+    lonname : string, optional
+        Name of longitude coordinate in data, if data is a DataArray
 
     Returns
     -------
@@ -255,7 +296,7 @@ def set_lon(data, lonmax=360, lon=None):
     """
 
     if isinstance(data, xray.DataArray):
-        lon = data['lon']
+        lon = data[lonname]
         vals = data.values
     else:
         vals = data
@@ -318,8 +359,7 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
     """
 
     if isinstance(data, xray.DataArray):
-        lat_in = data['lat'].values.copy()
-        lon_in = data['lon'].values.copy()
+        lat_in, lon_in = latlon(data)
         vals = data.values.copy()
     else:
         vals = data

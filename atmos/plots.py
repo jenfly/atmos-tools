@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 import xray
 from atmos.utils import print_if
+import atmos.data as dat
 
 # ----------------------------------------------------------------------
 def degree_sign():
@@ -181,10 +182,10 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
     """
 
     if isinstance(data, xray.DataArray):
-        lat, lon = data['lat'], data['lon']
-        vals = data.values
+        lat, lon = dat.latlon(data)
+        vals = np.squeeze(data.values)
     else:
-        vals = data
+        vals = np.squeeze(data)
 
     # Use a masked array so that pcolormesh displays NaNs properly
     vals_plot = np.ma.array(vals, mask=np.isnan(vals))
@@ -231,7 +232,7 @@ def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
     """
 
     if isinstance(data, xray.DataArray):
-        lat, lon = data['lat'], data['lon']
+        lat, lon = dat.latlon(data)
 
     if isinstance(clev, float) or isinstance(clev, int):
         # Define contour levels from selected interval spacing
@@ -243,9 +244,9 @@ def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
     if m is None:
         m = init_latlon(lat1, lat2, lon1, lon2)
     if clev is None:
-        m.contourf(x, y, data, cmap=cmap, latlon=True)
+        m.contourf(x, y, np.squeeze(data), cmap=cmap, latlon=True)
     else:
-        m.contourf(x,y, data, clev, cmap=cmap, latlon=True)
+        m.contourf(x, y, np.squeeze(data), clev, cmap=cmap, latlon=True)
     m.colorbar()
     plt.draw()
     return m
@@ -282,7 +283,7 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
     """
 
     if isinstance(data, xray.DataArray):
-        lat, lon = data['lat'], data['lon']
+        lat, lon = dat.latlon(data)
 
     if isinstance(clev, float) or isinstance(clev, int):
         # Define contour levels from selected interval spacing
@@ -294,11 +295,11 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
     if m is None:
         m = init_latlon(lat1, lat2, lon1, lon2)
     if clev is None:
-        m.contour(x, y, data, colors=colors, linewidths=linewidths,
+        m.contour(x, y, np.squeeze(data), colors=colors, linewidths=linewidths,
                   latlon=True)
     else:
-        m.contour(x,y, data, clev, colors=colors, linewidths=linewidths,
-                  latlon=True)
+        m.contour(x, y, np.squeeze(data), clev, colors=colors,
+                  linewidths=linewidths, latlon=True)
     plt.draw()
     return m
 
@@ -378,9 +379,9 @@ def pcolor_latpres(data, lat=None, plev=None, init=True, cmap='RdBu_r',
     # Data to be plotted
     if isinstance(data, xray.DataArray):
         lat, plev = data['lat'], data['plev']
-        vals = data.values
+        vals = np.squeeze(data.values)
     else:
-        vals = data
+        vals = np.squeeze(data)
 
     # Use a masked array so that pcolormesh displays NaNs properly
     vals_plot = np.ma.array(vals, mask=np.isnan(vals))
@@ -461,9 +462,9 @@ def contourf_latpres(data, lat=None, plev=None, clev=None, init=True,
     # Plot contours
     y, z = np.meshgrid(lat, plev)
     if clev is None:
-        plt.contourf(y, z, data, cmap=cmap)
+        plt.contourf(y, z, np.squeeze(data), cmap=cmap)
     else:
-        plt.contourf(y, z, data, clev, cmap=cmap)
+        plt.contourf(y, z, np.squeeze(data), clev, cmap=cmap)
     plt.colorbar()
 
     # Initialize plot
@@ -558,9 +559,9 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
     # Plot contours
     y, z = np.meshgrid(lat, plev)
     if clev is None:
-        plt.contour(y, z, data, colors=colors)
+        plt.contour(y, z, np.squeeze(data), colors=colors)
     else:
-        plt.contour(y, z, data, clev, colors=colors)
+        plt.contour(y, z, np.squeeze(data), clev, colors=colors)
 
     # Zero contour
     if not omitzero and zerolinewidth > 0:
