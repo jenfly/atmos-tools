@@ -130,11 +130,14 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
 
 
 # ----------------------------------------------------------------------
-def load_concat(paths, var, concat_dim='record', verbose=False):
+def load_concat(paths, var, concat_dim=None, verbose=False):
     """Load a variable from multiple files and concatenate into one.
 
     Especially useful for extracting variables split among multiple
     OpenDAP files.
+
+    *** Bug:  doesn't work when concat_dim=None.  Fix later when
+    this functionality is needed. ***
 
     Parameters
     ----------
@@ -143,9 +146,8 @@ def load_concat(paths, var, concat_dim='record', verbose=False):
     var : str
         Name of variable to extract.
     concat_dim : str, optional
-        Dimension to concatenate along.  If the dimension does not exist
-        in the input data, a new dimension with this name is created and
-        used for concatenation.
+        Dimension to concatenate along.  If None, a new dimension is
+        created for concatenation.
     verbose : bool, optional
         If True, print updates while processing files.
 

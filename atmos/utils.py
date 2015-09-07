@@ -31,7 +31,7 @@ def disptime(fmt=None):
     now = datetime.now()
 
     if fmt == None:
-        fmt = '%d/%d/%d %d:%d:%d'
+        fmt = '%02d/%02d/%02d %02d:%02d:%02d'
     now = (fmt % (now.month, now.day, now.year, now.hour, now.minute,
            now.second))
     print(now)
