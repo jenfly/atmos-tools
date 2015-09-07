@@ -9,6 +9,7 @@ import xray
 import atmos.utils as utils
 import atmos.plots as ap
 import atmos.data as dat
+from atmos.utils import print_if
 
 # ----------------------------------------------------------------------
 # Read monthly mean climatologies and do some test calcs
@@ -82,7 +83,31 @@ ap.pcolor_latlon(ps,cmap='hot')
 
 url_dir = ('http://goldsmr3.sci.gsfc.nasa.gov/opendap/MERRA/'
     'MAI3CPASM.5.2.0/1979/01/')
-filestart = 'MERRA100.prod.assim.inst3_3d_asm_Cp.197901'
-paths = ['%s%s%02d.hdf' % (url_dir, filestart, i) for i in range(1,4)]
+start = 'MERRA100.prod.assim.inst3_3d_asm_Cp.197901'
+#end = '.hdf?U,V,XDim,YDim,Height,TIME'
+end = '.hdf'
 
-ds = xray.open_mfdataset(paths)
+paths = ['%s%s%02d%s' % (url_dir, start, i, end) for i in range(1,3)]
+
+var = 'U'
+concat_dim = 'TIME'
+u = dat.load_concat(paths, var, concat_dim=concat_dim, verbose=True)
+
+# v = ds['V']
+# T = ds['T']
+# ps = ds['PS']
+# q = ds['QV']
+# hgt = ds['H']
+# omega = ds['OMEGA']
+
+# uu = u * u
+# uv = u * v
+
+ds_out = xray.Dataset()
+ds_out['u'] = u.mean(axis=0)
+# ds_out['v'] = v.mean(axis=0)
+# ds_out['uu'] = uu.mean(axis=0)
+# ds_out['uv'] = uv.mean(axis=0)
+
+outfile = 'data/more/merra_uv_197901.nc'
+ds_out.to_netcdf(outfile,mode='w')

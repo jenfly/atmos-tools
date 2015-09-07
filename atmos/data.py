@@ -15,7 +15,7 @@ from xray import Dataset
 from atmos.utils import print_if, print_odict, strictly_decreasing
 
 # ======================================================================
-# XRAY DATASETS AND NETCDF FILES
+# XRAY DATASETS AND FILE I/O
 # ======================================================================
 
 # ----------------------------------------------------------------------
@@ -126,6 +126,45 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
         # the file is closed
         ds.load()
         return ds
+
+
+# ----------------------------------------------------------------------
+def load_concat(paths, var, concat_dim='record', verbose=False):
+    """Load a variable from multiple files and concatenate into one.
+
+    Especially useful for extracting variables split among multiple
+    OpenDAP files.
+
+    Parameters
+    ----------
+    paths : list of strings
+        List of file paths or OpenDAP urls to process.
+    var : str
+        Name of variable to extract.
+    concat_dim : str, optional
+        Dimension to concatenate along.  If the dimension does not exist
+        in the input data, a new dimension with this name is created and
+        used for concatenation.
+    verbose : bool, optional
+        If True, print updates while processing files.
+
+    Returns:
+    --------
+    data : xray.DataArray
+        Data extracted from input files.
+    """
+
+    pieces = list()
+    for p in paths:
+        print_if('Loading ' + p, verbose)
+        with xray.open_dataset(p) as ds:
+            print_if('Appending data', verbose)
+            pieces.append(ds[var].load())
+
+    print_if('Concatenating data', verbose)
+    data = xray.concat(pieces, dim=concat_dim)
+    return data
+
 
 # ----------------------------------------------------------------------
 def _subset_1dim(data, dim_name, lower_or_list, upper=None,
@@ -501,29 +540,6 @@ def pres_convert(pres, units_in, units_out):
         raise ValueError('Problem with input/output units.')
     return pres_out
 
-# ----------------------------------------------------------------------
-# def pres_pa(data, units):
-#     """Return pressure data (ndarray) in units of Pascals."""
-#     if pres_units(units) == 'hPa':
-#         data_out = data * 100
-#     elif pres_units(units) == 'Pa':
-#         data_out = data
-#     else:
-#         raise ValueError('Unknown units ' + units)
-#     return data_out
-#
-#
-# # ----------------------------------------------------------------------
-# def pres_hpa(data, units):
-#     """Return pressure data (ndarray) in units of hPa."""
-#     if pres_units(units) == 'hPa':
-#         data_out = data
-#     elif pres_units(units) == 'Pa':
-#         data_out = data / 100
-#     else:
-#         raise ValueError('Unknown units ' + units)
-#     return data_out
-#
 
 # ----------------------------------------------------------------------
 def get_plev(data, plevname=None, units='hPa'):
@@ -676,6 +692,7 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
 # LAT-LON GEO
 def average_over_box():
     """Return the data field averaged over a lat-lon box."""
+    # Area-weighted on/off
 
 def average_over_country():
     """Return the data field averaged over a country."""
