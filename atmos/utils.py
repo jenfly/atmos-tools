@@ -3,6 +3,7 @@ Some general purpose utility functions used by other modules in this package.
 '''
 
 import numpy as np
+from datetime import datetime
 
 # ======================================================================
 # PRINTING
@@ -23,6 +24,17 @@ def print_odict(od, indent=2, width=20):
     for key in od:
         s = ' ' * indent + key
         print(s.ljust(width) + str(od[key]))
+
+
+# ----------------------------------------------------------------------
+def disptime(fmt=None):
+    now = datetime.now()
+
+    if fmt == None:
+        fmt = '%d/%d/%d %d:%d:%d'
+    now = (fmt % (now.month, now.day, now.year, now.hour, now.minute,
+           now.second))
+    print(now)
 
 
 # ======================================================================

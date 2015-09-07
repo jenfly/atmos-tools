@@ -12,7 +12,8 @@ from mpl_toolkits import basemap
 import xray
 from xray import Dataset
 
-from atmos.utils import print_if, print_odict, strictly_decreasing
+from atmos.utils import (print_if, print_odict, strictly_decreasing,
+    disptime)
 
 # ======================================================================
 # XRAY DATASETS AND FILE I/O
@@ -154,6 +155,7 @@ def load_concat(paths, var, concat_dim='record', verbose=False):
         Data extracted from input files.
     """
 
+    print_if(None, verbose, printfunc=disptime)
     pieces = list()
     for p in paths:
         print_if('Loading ' + p, verbose)
@@ -163,6 +165,7 @@ def load_concat(paths, var, concat_dim='record', verbose=False):
 
     print_if('Concatenating data', verbose)
     data = xray.concat(pieces, dim=concat_dim)
+    print_if(None, verbose, printfunc=disptime)
     return data
 
 
