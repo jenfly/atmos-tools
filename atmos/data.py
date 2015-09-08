@@ -157,9 +157,9 @@ def load_concat(paths, var, concat_dim=None, verbose=False):
         Data extracted from input files.
     """
 
-    print_if(None, verbose, printfunc=disptime)
     pieces = list()
     for p in paths:
+        print_if(None, verbose, printfunc=disptime)
         print_if('Loading ' + p, verbose)
         with xray.open_dataset(p) as ds:
             print_if('Appending data', verbose)

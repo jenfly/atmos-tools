@@ -10,6 +10,7 @@ import atmos.utils as utils
 import atmos.plots as ap
 import atmos.data as dat
 from atmos.utils import print_if
+from atmos.constants import const as constants
 
 # ----------------------------------------------------------------------
 # Read monthly mean climatologies and do some test calcs
@@ -72,7 +73,21 @@ url = ('http://goldsmr3.sci.gsfc.nasa.gov/opendap/MERRA_MONTHLY/'
     'MAIMCPASM.5.2.0/1979/MERRA100.prod.assim.instM_3d_asm_Cp.197901.hdf')
 
 ds = xray.open_dataset(url)
+T = ds['T']
 ps = ds['PS']
+plev = dat.get_plev(T, units='Pa')
+
+R = constants.R_air
+Cp = constants.Cp
+Lv = constants.Lv
+
+# Rewrite to use T.dims to find pressure level axis
+nlev = len(plev)
+reps = np.ones(T.ndim)
+reps[-3] = nlev
+pstile = np.tile(ps,reps)
+
+
 ps.dims
 plt.figure()
 ap.pcolor_latlon(ps,cmap='hot')

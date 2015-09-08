@@ -14,7 +14,7 @@ start = 'MERRA100.prod.assim.inst3_3d_asm_Cp.197901'
 #end = '.hdf?U,V,XDim,YDim,Height,TIME'
 end = '.hdf'
 
-paths = ['%s%s%02d%s' % (url_dir, start, i, end) for i in range(1,3)]
+paths = ['%s%s%02d%s' % (url_dir, start, i, end) for i in range(1,32)]
 
 concat_dim = 'TIME'
 
@@ -32,7 +32,7 @@ ds['v'].attrs = v.attrs
 ds['uu'].attrs = {'long_name' : 'u * u', 'units' : 'm^2 s^-2'}
 ds['uv'].attrs = {'long_name' : 'u * v', 'units' : 'm^2 s^-2'}
 
-outfile = 'data/more/merra_uv_197901.nc'
+outfile = '~/datastore/merra/testing/merra_uv_197901.nc'
 ds.to_netcdf(outfile,mode='w')
 
 # v = ds['V']

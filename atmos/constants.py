@@ -43,7 +43,7 @@ const['Omega'] = xray.DataArray(
           })
 
 const['S0'] = xray.DataArray(
-    1367,
+    1367.,
     attrs={'name' : "Earth's solar constant",
            'units' : 'W m^-2',
            'ref' : hart
@@ -59,7 +59,7 @@ const['R_gas'] = xray.DataArray(
 
 
 const['R_air'] = xray.DataArray(
-    287,
+    287.,
     attrs={'name' : 'Gas constant for dry air',
            'units' : 'J K^-1 kg^-1',
            'ref' : hart
@@ -81,14 +81,14 @@ const['density_air'] = xray.DataArray(
 
 
 const['Cp'] = xray.DataArray(
-    1004,
+    1004.,
     attrs={'name' : 'Dry air specific heat at constant pressure',
            'units' : 'J kg^-1 K^-1',
            'ref' : hart
           })
 
 const['Cv'] = xray.DataArray(
-    717,
+    717.,
     attrs={'name' : 'Dry air specific heat at constant volume',
            'units' : 'J kg^-1 K^-1',
            'ref' : hart
@@ -102,14 +102,14 @@ const['mm_water'] = xray.DataArray(
           })
 
 const['R_water_v'] = xray.DataArray(
-    461,
+    461.,
     attrs={'name' : 'Gas constant for water vapor',
            'units' : 'J K^-1 kg^-1',
            'ref' : hart
           })
 
 const['Cp_water_v'] = xray.DataArray(
-    1952,
+    1952.,
     attrs={'name' : 'Specific heat of water vapor at constant pressure',
            'units' : 'J K^-1 kg^-1',
            'ref' : hart
@@ -117,21 +117,21 @@ const['Cp_water_v'] = xray.DataArray(
 
 
 const['Cv_water_v'] = xray.DataArray(
-    1463,
+    1463.,
     attrs={'name' : 'Specific heat of water vapor at constant volume',
            'units' : 'J K^-1 kg^-1',
            'ref' : hart
           })
 
 const['C_water_l'] = xray.DataArray(
-    4218,
+    4218.,
     attrs={'name' : 'Specific heat of liquid water at 0C',
            'units' : 'J K^-1 kg^-1',
            'ref' : hart
           })
 
 const['C_water_i'] = xray.DataArray(
-    2106,
+    2106.,
     attrs={'name' : 'Specific heat of water ice at 0C',
            'units' : 'J K^-1 kg^-1',
            'ref' : hart
