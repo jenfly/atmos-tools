@@ -86,3 +86,8 @@ def equiv_potential_temp(T, p, q, p0=1e5):
 
 
 # ----------------------------------------------------------------------
+# streamfunction - needs int_pres
+# Dry static energy, moist static energy
+# Moisture flux convergence
+# Vorticity
+
