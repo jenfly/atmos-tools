@@ -74,6 +74,7 @@ url = ('http://goldsmr3.sci.gsfc.nasa.gov/opendap/MERRA_MONTHLY/'
 ds = xray.open_dataset(url)
 T = ds['T']
 ps = ds['PS']
+a = ds['QV']
 plev = dat.get_plev(T, units='Pa')
 
 p0 = 1e5
@@ -82,16 +83,22 @@ Cp = constants.Cp
 Lv = constants.Lv
 
 theta = potential_temp(T, plev, p0)
+theta_e = equiv_potential_temp(T, plev, q, p0)
 
-t, k = 0, 6
+# t, k = 0, 6
+# t, k = 0, 22
+t, k = 0, 14
 pstr = '%d hPa' % (plev[k]/100)
 plt.figure(figsize=(7,10))
-plt.subplot(211)
+plt.subplot(311)
 ap.pcolor_latlon(T[t,k])
 plt.title('Temperature ' + pstr)
-plt.subplot(212)
+plt.subplot(312)
 ap.pcolor_latlon(theta[t,k])
 plt.title('Potential Temperature ' + pstr)
+plt.subplot(313)
+ap.pcolor_latlon(theta_e[t,k])
+plt.title('Equiv Potential Temperature ' + pstr)
 
 ps.dims
 plt.figure()
