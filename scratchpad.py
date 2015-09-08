@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from mpl_toolkits.basemap import Basemap
 import xray
+from datetime import datetime
 
 # My modules:
 import atmos.utils as utils
@@ -75,13 +76,9 @@ url = ('http://goldsmr3.sci.gsfc.nasa.gov/opendap/MERRA_MONTHLY/'
 ds = xray.open_dataset(url)
 T = ds['T']
 ps = ds['PS']
-a = ds['QV']
+q = ds['QV']
 plev = dat.get_plev(T, units='Pa')
-
 p0 = 1e5
-R = constants.R_air
-Cp = constants.Cp
-Lv = constants.Lv
 
 theta = av.potential_temp(T, plev, p0)
 theta_e = av.equiv_potential_temp(T, plev, q, p0)
@@ -104,3 +101,15 @@ plt.title('Equiv Potential Temperature ' + pstr)
 ps.dims
 plt.figure()
 ap.pcolor_latlon(ps,cmap='hot')
+
+# ======================================================================
+
+# Use 'ortho' projection to make a fancy globe with shaded continents
+plt.figure()
+m = Basemap(projection='ortho', lat_0=0, lon_0=-50)
+m.drawmapboundary(fill_color='aqua')
+m.fillcontinents(color='coral',lake_color='aqua')
+m.drawcoastlines()
+date = datetime.utcnow()
+CS=m.nightshade(date)
+plt.title('Day/Night Map for %s (UTC)' % date.strftime("%d %b %Y %H:%M:%S"))

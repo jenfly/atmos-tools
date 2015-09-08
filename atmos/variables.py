@@ -29,7 +29,7 @@ def potential_temp(T, p, p0=1e5):
     R = constants.R_air
     Cp = constants.Cp
 
-    scale = (p0/plev) ** (R/Cp).values
+    scale = (p0/p) ** (R/Cp).values
     theta = T * dat.biggify(scale, T)
 
     if isinstance(T, xray.DataArray):
