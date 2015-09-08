@@ -1,6 +1,7 @@
 """
 Utility functions for atmospheric data wrangling / preparation.
 
+- ndarrays
 - xray datasets and netCDF files
 - Lat-lon geophysical data
 - Topography
@@ -16,7 +17,7 @@ from atmos.utils import print_if, print_odict, disptime
 import atmos.utils as utils
 
 # ======================================================================
-# NDARRAY UTILITIES
+# NDARRAYS
 # ======================================================================
 
 # ----------------------------------------------------------------------
@@ -795,15 +796,7 @@ def near_surface():
 def interp_plevels():
     """Return the data interpolated onto new pressure level grid."""
 
-def pressure_grid():
-    """Return a grid of pressures from 1-D pressure level array."""
-
-def pressure_grid_eta():
-    """Return a grid of pressures for eta-level data."""
-
-def ps_grid():
-    """Return a grid of surface pressures."""
 
 def int_pres():
     """Return the data integrated vertically by pressure."""
-    # Maybe this should go in analysis.py
+
