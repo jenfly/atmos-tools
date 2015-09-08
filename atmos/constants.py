@@ -139,19 +139,10 @@ const['C_water_i'] = xray.DataArray(
 
 const['Lv'] = xray.DataArray(
     2.5e6,
-    attrs={'name' : 'Latent heat of vaporization of water at 0C',
+    attrs={'name' : 'Latent heat of vaporization/condensation of water at 0C',
            'units' : 'J kg^-1',
            'ref' : hart
           })
-
-
-const['Lv_100'] = xray.DataArray(
-    2.25e6,
-    attrs={'name' : 'Latent heat of vaporization of water at 100C',
-           'units' : 'J kg^-1',
-           'ref' : hart
-          })
-
 
 const['L_water_fusion'] = xray.DataArray(
     3.34e5,

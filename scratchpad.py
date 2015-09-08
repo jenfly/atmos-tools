@@ -81,8 +81,7 @@ R = constants.R_air
 Cp = constants.Cp
 Lv = constants.Lv
 
-scale = (p0/plev) ** (R/Cp).values
-theta = T * dat.biggify(scale, T)
+theta = potential_temp(T, plev, p0)
 
 t, k = 0, 6
 pstr = '%d hPa' % (plev[k]/100)
