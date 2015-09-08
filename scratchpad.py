@@ -76,19 +76,23 @@ T = ds['T']
 ps = ds['PS']
 plev = dat.get_plev(T, units='Pa')
 
-test = dat.biggify(plev, T)
-test2 = dat.biggify(ps, T)
-
+p0 = 1e5
 R = constants.R_air
 Cp = constants.Cp
 Lv = constants.Lv
 
-# Rewrite to use T.dims to find pressure level axis
-nlev = len(plev)
-reps = np.ones(T.ndim)
-reps[-3] = nlev
-pstile = np.tile(ps,reps)
+scale = (p0/plev) ** (R/Cp).values
+theta = T * dat.biggify(scale, T)
 
+t, k = 0, 6
+pstr = '%d hPa' % (plev[k]/100)
+plt.figure(figsize=(7,10))
+plt.subplot(211)
+ap.pcolor_latlon(T[t,k])
+plt.title('Temperature ' + pstr)
+plt.subplot(212)
+ap.pcolor_latlon(theta[t,k])
+plt.title('Potential Temperature ' + pstr)
 
 ps.dims
 plt.figure()

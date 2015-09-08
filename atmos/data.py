@@ -12,16 +12,16 @@ from mpl_toolkits import basemap
 import xray
 from xray import Dataset
 
-from atmos.utils import (print_if, print_odict, strictly_decreasing,
-    disptime)
+from atmos.utils import print_if, print_odict, disptime
+import atmos.utils as utils
 
 # ======================================================================
 # NDARRAY UTILITIES
 # ======================================================================
 
 # ----------------------------------------------------------------------
-def biggify(small, big, debug=False):
-    """Add singleton dimensions for broadcasting arrays.
+def biggify(small, big, tile=False, debug=False):
+    """Add singleton dimensions or tile an array for broadcasting.
 
     Parameters
     ----------
@@ -31,32 +31,48 @@ def biggify(small, big, debug=False):
     big : ndarray
         Array whose shape will be used to determine the shape of
         the output.
+    tile : bool, optional
+        If True, tile the array along the added dimensions.
+        If False, add singleton dimensions.
     debug : bool, optional
         Print debugging output.
 
     Returns
     -------
     biggified : ndarray
-        Array of data from small, with singleton dimensions added
+        Array of data from small, with dimensions added
         for any dimension that is in big but not in small.
     """
 
     dbig, dsmall = big.shape, small.shape
 
     # Check that all of the dimensions of small are contained within big
-    check = [d in dbig for d in dsmall]
+    check = [d in dbig or d == 1 for d in dsmall]
     if not np.all(check):
         msg = ('Dimensions of small ' + str(dsmall) +
             ' are not a subset of big ' + str(dbig))
         raise ValueError(msg)
 
-    biggified = small
+    # Check that the dimensions appear in a compatible order
+    inds = list()
+    for d in dsmall:
+        try:
+            inds.append(dbig.index(d))
+        except ValueError:
+            inds.append(-1)
+    if not utils.non_decreasing(inds):
+        msg = ('Dimensions of small ' + str(dsmall) +
+            ' are not in an order compatible with big ' + str(dbig))
+        raise ValueError(msg)
 
+    # Biggify the small array
+    biggified = small
     ibig = big.ndim - 1
     ismall = small.ndim - 1
     n = -1
 
-    while ismall >= 0:
+    # First add singleton dimensions
+    while ismall >= 0 and ibig >= 0:
         print_if('ibig %d, ismall %d, n %d' % (ibig, ismall, n), debug)
         if dbig[ibig] == dsmall[ismall] or dsmall[ismall] == 1:
             print_if('  Same %d' % dbig[ibig], debug)
@@ -67,6 +83,16 @@ def biggify(small, big, debug=False):
             biggified = np.expand_dims(biggified, n)
         n -= 1
         ibig -= 1
+
+    # Expand the singletons to tiles if selected
+    if tile:
+        dims = list(biggified.shape)
+        for i in range(-1, -1 - len(dims), -1):
+            if dims[i] == dbig[i]:
+                dims[i] = 1
+            else:
+                dims[i] = dbig[i]
+        biggified = np.tile(biggified, dims)
 
     return biggified
 
@@ -506,10 +532,10 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
     # Check for the common case that lat_in and/or lat_out are decreasing
     # and flip if necessary to work with basemap.interp()
     flip = False
-    if strictly_decreasing(lat_in):
+    if utils.strictly_decreasing(lat_in):
         lat_in = lat_in[::-1]
         vals = vals[...,::-1, :]
-    if strictly_decreasing(lat_out):
+    if utils.strictly_decreasing(lat_out):
         flip = True
         lat_out = lat_out[::-1]
 
