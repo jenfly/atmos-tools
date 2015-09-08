@@ -54,18 +54,18 @@ def biggify(small, big, debug=False):
 
     ibig = big.ndim - 1
     ismall = small.ndim - 1
-    n = ismall + 1
+    n = -1
 
     while ismall >= 0:
         print_if('ibig %d, ismall %d, n %d' % (ibig, ismall, n), debug)
-        if dbig[ibig] == dsmall[ismall]:
+        if dbig[ibig] == dsmall[ismall] or dsmall[ismall] == 1:
             print_if('  Same %d' % dbig[ibig], debug)
             ismall -= 1
         else:
             print_if('  Different.  Big %d, small %d' %
                 (dbig[ibig], dsmall[ismall]), debug)
             biggified = np.expand_dims(biggified, n)
-            n -= 1
+        n -= 1
         ibig -= 1
 
     return biggified
