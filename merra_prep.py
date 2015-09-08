@@ -41,3 +41,9 @@ ds.to_netcdf(outfile,mode='w')
 # q = ds['QV']
 # hgt = ds['H']
 # omega = ds['OMEGA']
+
+# Save monthly means of 3-hourly data:
+# u, v, omega, T, ps, z, q
+# theta, theta_e
+# uu, uv, uq, vq, uT,vT, utheta, vtheta, utheta_e, vtheta_e, uz, vz
+
