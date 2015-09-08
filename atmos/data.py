@@ -16,6 +16,62 @@ from atmos.utils import (print_if, print_odict, strictly_decreasing,
     disptime)
 
 # ======================================================================
+# NDARRAY UTILITIES
+# ======================================================================
+
+# ----------------------------------------------------------------------
+def biggify(small, big, debug=False):
+    """Add singleton dimensions for broadcasting arrays.
+
+    Parameters
+    ----------
+    small : ndarray
+        Array which singleton dimensions will be added to.  Its
+        dimensions must be a subset of big's dimensions.
+    big : ndarray
+        Array whose shape will be used to determine the shape of
+        the output.
+    debug : bool, optional
+        Print debugging output.
+
+    Returns
+    -------
+    biggified : ndarray
+        Array of data from small, with singleton dimensions added
+        for any dimension that is in big but not in small.
+    """
+
+    dbig, dsmall = big.shape, small.shape
+
+    # Check that all of the dimensions of small are contained within big
+    check = [d in dbig for d in dsmall]
+    if not np.all(check):
+        msg = ('Dimensions of small ' + str(dsmall) +
+            ' are not a subset of big ' + str(dbig))
+        raise ValueError(msg)
+
+    biggified = small
+
+    ibig = big.ndim - 1
+    ismall = small.ndim - 1
+    n = ismall + 1
+
+    while ismall >= 0:
+        print_if('ibig %d, ismall %d, n %d' % (ibig, ismall, n), debug)
+        if dbig[ibig] == dsmall[ismall]:
+            print_if('  Same %d' % dbig[ibig], debug)
+            ismall -= 1
+        else:
+            print_if('  Different.  Big %d, small %d' %
+                (dbig[ibig], dsmall[ismall]), debug)
+            biggified = np.expand_dims(biggified, n)
+            n -= 1
+        ibig -= 1
+
+    return biggified
+
+
+# ======================================================================
 # XRAY DATASETS AND FILE I/O
 # ======================================================================
 

@@ -63,7 +63,6 @@ ap.contour_latpres(uplot, clev=cint, topo=ps_plot)
 plt.figure()
 ap.contourf_latpres(uplot,clev=cint, topo=ps_plot)
 
-
 # ======================================================================
 # OpenDAP
 
@@ -76,6 +75,9 @@ ds = xray.open_dataset(url)
 T = ds['T']
 ps = ds['PS']
 plev = dat.get_plev(T, units='Pa')
+
+test = dat.biggify(plev, T)
+test2 = dat.biggify(ps, T)
 
 R = constants.R_air
 Cp = constants.Cp
