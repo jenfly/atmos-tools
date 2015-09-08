@@ -9,6 +9,7 @@ import xray
 import atmos.utils as utils
 import atmos.plots as ap
 import atmos.data as dat
+import atmos.variables as av
 from atmos.utils import print_if
 from atmos.constants import const as constants
 
@@ -82,8 +83,8 @@ R = constants.R_air
 Cp = constants.Cp
 Lv = constants.Lv
 
-theta = potential_temp(T, plev, p0)
-theta_e = equiv_potential_temp(T, plev, q, p0)
+theta = av.potential_temp(T, plev, p0)
+theta_e = av.equiv_potential_temp(T, plev, q, p0)
 
 # t, k = 0, 6
 # t, k = 0, 22

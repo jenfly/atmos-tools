@@ -62,6 +62,14 @@ def equiv_potential_temp(T, p, q, p0=1e5):
         Equivalent potential temperatures in Kelvins.  If T is a
         DataArray, then theta_e is returned as a DataArray with the
         same coordinates. Otherwise theta_e is returned as an ndarray.
+
+    Notes
+    -----
+    Equivalent potential temperature is computed according to the
+    definition in Equation (4-30) in:
+    Marshall, John, and R. Alan Plumb. Atmosphere, Ocean, and Climate
+        Dynamics: An Introductory Text. Amsterdam: Elsevier Academic
+        Press, 2008.
     """
 
     L = constants.Lv
