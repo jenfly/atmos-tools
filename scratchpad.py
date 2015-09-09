@@ -115,34 +115,59 @@ print(ps_land.mean())
 
 # ----------------------------------------------------------------------
 # Averaging over box
-
 lon1, lon2 = 60, 100
-lat1, lat2 = 0, 30
-# area = np.radians(lon2 - lon1) *
-#     (np.sin(np.radians(lat2)) - np.sin(np.radians(lat1)))
+lat1, lat2 = -45, 45
 
-Tsub = dat.subset(T, 'XDim', lon1, lon2, 'YDim', lat1, lat2)
-lat_sub, lon_sub = Tsub.YDim, Tsub.XDim
-coslat = np.cos(np.radians(lat_sub))
-coslat = dat.biggify(coslat, Tsub)
-Tsub_weighted = Tsub * coslat
+avg1 = mean_over_geobox(T, lat1, lat2, lon1, lon2, area_wtd=False)
+avg2 = mean_over_geobox(T, lat1, lat2, lon1, lon2, area_wtd=True)
 
-avg = np.squeeze(Tsub.mean(dim=['XDim', 'YDim']))
-avg_weighted = np.squeeze(Tsub_weighted.mean(dim=['XDim', 'YDim']))
+t, k = 0, 3
+plt.figure()
+ap.pcolor_latlon(T[t,k], axlims=(lat1,lat2,lon1,lon2), cmap='jet')
+plt.clim(285, 295)
 
-# Not working properly!  Need to troubleshoot.
+print(avg1[t, k].values)
+print(avg2[t, k].values)
 
-# ----------------------------------------------------------------------
-# lat = np.arange(-89.5, 90, 0.5)
-# lon = np.arange(0.5, 360, 0.5)
-# lonlims = (0, 360)
-# latlims = (-90, 90)
+
+# # area = np.radians(lon2 - lon1) *
+# #     (np.sin(np.radians(lat2)) - np.sin(np.radians(lat1)))
 #
-# lonrad1, lonrad2 = np.radians(lonlims)
-# latrad1, latrad2 = np.radians(latlims)
-# area = (lonrad2 - lonrad1) * (np.sin(latrad2) - np.sin(latrad1))
-
-coslat = np.cos(np.radians(lat))
-coslat = biggify(coslat, data)
-
-data_out = data * coslat
+# Tsub = dat.subset(T, 'XDim', lon1, lon2, 'YDim', lat1, lat2)
+# lat_sub, lon_sub = Tsub.YDim, Tsub.XDim
+# coslat = np.cos(np.radians(lat_sub))
+# coslat = coslat / coslat.mean()
+# coslat = dat.biggify(coslat, Tsub)
+# # Tsub_weighted = Tsub * coslat / coslat.mean()
+# Tsub_weighted = Tsub * coslat / np.cos(np.radians(lat.mean()))
+#
+# avg = np.squeeze(Tsub.mean(dim=['XDim', 'YDim']))
+# avg_weighted = np.squeeze(Tsub_weighted.mean(dim=['XDim', 'YDim']))
+#
+# # Not working properly!  Need to troubleshoot.
+#
+# # ----------------------------------------------------------------------
+# # lat = np.arange(-89.5, 90, 0.5)
+# # lon = np.arange(0.5, 360, 0.5)
+# # lonlims = (0, 360)
+# # latlims = (-90, 90)
+# #
+# # lonrad1, lonrad2 = np.radians(lonlims)
+# # latrad1, latrad2 = np.radians(latlims)
+# # area = (lonrad2 - lonrad1) * (np.sin(latrad2) - np.sin(latrad1))
+#
+# lat1, lat2 = np.radians(15), np.radians(45)
+# N = 1000
+# lat = np.linspace(lat1, lat2, N)
+# coslat = np.cos(lat)
+#
+# area_cont = np.sin(lat2) - np.sin(lat1)
+# area_trapz = np.trapz(coslat, lat)
+# area_mean = (lat2 - lat1) * coslat.mean()
+#
+# data = np.ones((N, 500), dtype=float)
+# coslat = biggify(coslat, data)
+#
+# data_wtd = data * coslat
+#
+# avg = np.trapz(data_wtd, lat, axis=0) / area_trapz

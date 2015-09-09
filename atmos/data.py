@@ -325,8 +325,8 @@ def subset(data, dim_name, lower_or_list, upper=None,
 # ======================================================================
 
 # ----------------------------------------------------------------------
-def get_lat(data, latname=None):
-    """Return latitude array from DataArray.
+def get_lat(data, latname=None, return_name=False):
+    """Return latitude array (or dimension name) from DataArray.
 
     Parameters
     ----------
@@ -335,11 +335,14 @@ def get_lat(data, latname=None):
     latname : string, optional
         Name of latitude coord in data.  If omitted, search through
         a list of common names for a match.
+    return_name : bool, optional
+        Return the name of the latitude dimension rather than the
+        array of values.
 
     Returns
     -------
-    lat : ndarray
-        Latitude array
+    lat : ndarray or string
+        Latitude array or name of latitude dimension
 
     Notes
     -----
@@ -363,12 +366,16 @@ def get_lat(data, latname=None):
             latname = latnames[found[0]]
 
     lat = data[latname].values.copy()
-    return lat
+
+    if return_name:
+        return latname
+    else:
+        return lat
 
 
 # ----------------------------------------------------------------------
-def get_lon(data, lonname=None):
-    """Return longitude array from DataArray.
+def get_lon(data, lonname=None, return_name=False):
+    """Return longitude array (or dimension name) from DataArray.
 
     Parameters
     ----------
@@ -377,11 +384,14 @@ def get_lon(data, lonname=None):
     lonname : string, optional
         Name of longitude coords in data.  If omitted, search through
         a list of common names for a match.
+    return_name : bool, optional
+        Return the name of the longitude dimension rather than the
+        array of values.
 
     Returns
     -------
-    lon : ndarray
-        Longitude array
+    lon : ndarray or string
+        Longitude array or dimension name
 
     Notes
     -----
@@ -405,7 +415,11 @@ def get_lon(data, lonname=None):
             lonname = lonnames[found[0]]
 
     lon = data[lonname].values.copy()
-    return lon
+
+    if return_name:
+        return lonname
+    else:
+        return lon
 
 
 # ----------------------------------------------------------------------
@@ -479,7 +493,7 @@ def set_lon(data, lonmax=360, lon=None, lonname='lon'):
 
     if isinstance(data, xray.DataArray):
         data_out = data.copy()
-        data_out['lon'].values = lon_out
+        data_out[lonname].values = lon_out
         data_out.values = vals_out
         return data_out
     else:
@@ -594,6 +608,51 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
     return data_out
 
 
+# ----------------------------------------------------------------------
+def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
+                     area_wtd=True):
+    """Return the mean of an array over a lat-lon region."""
+
+    if not isinstance(data, xray.DataArray):
+        data_out = xray.DataArray(data)
+        coords = data_out.coords.keys()
+        data_out = data_out.rename({coords[-1]: 'lon', coords[-2] : 'lat'})
+        latname, lonname = 'lat', 'lon'
+        data_out[latname] = lat
+        data_out[lonname] = lon
+    else:
+        data_out = data
+        attrs = data.attrs
+        coords = data.coords
+        dims = data.dims[:-2]
+        latname = get_lat(data, return_name=True)
+        lonname = get_lon(data, return_name=True)
+
+    data_out = subset(data_out, latname, lat1, lat2, lonname, lon1, lon2)
+    lat_sub = get_lat(data_out)
+
+    # Mean over longitudes
+    data_out = data_out.mean(axis=-1)
+
+    # Mean over latitudes
+    if area_wtd:
+        coslat = np.cos(np.radians(lat_sub))
+        area = np.trapz(coslat, lat_sub)
+        coslat = biggify(coslat, data_out)
+        data_out = data_out * coslat / area
+        avg = np.trapz(data_out, lat_sub, axis=-1)
+    else:
+        avg = data_out.mean(axis=-1).values
+
+    # Pack output into DataArray with the metadata that was lost in np.trapz
+    if isinstance(data, xray.DataArray) and not isinstance(avg, xray.DataArray):
+        avg = xray.DataArray(avg, dims=dims, attrs=attrs)
+        for d in dims:
+            avg[d] = coords[d]
+
+    return avg
+
+
 # ======================================================================
 # TOPOGRAPHY
 # ======================================================================
@@ -630,8 +689,8 @@ def pres_convert(pres, units_in, units_out):
 
 
 # ----------------------------------------------------------------------
-def get_plev(data, plevname=None, units='hPa'):
-    """Return pressure level array from DataArray.
+def get_plev(data, plevname=None, units='hPa', return_name=False):
+    """Return pressure level array (or dimension name) from DataArray.
 
     Parameters
     ----------
@@ -642,11 +701,14 @@ def get_plev(data, plevname=None, units='hPa'):
         through a list of common names for a match.
     units: string, optional
         Pressure units to use for output.
+    return_name : bool, optional
+        Return the name of the pressure dimension rather than the
+        array of values.
 
     Returns
     -------
-    plev : ndarray
-        Pressure level array
+    plev : ndarray or string
+        Pressure level array or dimension name
 
     Notes
     -----
@@ -674,7 +736,10 @@ def get_plev(data, plevname=None, units='hPa'):
     plev = data[plevname].values.copy()
     plev = pres_convert(plev, data[plevname].units, units)
 
-    return plev
+    if return_name:
+        return plevname
+    else:
+        return plev
 
 
 # ----------------------------------------------------------------------
