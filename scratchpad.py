@@ -78,6 +78,7 @@ T = ds['T']
 ps = ds['PS']
 q = ds['QV']
 plev = dat.get_plev(T, units='Pa')
+lat, lon = dat.get_lat(ps), dat.get_lon(ps)
 p0 = 1e5
 
 theta = av.potential_temp(T, plev, p0)
@@ -102,14 +103,46 @@ ps.dims
 plt.figure()
 ap.pcolor_latlon(ps,cmap='hot')
 
-# ======================================================================
-
-# Use 'ortho' projection to make a fancy globe with shaded continents
+# ----------------------------------------------------------------------
+# Masking ocean
+x, y = np.meshgrid(lon, lat)
+ps_land = basemap.maskoceans(x, y, ps)
 plt.figure()
-m = Basemap(projection='ortho', lat_0=0, lon_0=-50)
-m.drawmapboundary(fill_color='aqua')
-m.fillcontinents(color='coral',lake_color='aqua')
-m.drawcoastlines()
-date = datetime.utcnow()
-CS=m.nightshade(date)
-plt.title('Day/Night Map for %s (UTC)' % date.strftime("%d %b %Y %H:%M:%S"))
+ap.pcolor_latlon(ps_land/100, lat, lon, cmap='jet')
+print(ps.mean())
+print(ps_land.mean())
+
+
+# ----------------------------------------------------------------------
+# Averaging over box
+
+lon1, lon2 = 60, 100
+lat1, lat2 = 0, 30
+# area = np.radians(lon2 - lon1) *
+#     (np.sin(np.radians(lat2)) - np.sin(np.radians(lat1)))
+
+Tsub = dat.subset(T, 'XDim', lon1, lon2, 'YDim', lat1, lat2)
+lat_sub, lon_sub = Tsub.YDim, Tsub.XDim
+coslat = np.cos(np.radians(lat_sub))
+coslat = dat.biggify(coslat, Tsub)
+Tsub_weighted = Tsub * coslat
+
+avg = np.squeeze(Tsub.mean(dim=['XDim', 'YDim']))
+avg_weighted = np.squeeze(Tsub_weighted.mean(dim=['XDim', 'YDim']))
+
+# Not working properly!  Need to troubleshoot.
+
+# ----------------------------------------------------------------------
+# lat = np.arange(-89.5, 90, 0.5)
+# lon = np.arange(0.5, 360, 0.5)
+# lonlims = (0, 360)
+# latlims = (-90, 90)
+#
+# lonrad1, lonrad2 = np.radians(lonlims)
+# latrad1, latrad2 = np.radians(latlims)
+# area = (lonrad2 - lonrad1) * (np.sin(latrad2) - np.sin(latrad1))
+
+coslat = np.cos(np.radians(lat))
+coslat = biggify(coslat, data)
+
+data_out = data * coslat

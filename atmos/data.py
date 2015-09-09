@@ -788,6 +788,9 @@ def average_over_country():
 def mask_ocean():
     """Return the data with ocean masked out."""
 
+# basemap.is_land(xpt, ypt)
+# basemap.maskoceans(lons, lats, data)
+
 # PRESSURE / VERTICAL LEVELS
 
 def near_surface():
@@ -799,4 +802,3 @@ def interp_plevels():
 
 def int_pres():
     """Return the data integrated vertically by pressure."""
-
