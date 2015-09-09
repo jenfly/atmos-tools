@@ -636,11 +636,20 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
 
     # Mean over latitudes
     if area_wtd:
+        # Mask out NaNs so that np.trapz ignores them
+        mdat = np.ma.masked_array(data_out, np.isnan(data_out))
+        ind = np.zeros(mdat.ndim, dtype=int)
+        ind = tuple(ind[:-1])
+        latmask = mdat.mask[ind]
+        lat_sub = np.ma.masked_array(lat_sub, latmask)
+
+        # Weight by area with cos(lat)
         coslat = np.cos(np.radians(lat_sub))
         area = np.trapz(coslat, lat_sub)
-        coslat = biggify(coslat, data_out)
-        data_out = data_out * coslat / area
-        avg = np.trapz(data_out, lat_sub, axis=-1)
+        coslat = biggify(coslat, mdat)
+        mdat = mdat * coslat / area
+        avg = np.trapz(mdat, lat_sub, axis=-1)
+        avg = avg.filled(np.nan)
     else:
         avg = data_out.mean(axis=-1).values
 
