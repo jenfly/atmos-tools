@@ -611,7 +611,28 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
 # ----------------------------------------------------------------------
 def mask_oceans(data, lat=None, lon=None, inlands=True, resolution='l',
                 grid=5):
-    """Return the data with ocean masked out."""
+    """Return the data with ocean grid points set to NaN.
+
+    Parameters
+    ----------
+    data : ndarray or xray.DataArray
+        Data to mask, with latitude as second-last dimension,
+        longitude as last dimension.  Maximum array dimensions: 5-D.
+    lat, lon : ndarray, optional
+        Latitude and longitude arrays.  Only used if data is an
+        ndarray and not an xray.DataArray.
+    inlands : bool, optional
+        If False, mask only ocean points and not inland lakes.
+    resolution : {'c','l','i','h', 'f'}, optional
+        gshhs coastline resolution used to define land/sea mask.
+    grid : {1.25, 2.5, 5, 10}, optional
+        Land/sea mask grid spacing in minutes.
+
+    Returns
+    -------
+    data_out : ndarray or xray.DataArray
+        Data with ocean grid points set to NaN.
+    """
 
     if isinstance(data, xray.DataArray):
         lat, lon = get_lat(data), get_lon(data)
@@ -661,7 +682,7 @@ def mask_oceans(data, lat=None, lon=None, inlands=True, resolution='l',
 
 # ----------------------------------------------------------------------
 def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
-                     area_wtd=True):
+                     area_wtd=True, land_only=False):
     """Return the mean of an array over a lat-lon region.
 
     Parameters
@@ -677,6 +698,9 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
         ndarray and not an xray.DataArray.
     area_wtd : bool, optional
         Return the area-weighted average (weighted by cos(lat))
+    land_only : bool, optional
+        Mask out ocean grid points so that only data over land is
+        included in the mean.
 
     Returns
     -------
@@ -701,6 +725,9 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
 
     data_out = subset(data_out, latname, lat1, lat2, lonname, lon1, lon2)
     lat_sub = get_lat(data_out)
+
+    if land_only:
+        data_out = mask_oceans(data_out)
 
     # Mean over longitudes
     data_out = data_out.mean(axis=-1)
@@ -923,13 +950,9 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
 # ----------------------------------------------------------------------
 
 # LAT-LON GEO
-def average_over_country():
-    """Return the data field averaged over a country."""
+# def average_over_country():
+#    """Return the data field averaged over a country."""
 
-
-
-# basemap.is_land(xpt, ypt)
-# basemap.maskoceans(lons, lats, data)
 
 # PRESSURE / VERTICAL LEVELS
 
