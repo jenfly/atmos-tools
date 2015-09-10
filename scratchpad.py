@@ -103,23 +103,14 @@ ps.dims
 plt.figure()
 ap.pcolor_latlon(ps,cmap='hot')
 
-# ----------------------------------------------------------------------
-# Masking ocean
-x, y = np.meshgrid(lon, lat)
-ps_land = basemap.maskoceans(x, y, ps)
-plt.figure()
-ap.pcolor_latlon(ps_land/100, lat, lon, cmap='jet')
-print(ps.mean())
-print(ps_land.mean())
-
 
 # ----------------------------------------------------------------------
 # Averaging over box
 lon1, lon2 = 60, 100
 lat1, lat2 = 10, 30
 
-avg1 = mean_over_geobox(T, lat1, lat2, lon1, lon2, area_wtd=False)
-avg2 = mean_over_geobox(T, lat1, lat2, lon1, lon2, area_wtd=True)
+avg1 = dat.mean_over_geobox(T, lat1, lat2, lon1, lon2, area_wtd=False)
+avg2 = dat.mean_over_geobox(T, lat1, lat2, lon1, lon2, area_wtd=True)
 
 t, k = 0, 3
 plt.figure()
@@ -128,3 +119,12 @@ plt.clim(285, 295)
 
 print(avg1[t, k].values)
 print(avg2[t, k].values)
+
+# ----------------------------------------------------------------------
+# Masking ocean
+
+T_land = dat.mask_oceans(T)
+
+t, k = 0, 10
+plt.figure()
+ap.pcolor_latlon(T_land[t,k], cmap='jet')

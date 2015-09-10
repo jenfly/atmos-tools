@@ -609,9 +609,80 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
 
 
 # ----------------------------------------------------------------------
+def mask_oceans(data, lat=None, lon=None, inlands=True, resolution='l',
+                grid=5):
+    """Return the data with ocean masked out."""
+
+    if isinstance(data, xray.DataArray):
+        lat, lon = get_lat(data), get_lon(data)
+        vals = data.values.copy()
+    else:
+        vals = data
+
+    x, y = np.meshgrid(lon, lat)
+    dims = vals.shape
+    ndim = vals.ndim
+    vals_out = np.ones(vals.shape, dtype=float)
+    vals_out = np.ma.masked_array(vals_out, np.isnan(vals_out))
+
+    # Iterate over up to 3 additional dimensions
+    if ndim > 5:
+        raise ValueError('Too many dimensions in data.  Max 5-D.')
+    if ndim == 5:
+        for i in range(dims[0]):
+            for j in range(dims[1]):
+                for k in range(dims[2]):
+                    vals_out[i, j, k] = basemap.maskoceans(x, y, vals[i, j, k],
+                        inlands=inlands, resolution=resolution, grid=grid)
+    elif ndim == 4:
+        for i in range(dims[0]):
+            for j in range(dims[1]):
+                vals_out[i, j] = basemap.maskoceans(x, y, vals[i, j],
+                    inlands=inlands, resolution=resolution, grid=grid)
+    elif ndim == 3:
+        for i in range(dims[0]):
+            vals_out[i] = basemap.maskoceans(x, y, vals[i],
+                inlands=inlands, resolution=resolution, grid=grid)
+
+    else:
+        vals_out = basemap.maskoceans(x, y, vals,
+            inlands=inlands, resolution=resolution, grid=grid)
+
+    # Convert from masked array to regular array with NaNs
+    vals_out = vals_out.filled(np.nan)
+
+    if isinstance(data, xray.DataArray):
+        data_out = xray.DataArray(vals_out, name=data.name, coords=data.coords)
+    else:
+        data_out = vals_out
+
+    return data_out
+
+
+# ----------------------------------------------------------------------
 def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
                      area_wtd=True):
-    """Return the mean of an array over a lat-lon region."""
+    """Return the mean of an array over a lat-lon region.
+
+    Parameters
+    ----------
+    data : ndarray or xray.DataArray
+        Data to average, with latitude as second-last dimension and
+        longitude as last dimension.
+    lat1, lat2, lon1, lon2 : float
+        Latitude and longitude limits for averaging region, with
+        lon1 < lon2 and lat1 < lat2.
+    lat, lon : ndarray, optional
+        Latitude and longitude arrays.  Only used if data is an
+        ndarray and not an xray.DataArray.
+    area_wtd : bool, optional
+        Return the area-weighted average (weighted by cos(lat))
+
+    Returns
+    -------
+    avg : ndarray or xray.DataArray
+        The data averaged over the lat-lon region.
+    """
 
     if not isinstance(data, xray.DataArray):
         data_out = xray.DataArray(data)
@@ -852,15 +923,10 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
 # ----------------------------------------------------------------------
 
 # LAT-LON GEO
-def average_over_box():
-    """Return the data field averaged over a lat-lon box."""
-    # Area-weighted on/off
-
 def average_over_country():
     """Return the data field averaged over a country."""
 
-def mask_ocean():
-    """Return the data with ocean masked out."""
+
 
 # basemap.is_land(xpt, ypt)
 # basemap.maskoceans(lons, lats, data)
