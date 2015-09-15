@@ -33,7 +33,7 @@ def biggify(small, big, tile=False, debug=False):
         Array whose shape will be used to determine the shape of
         the output.
     tile : bool, optional
-        If True, tile the array along the added dimensions.
+        If True, tile the array along the additional dimensions.
         If False, add singleton dimensions.
     debug : bool, optional
         Print debugging output.
@@ -85,9 +85,16 @@ def biggify(small, big, tile=False, debug=False):
         n -= 1
         ibig -= 1
 
-    # Expand the singletons to tiles if selected
+    # Expand with tiles if selected
     if tile:
         dims = list(biggified.shape)
+
+        # First add any additional singleton dimensions needed to make
+        # biggified of the same dimension as big\
+        for i in range(len(dims), len(dbig)):
+            dims.insert(0, 1)
+
+        # Tile the array
         for i in range(-1, -1 - len(dims), -1):
             if dims[i] == dbig[i]:
                 dims[i] = 1
@@ -96,6 +103,39 @@ def biggify(small, big, tile=False, debug=False):
         biggified = np.tile(biggified, dims)
 
     return biggified
+
+
+# ----------------------------------------------------------------------
+def nantrapz(y, x=None, axis=-1):
+    """
+    Integrate using the composite trapezoidal rule, ignoring NaNs
+
+    Integrate `ym` (`x`) along given axis, where `ym` is a masked
+    array of `y` with NaNs masked.
+
+    Parameters
+    ----------
+    y : array_like
+        Input array to integrate.
+    x : array_like, optional
+        If `x` is None, then spacing between all `y` elements is `dx`.
+    axis : int, optional
+        Specify the axis.
+
+    Returns
+    -------
+    trapz : float
+        Definite integral as approximated by trapezoidal rule.
+    """
+
+    ym = np.ma.masked_array(y, np.isnan(y))
+    trapz = np.trapz(ym, x, axis=axis)
+
+    # Convert from masked array back to regular ndarray
+    if isinstance(trapz, np.ma.masked_array):
+        trapz = trapz.filled(np.nan)
+
+    return trapz
 
 
 # ======================================================================
@@ -724,7 +764,7 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
         lonname = get_lon(data, return_name=True)
 
     data_out = subset(data_out, latname, lat1, lat2, lonname, lon1, lon2)
-    lat_sub = get_lat(data_out)
+    lat_rad = np.radians(get_lat(data_out))
 
     if land_only:
         data_out = mask_oceans(data_out)
@@ -734,22 +774,21 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
 
     # Mean over latitudes
     if area_wtd:
-        # Mask out NaNs so that np.trapz ignores them
+        coslat = np.cos(lat_rad)
+        coslat = biggify(coslat, data_out, tile=True)
+
+        # Mask coslat with the same NaN mask as the data so that the
+        # area calculation below is correct
         mdat = np.ma.masked_array(data_out, np.isnan(data_out))
-        ind = np.zeros(mdat.ndim, dtype=int)
-        ind = tuple(ind[:-1])
-        latmask = mdat.mask[ind]
-        lat_sub = np.ma.masked_array(lat_sub, latmask)
+        coslat = np.ma.masked_array(coslat, mdat.mask)
+        coslat = coslat.filled(np.nan)
 
         # Weight by area with cos(lat)
-        coslat = np.cos(np.radians(lat_sub))
-        area = np.trapz(coslat, lat_sub)
-        coslat = biggify(coslat, mdat)
-        mdat = mdat * coslat / area
-        avg = np.trapz(mdat, lat_sub, axis=-1)
-        avg = avg.filled(np.nan)
+        area = nantrapz(coslat, lat_rad, axis=-1)
+        data_out = data_out * coslat
     else:
-        avg = data_out.mean(axis=-1).values
+        area = 1.0
+    avg = nantrapz(data_out, lat_rad, axis=-1) / area
 
     # Pack output into DataArray with the metadata that was lost in np.trapz
     if isinstance(data, xray.DataArray) and not isinstance(avg, xray.DataArray):

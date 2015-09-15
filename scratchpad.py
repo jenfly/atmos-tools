@@ -133,3 +133,19 @@ T_land = dat.mask_oceans(T, inlands=True)
 t, k = 0, 10
 plt.figure()
 ap.pcolor_latlon(T_land[t,k], cmap='jet')
+
+# ----------------------------------------------------------------------
+# More testing of mean_over_geobox
+
+#lat1, lat2 = 10, 60
+lat1, lat2 = -88, -60
+lon1, lon2 = 20, 120
+lat = np.arange(89., -89., -1.0)
+lon = np.arange(0., 359., 1.)
+data1 = 10 - np.radians(lat*2)**2
+data = np.reshape(data1, (178, 1))
+data = np.tile(data, (10, 1, 359))
+
+plt.figure()
+plt.plot(lat, data.mean(axis=-1))
+plt.xlim(lat1, lat2)
