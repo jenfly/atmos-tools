@@ -105,34 +105,10 @@ ap.pcolor_latlon(ps,cmap='hot')
 
 
 # ----------------------------------------------------------------------
-# Averaging over box
-#lon1, lon2 = 70, 90
-#lat1, lat2 = 10, 25
-lon1, lon2 = 15, 30
-lat1, lat2 = -50, -15
 
-avg1 = dat.mean_over_geobox(T, lat1, lat2, lon1, lon2, area_wtd=False)
-avg2 = dat.mean_over_geobox(T, lat1, lat2, lon1, lon2, area_wtd=True)
-avg3 = dat.mean_over_geobox(T, lat1, lat2, lon1, lon2, area_wtd=True,
-                            land_only=True)
-
-t, k = 0, 6
-plt.figure()
-ap.pcolor_latlon(T[t,k], axlims=(lat1,lat2,lon1,lon2), cmap='jet')
-plt.clim(270, 300)
-
-print(avg1[t, k].values)
-print(avg2[t, k].values)
-print(avg3[t, k].values)
 
 # ----------------------------------------------------------------------
-# Masking ocean
 
-T_land = dat.mask_oceans(T, inlands=True)
-
-t, k = 0, 10
-plt.figure()
-ap.pcolor_latlon(T_land[t,k], cmap='jet')
 
 # ----------------------------------------------------------------------
 # More testing of mean_over_geobox
@@ -147,5 +123,5 @@ data = np.reshape(data1, (178, 1))
 data = np.tile(data, (10, 1, 359))
 
 plt.figure()
-plt.plot(lat, data.mean(axis=-1))
+plt.plot(lat, data[0].mean(axis=-1))
 plt.xlim(lat1, lat2)

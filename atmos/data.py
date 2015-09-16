@@ -360,6 +360,66 @@ def subset(data, dim_name, lower_or_list, upper=None,
     return sub
 
 
+# ----------------------------------------------------------------------
+def coords_init(data):
+    """Return OrderedDict of xray.DataArray-like coords for numpy array.
+
+    Parameters
+    ----------
+    data : ndarray
+
+    Returns
+    -------
+    coords : collections.OrderedDict
+        Keys are dim_0, dim_1, etc. and values are np.arange(d) for
+        each value d in data.shape.
+    """
+
+    coords = collections.OrderedDict()
+    dims = data.shape
+
+    for i, d in enumerate(dims):
+        coords['dim_' + str(i)] = np.arange(d)
+
+    return coords
+
+
+# ----------------------------------------------------------------------
+def coords_assign(coords, dim, new_name, new_val):
+    """Reassign an xray.DataArray-style coord at a given dimension.
+
+    Parameters
+    ----------
+    coords : collections.OrderedDict
+        Ordered dictionary of coord name : value pairs.
+    dim : int
+        Dimension to change (e.g. -1 for last dimension).
+    new_name : string
+        New name for coordinate key.
+    new_val : any
+        New value, e.g. numpy array of values
+
+    Returns
+    -------
+    new_coords : collections.OrderedDict
+        Ordered dictionary with altered dimension.
+
+    Example
+    -------
+    lat = np.arange(89., -89., -1.0)
+    lon = np.arange(0., 359., 1.)
+    data = np.ones((len(lat), len(lon)), dtype=float)
+    coords = coords_init(data)
+    coords = coords_assign(coords, -1, 'lon', lon)
+    coords = coords_assign(coords, -2, 'lat', lat)
+    """
+
+    items = list(coords.items())
+    items[dim] = (new_name, new_val)
+    new_coords = collections.OrderedDict(items)
+    return new_coords
+
+
 # ======================================================================
 # LAT-LON GEOPHYSICAL DATA
 # ======================================================================
@@ -749,12 +809,14 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
     """
 
     if not isinstance(data, xray.DataArray):
-        data_out = xray.DataArray(data)
-        coords = data_out.coords.keys()
-        data_out = data_out.rename({coords[-1]: 'lon', coords[-2] : 'lat'})
+        if lat is None or lon is None:
+            raise ValueError('Latitude and longitude arrays must be provided '
+                'if data is not an xray.DataArray.')
         latname, lonname = 'lat', 'lon'
-        data_out[latname] = lat
-        data_out[lonname] = lon
+        coords = coords_init(data)
+        coords = coords_assign(coords, -1, lonname, lon)
+        coords = coords_assign(coords, -2, latname, lat)
+        data_out = xray.DataArray(data, coords=coords)
     else:
         data_out = data
         attrs = data.attrs
@@ -764,7 +826,6 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
         lonname = get_lon(data, return_name=True)
 
     data_out = subset(data_out, latname, lat1, lat2, lonname, lon1, lon2)
-    lat_rad = np.radians(get_lat(data_out))
 
     if land_only:
         data_out = mask_oceans(data_out)
@@ -772,22 +833,23 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
     # Mean over longitudes
     data_out = data_out.mean(axis=-1)
 
-    # Mean over latitudes
+    # Array of latitudes with same NaN mask as the data so that the
+    # area calculation is correct
+    lat_rad = np.radians(get_lat(data_out))
+    lat_rad = biggify(lat_rad, data_out, tile=True)
+    mdat = np.ma.masked_array(data_out, np.isnan(data_out))
+    lat_rad = np.ma.masked_array(lat_rad, mdat.mask)
+    lat_rad = lat_rad.filled(np.nan)
+
     if area_wtd:
-        coslat = np.cos(lat_rad)
-        coslat = biggify(coslat, data_out, tile=True)
-
-        # Mask coslat with the same NaN mask as the data so that the
-        # area calculation below is correct
-        mdat = np.ma.masked_array(data_out, np.isnan(data_out))
-        coslat = np.ma.masked_array(coslat, mdat.mask)
-        coslat = coslat.filled(np.nan)
-
         # Weight by area with cos(lat)
-        area = nantrapz(coslat, lat_rad, axis=-1)
+        coslat = np.cos(lat_rad)
         data_out = data_out * coslat
+        area = nantrapz(coslat, lat_rad, axis=-1)
     else:
-        area = 1.0
+        area = nantrapz(np.ones(lat_rad.shape, dtype=float), lat_rad, axis=-1)
+
+    # Mean over latitudes
     avg = nantrapz(data_out, lat_rad, axis=-1) / area
 
     # Pack output into DataArray with the metadata that was lost in np.trapz
