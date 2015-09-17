@@ -26,7 +26,7 @@ def print_odict(od, indent=2, width=20):
         print(s.ljust(width) + str(od[key]))
 
 
-# ----------------------------------------------------------------------
+
 # ----------------------------------------------------------------------
 def odict_insert(odict, newkey, newval, pos=0):
     """Return an OrderedDict with key:value inserted at specified position.
@@ -54,7 +54,8 @@ def odict_insert(odict, newkey, newval, pos=0):
             odict_new[newkey] = newval
         odict_new[key] = odict[key]
     return odict_new
-    
+
+
 # ----------------------------------------------------------------------
 def disptime(fmt=None):
     now = datetime.now()
