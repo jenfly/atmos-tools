@@ -862,7 +862,7 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
 
 
 # ======================================================================
-# TOPOGRAPHY
+# PRESSURE LEVEL DATA AND TOPOGRAPHY
 # ======================================================================
 
 # ----------------------------------------------------------------------
@@ -1047,6 +1047,101 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
     return data_out
 
 
+# ----------------------------------------------------------------------
+def near_surface(data, pdim=-3, return_inds=False):
+    """Return the pressure-level data closest to surface.
+
+    At each grid point, the first non-NaN level is taken as the
+    near-surface level.
+
+    Parameters
+    ----------
+    data : ndarray or xray.DataArray
+        Input data, maximum of 5 dimensions.  Pressure levels must
+        be the last, second-last or third-last dimension.
+    pdim : {-3, -2, -1}, optional
+        Dimension of vertical levels in data.
+    return_inds : bool, optional
+        If True, return the pressure-level indices of the extracted
+        data in a tuple along with the near-surface data.
+        If False, return only the near-surface data.
+
+    Returns
+    -------
+    data_s[, ind_s] : ndarray or xray.DataArray[, ndarray]
+        Near-surface data [and indices of extracted data, if
+        return_inds is True]. If input data is an xray.DataArray,
+        data_s is returned as an xray.DataArray, otherwise as
+        an ndarray.
+    """
+
+    # Maximum number of dimensions handled by this code
+    nmax = 5
+    ndim = data.ndim
+
+    if ndim > 5:
+        raise ValueError('Input data has too many dimensions. Max 5-D.')
+
+    # Save metadata for output DataArray, if applicable
+    if isinstance(data, xray.DataArray):
+        i_DataArray = True
+        data = data.copy()
+        title = 'Near-surface data extracted from pressure level data'
+        attrs = collections.OrderedDict({'title' : title})
+        for d in data.attrs:
+            attrs[d] = data.attrs[d]
+        pname = get_plev(data, return_name=True)
+        coords = collections.OrderedDict()
+        for key in data.dims:
+            if key != pname:
+                coords[key] = data.coords[key]
+    else:
+        i_DataArray = False
+
+    # Add singleton dimensions for looping, if necessary
+    for i in range(ndim, nmax):
+        data = np.expand_dims(data, axis=0)
+
+    # Make sure pdim is indexing from end
+    pdim_in = pdim
+    if pdim > 0:
+        pdim = pdim - nmax
+
+    # Iterate over all other dimensions
+    dims = list(data.shape)
+    dims.pop(pdim)
+    data_s = np.nan*np.ones(dims, dtype=float)
+    ind_s = np.ones(dims, dtype=int)
+    for i in range(dims[0]):
+        for j in range(dims[1]):
+            for k in range(dims[2]):
+                for m in range(dims[3]):
+                    if pdim == -3:
+                        sub = data[i,j,:,k,m]
+                    elif pdim == -2:
+                        sub = data[i,j,k,:,m]
+                    elif pdim == -1:
+                        sub = data[i,j,k,m,:]
+                    else:
+                        raise ValueError('Invalid p dimension ' + str(pdim_in))
+                    ind = np.where(~np.isnan(sub))[0][0]
+                    data_s[i,j,k,m] = sub[ind]
+                    ind_s[i,j,k,m] = ind
+
+    # Collapse any additional dimensions that were added
+    for i in range(ndim - 1, data_s.ndim):
+        data_s = data_s[0]
+        ind_s = ind_s[0]
+
+    # Pack data_s into an xray.DataArray if input was in that form
+    if i_DataArray:
+        data_s = xray.DataArray(data_s, coords=coords, attrs=attrs)
+
+    # Return data only, or tuple of data plus array of indices extracted
+    if return_inds:
+        return data_s, ind_s
+    else:
+        return data_s
 
 # ----------------------------------------------------------------------
 
@@ -1055,10 +1150,6 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
 #    """Return the data field averaged over a country."""
 
 
-# PRESSURE / VERTICAL LEVELS
-
-def near_surface():
-    """Return the pressure-level data closest to surface."""
 
 def interp_plevels():
     """Return the data interpolated onto new pressure level grid."""
