@@ -27,6 +27,35 @@ def print_odict(od, indent=2, width=20):
 
 
 # ----------------------------------------------------------------------
+# ----------------------------------------------------------------------
+def odict_insert(odict, newkey, newval, pos=0):
+    """Return an OrderedDict with key:value inserted at specified position.
+
+    Parameters
+    ----------
+    odict : collections.OrderedDict
+        Ordered dictionary to copy and insert new value into.
+    newkey : string
+        New key to insert.
+    newval : any
+        New value to insert.
+    pos : int, optional
+        Position to insert.  Default 0 (prepend to start of dict).
+
+    Returns
+    -------
+    odict_new : collections.OrderedDict
+        A copy of the dictionary with the new key:value pair inserted.
+    """
+
+    odict_new = collections.OrderedDict()
+    for i, key in enumerate(odict):
+        if i == pos:
+            odict_new[newkey] = newval
+        odict_new[key] = odict[key]
+    return odict_new
+    
+# ----------------------------------------------------------------------
 def disptime(fmt=None):
     now = datetime.now()
 
