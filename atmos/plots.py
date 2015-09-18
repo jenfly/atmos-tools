@@ -9,6 +9,7 @@ from mpl_toolkits.basemap import Basemap
 import xray
 from atmos.utils import print_if
 import atmos.data as dat
+from atmos.data import get_coord
 
 # ----------------------------------------------------------------------
 def degree_sign():
@@ -233,7 +234,8 @@ def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
     """
 
     if isinstance(data, xray.DataArray):
-        lat, lon = dat.get_lat(data), dat.get_lon(data)
+        lat = dat.get_coord(data, 'lat')
+        lon = dat.get_coord(data, 'lon')
 
     if isinstance(clev, float) or isinstance(clev, int):
         # Define contour levels from selected interval spacing
@@ -284,7 +286,8 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
     """
 
     if isinstance(data, xray.DataArray):
-        lat, lon = dat.get_lat(data), dat.get_lon(data)
+        lat = dat.get_coord(data, 'lat')
+        lon = dat.get_coord(data, 'lon')
 
     if isinstance(clev, float) or isinstance(clev, int):
         # Define contour levels from selected interval spacing

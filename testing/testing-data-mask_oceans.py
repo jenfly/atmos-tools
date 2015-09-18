@@ -36,6 +36,7 @@ ps_land2 = mask_oceans(ps, lat, lon)
 t = 0
 cmap='jet'
 
+# pcolor
 plt.figure(figsize=(7,10))
 plt.subplot(311)
 ap.pcolor_latlon(ps[t], cmap=cmap)
@@ -43,3 +44,12 @@ plt.subplot(312)
 ap.pcolor_latlon(ps_land[t], cmap=cmap)
 plt.subplot(313)
 ap.pcolor_latlon(ps_land2[t], lat, lon, cmap=cmap)
+
+# contourf, contour
+ps_plot = ps[0]/100
+cint = 100
+plt.figure(figsize=(7,8))
+plt.subplot(211)
+ap.contourf_latlon(ps_plot, clev=cint, cmap=cmap, symmetric=False)
+plt.subplot(212)
+ap.contour_latlon(ps_plot, clev=cint)
