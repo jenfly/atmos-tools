@@ -2,7 +2,7 @@
 Utility functions for atmospheric data wrangling / preparation.
 
 - ndarrays
-- xray datasets and netCDF files
+- netCDF files
 - Lat-lon geophysical data
 - Topography
 """
@@ -14,8 +14,10 @@ from mpl_toolkits import basemap
 import xray
 from xray import Dataset
 
-from atmos.utils import print_if, print_odict, disptime
+from atmos.utils import print_if, disptime
 import atmos.utils as utils
+import atmos.xrhelper as xr
+from atmos.xrhelper import subset
 
 # ======================================================================
 # NDARRAYS
@@ -140,93 +142,17 @@ def nantrapz(y, x=None, axis=-1):
 
 
 # ======================================================================
-# XRAY DATASETS AND FILE I/O
+# NETCDF FILE I/O
 # ======================================================================
-
-# ----------------------------------------------------------------------
-def ds_print(ds, indent=2, width=20):
-    """Print attributes of xray dataset and each of its variables."""
-    line = '-' * 60
-
-    # Attributes for dataset as a whole
-    print('\n' + line + '\nDATASET\n' + line)
-    print(ds)
-
-    # Coordinates attributes
-    print('\n' + line + '\nCOORDINATES\n' + line)
-    for coord in ds.coords:
-        print(coord)
-        print_odict(ds[coord].attrs, indent=indent, width=width)
-
-    # Data variables attributes
-    print('\n' + line + '\nDATA VARIABLES\n' + line)
-    for var in ds.data_vars:
-        print(var)
-        print_odict(ds[var].attrs, indent=indent, width=width)
-
-    print(line + '\n')
-
 
 # ----------------------------------------------------------------------
 def ncdisp(filename, verbose=True, decode_cf=False, indent=2, width=20):
     """Display the attributes of data in a netcdf file."""
     with xray.open_dataset(filename, decode_cf=decode_cf) as ds:
         if verbose:
-            ds_print(ds, indent, width)
+            xr.ds_print(ds, indent, width)
         else:
             print(ds)
-
-
-# ----------------------------------------------------------------------
-def ds_unpack(dataset, missing_name=u'missing_value', offset_name=u'add_offset',
-              scale_name=u'scale_factor', verbose=False, dtype=np.float64):
-    """
-    Unpack compressed data from an xray.Dataset object.
-
-    Converts compressed int data to floats and missing values to NaN.
-    Returns the results in an xray.Dataset object.
-    """
-    ds = dataset
-    for var in ds.data_vars:
-        print_if(var, verbose)
-        vals = ds[var].values
-        attrs = ds[var].attrs
-        print_if(attrs, verbose, printfunc=print_odict)
-
-        # Flag missing values for further processing
-        if missing_name in attrs:
-            missing_val = attrs[missing_name]
-            imissing = vals == missing_val
-            print_if('missing_val ' + str(missing_val), verbose)
-            print_if('Found ' + str(imissing.sum()) + ' missings', verbose)
-        else:
-            imissing = []
-            print_if('Missing values not flagged in input file', verbose)
-
-        # Get offset and scaling factors, if any
-        if offset_name in attrs:
-            offset_val = attrs[offset_name]
-            print_if('offset val ' + str(offset_val), verbose)
-        else:
-            offset_val = 0.0
-            print_if('No offset in input file, setting to 0.0', verbose)
-        if scale_name in attrs:
-            scale_val = attrs[scale_name]
-            print_if('scale val ' + str(scale_val), verbose)
-        else:
-            scale_val = 1.0
-            print_if('No scaling in input file, setting to 1.0', verbose)
-
-        # Convert from int to float with the offset and scaling
-        vals = vals * scale_val + offset_val
-
-        # Replace missing values with NaN
-        vals[imissing] = np.nan
-
-        # Replace the values in dataset with the converted ones
-        ds[var].values = vals.astype(dtype)
-
-    return ds
 
 
 # ----------------------------------------------------------------------
@@ -241,10 +167,10 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
     """
     with xray.open_dataset(filename, decode_cf=decode_cf) as ds:
         print_if('****** Reading file: ' + filename + '********', verbose)
-        print_if(ds, verbose, printfunc=ds_print)
+        print_if(ds, verbose, printfunc=xr.ds_print)
         if unpack:
             print_if('****** Unpacking data *********', verbose)
-            ds = ds_unpack(ds, verbose=verbose, missing_name=missing_name,
+            ds = xr.ds_unpack(ds, verbose=verbose, missing_name=missing_name,
                 offset_name=offset_name, scale_name=scale_name)
 
         # Use the load() function so that the dataset is available after
@@ -293,171 +219,6 @@ def load_concat(paths, var, concat_dim=None, verbose=False):
     data = xray.concat(pieces, dim=concat_dim)
     print_if(None, verbose, printfunc=disptime)
     return data
-
-
-# ----------------------------------------------------------------------
-def _subset_1dim(data, dim_name, lower_or_list, upper=None,
-                 incl_lower=True, incl_upper=True):
-    """Extract a subset of a DataArray along a named dimension."""
-
-    vals = data[dim_name]
-    if upper is None:
-        valrange = lower_or_list
-    else:
-        if incl_lower:
-            ind1 = vals >= lower_or_list
-        else:
-            ind1 = vals > lower_or_list
-        if incl_upper:
-            ind2 = vals <= upper
-        else:
-            ind2 = vals < upper
-        valrange = vals[ind1 & ind2]
-
-    return data.sel(**{dim_name : valrange}).copy()
-
-
-def subset(data, dim_name, lower_or_list, upper=None,
-           dim_name2=None, lower_or_list2=None, upper2=None,
-           incl_lower=True, incl_upper=True):
-    """Extract a subset of a DataArray along 1 or 2 named dimensions.
-
-    Returns a DataArray sub extracted from input data, such that:
-        sub[dim_name] >= lower_or_list & sub[dim_name] <= upper,
-    OR  sub[dim_name] == lower_or_list (if lower_or_list is a list)
-    And similarly for dim_name2, if included.
-
-    Parameters
-    ----------
-    data : xray.DataArray
-        Data source for extraction.
-    dim_name : string
-        Name of dimension to extract from.
-    lower_or_list : scalar or list of int or float
-        If scalar, then used as the lower bound for the   subset range.
-        If list, then the subset matching the list will be extracted.
-    upper : int or float, optional
-        Upper bound for subset range.
-    dim_name2, lower_or_list2, upper2 : optional
-        Parameters as described above for optional 2nd dimension.
-    incl_lower, incl_upper : bool, optional
-        If True lower / upper bound is inclusive, with >= or <=.
-        If False, lower / upper bound is exclusive with > or <.
-        If lower_or_list is a list, then the whole list is included
-        and these parameters are ignored.
-
-    Returns
-    -------
-        sub : xray.DataArray
-    """
-
-    sub = _subset_1dim(data, dim_name, lower_or_list, upper, incl_lower,
-                       incl_upper)
-
-    if dim_name2 is not None:
-        sub = _subset_1dim(sub, dim_name2, lower_or_list2, upper2, incl_lower,
-                           incl_upper)
-
-    return sub
-
-
-# ----------------------------------------------------------------------
-def meta_DataArray(data):
-    """Return the metadata from an xray.DataArray.
-
-    Returns copies of the coordinates and attributes, rather than
-    views, so that the output variables can be subsequently modified
-    without accidentally changing the original DataArray.
-
-    Parameters
-    ----------
-    data : xray.DataArray
-
-    Returns
-    -------
-    coords : OrderedDict
-    attrs : OrderedDict
-    name : string
-
-    Usage
-    -----
-    coords, attrs, name = meta_DataArray(data)
-    """
-
-    # Create new variables and populate them to avoid inadvertent
-    # views that could modify the originals later on
-    attrs = collections.OrderedDict()
-    for d in data.attrs:
-        attrs[d] = data.attrs[d]
-
-    coords = collections.OrderedDict()
-    # Iterate in order of data.dims so that output is in the
-    # same order as the data dimensions
-    for key in data.dims:
-        coords[key] = data.coords[key]
-
-    return coords, attrs, data.name
-
-
-# ----------------------------------------------------------------------
-def coords_init(data):
-    """Return OrderedDict of xray.DataArray-like coords for numpy array.
-
-    Parameters
-    ----------
-    data : ndarray
-
-    Returns
-    -------
-    coords : collections.OrderedDict
-        Keys are dim_0, dim_1, etc. and values are np.arange(d) for
-        each value d in data.shape.
-    """
-
-    coords = collections.OrderedDict()
-    dims = data.shape
-
-    for i, d in enumerate(dims):
-        coords['dim_' + str(i)] = np.arange(d)
-
-    return coords
-
-
-# ----------------------------------------------------------------------
-def coords_assign(coords, dim, new_name, new_val):
-    """Reassign an xray.DataArray-style coord at a given dimension.
-
-    Parameters
-    ----------
-    coords : collections.OrderedDict
-        Ordered dictionary of coord name : value pairs.
-    dim : int
-        Dimension to change (e.g. -1 for last dimension).
-    new_name : string
-        New name for coordinate key.
-    new_val : any
-        New value, e.g. numpy array of values
-
-    Returns
-    -------
-    new_coords : collections.OrderedDict
-        Ordered dictionary with altered dimension.
-
-    Example
-    -------
-    lat = np.arange(89., -89., -1.0)
-    lon = np.arange(0., 359., 1.)
-    data = np.ones((len(lat), len(lon)), dtype=float)
-    coords = coords_init(data)
-    coords = coords_assign(coords, -1, 'lon', lon)
-    coords = coords_assign(coords, -2, 'lat', lat)
-    """
-
-    items = list(coords.items())
-    items[dim] = (new_name, new_val)
-    new_coords = collections.OrderedDict(items)
-    return new_coords
-
 
 # ======================================================================
 # LAT-LON GEOPHYSICAL DATA
@@ -852,9 +613,9 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
             raise ValueError('Latitude and longitude arrays must be provided '
                 'if data is not an xray.DataArray.')
         latname, lonname = 'lat', 'lon'
-        coords = coords_init(data)
-        coords = coords_assign(coords, -1, lonname, lon)
-        coords = coords_assign(coords, -2, latname, lat)
+        coords = xr.coords_init(data)
+        coords = xr.coords_assign(coords, -1, lonname, lon)
+        coords = xr.coords_assign(coords, -2, latname, lat)
         data_out = xray.DataArray(data, coords=coords)
     else:
         data_out = data
@@ -1125,7 +886,7 @@ def near_surface(data, pdim=-3, return_inds=False):
     if isinstance(data, xray.DataArray):
         i_DataArray = True
         data = data.copy()
-        coords, attrs = meta_DataArray(data)
+        coords, attrs, name = xr.meta(data)
         title = 'Near-surface data extracted from pressure level data'
         attrs = utils.odict_insert(attrs, 'title', title, pos=0)
         pname = get_plev(data, return_name=True)
@@ -1217,7 +978,7 @@ def interp_plevels(data, plev_new, plev_in=None, pdim=-3, kind='linear'):
     if isinstance(data, xray.DataArray):
         i_DataArray = True
         data = data.copy()
-        coords, attrs, name = meta_DataArray(data)
+        coords, attrs, name = xr.meta(data)
         title = 'Pressure-level data interpolated onto new pressure grid'
         attrs = utils.odict_insert(attrs, 'title', title, pos=0)
         pname = get_plev(data, return_name=True)
