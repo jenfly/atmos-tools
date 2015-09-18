@@ -603,11 +603,25 @@ def mask_oceans(data, lat=None, lon=None, inlands=True, resolution='l',
         Data with ocean grid points set to NaN.
     """
 
+    # Maximum number of dimensions handled by this code
+    nmax = 5
+    ndim = data.ndim
+
+    if ndim > 5:
+        raise ValueError('Input data has too many dimensions. Max 5-D.')
+
     if isinstance(data, xray.DataArray):
-        lat, lon = get_lat(data), get_lon(data)
+        lat = get_coord(data, 'lat')
+        lon = get_coord(data, 'lon')
+        coords, attrs, name = xr.meta(data)
         vals = data.values.copy()
     else:
         vals = data
+
+    # Convert to 180W-180E convention that basemap.maskoceans requires
+    lonmax = lon_convention(lon)
+    if lonmax == 360:
+        vals, lon = set_lon(vals, lonmax=180, lon=lon)
 
     x, y = np.meshgrid(lon, lat)
     dims = vals.shape
@@ -641,8 +655,13 @@ def mask_oceans(data, lat=None, lon=None, inlands=True, resolution='l',
     # Convert from masked array to regular array with NaNs
     vals_out = vals_out.filled(np.nan)
 
+    # Convert back to original longitude convention
+    if lonmax == 360:
+        vals_out, lon = set_lon(vals_out, lonmax=lonmax, lon=lon)
+
     if isinstance(data, xray.DataArray):
-        data_out = xray.DataArray(vals_out, name=data.name, coords=data.coords)
+        data_out = xray.DataArray(vals_out, name=name, coords=coords,
+                                  attrs=attrs)
     else:
         data_out = vals_out
 
