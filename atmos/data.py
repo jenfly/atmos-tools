@@ -225,6 +225,70 @@ def load_concat(paths, var, concat_dim=None, verbose=False):
 # ======================================================================
 
 # ----------------------------------------------------------------------
+def get_coord(data, coord_type, return_type='values', coord_name=None):
+    """Return values, name or dimension of coordinate in DataArray.
+
+    Parameters
+    ----------
+    data : xray.DataArray
+        Data array to search for latitude coords.
+    coord_type : {'lat', 'lon', 'plev'}
+        Type of coordinate to extract.
+    return_type : {'values', 'name', 'dim'}, optional
+        'values' : Return an array of coordinate values.
+        'name' : Return the name of the coordinate.
+        'dim' : Return the dimension of the coordinate.
+    coord_name : string, optional
+        Name of coordinate in data.  If omitted, search through
+        a list of common names for a match.
+
+    Returns
+    -------
+    output : ndarray, string or int
+
+    The coordinate names searched through are:
+    'lat' : ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
+    'lon' : ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
+    'plev' : ['plev', 'plevel', 'plevels', 'Height']
+    """
+
+    names_all = dict()
+    names_all['lat'] = ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
+    names_all['lon'] = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
+    names_all['plev'] = ['plev', 'plevel', 'plevels', 'Height']
+
+    if coord_type.lower() not in names_all.keys():
+        raise ValueError('Invalid coord_type ' + coord_type + '. '
+            'Valid coord_types are ' + ', '.join(names_all.keys()))
+
+    names = names_all[coord_type.lower()]
+
+    if coord_name is None:
+        # Look in list of common coordinate names
+        found = [i for i, s in enumerate(names) if s in data.coords]
+
+        if len(found) == 0:
+            raise ValueError("Can't find coordinate name in data coords %s" %
+                             data.coords.keys())
+        if len(found) > 1:
+            raise ValueError('Conflicting possible coord names in coords %s'
+                % data.coords.keys())
+        else:
+            coord_name = names[found[0]]
+
+    if return_type == 'values':
+        output = data[coord_name].values.copy()
+    elif return_type == 'name':
+        output = coord_name
+    elif return_type == 'dim':
+        output = data.dims.index(coord_name)
+    else:
+        raise ValueError('Invalid return_type ' + return_type)
+
+    return output
+
+
+# ----------------------------------------------------------------------
 def get_lat(data, latname=None, return_name=False):
     """Return latitude array (or dimension name) from DataArray.
 
