@@ -225,101 +225,67 @@ def load_concat(paths, var, concat_dim=None, verbose=False):
 # ======================================================================
 
 # ----------------------------------------------------------------------
-def get_lat(data, latname=None, return_name=False):
-    """Return latitude array (or dimension name) from DataArray.
+def get_coord(data, coord_type, return_type='values', coord_name=None):
+    """Return values, name or dimension of coordinate in DataArray.
 
     Parameters
     ----------
     data : xray.DataArray
         Data array to search for latitude coords.
-    latname : string, optional
-        Name of latitude coord in data.  If omitted, search through
+    coord_type : {'lat', 'lon', 'plev'}
+        Type of coordinate to extract.
+    return_type : {'values', 'name', 'dim'}, optional
+        'values' : Return an array of coordinate values.
+        'name' : Return the name of the coordinate.
+        'dim' : Return the dimension of the coordinate.
+    coord_name : string, optional
+        Name of coordinate in data.  If omitted, search through
         a list of common names for a match.
-    return_name : bool, optional
-        Return the name of the latitude dimension rather than the
-        array of values.
 
     Returns
     -------
-    lat : ndarray or string
-        Latitude array or name of latitude dimension
+    output : ndarray, string or int
 
-    Notes
-    -----
-    The latitude dimension names searched for are:
-      latnames = ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
+    The coordinate names searched through are:
+    'lat' : ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
+    'lon' : ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
+    'plev' : ['plev', 'plevel', 'plevels', 'Height']
     """
 
-    latnames = ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
+    names_all = dict()
+    names_all['lat'] = ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
+    names_all['lon'] = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
+    names_all['plev'] = ['plev', 'plevel', 'plevels', 'Height']
 
-    if latname is None:
-        # Look for lat names in data coordinates
-        found = [i for i, s in enumerate(latnames) if s in data.coords]
+    if coord_type.lower() not in names_all.keys():
+        raise ValueError('Invalid coord_type ' + coord_type + '. '
+            'Valid coord_types are ' + ', '.join(names_all.keys()))
 
-        if len(found) == 0:
-            raise ValueError("Can't find latitude names in data coords %s" %
-                             data.coords.keys())
-        if len(found) > 1:
-            raise ValueError('Conflicting possible latitude names in coords %s'
-                % data.coords.keys())
-        else:
-            latname = latnames[found[0]]
+    names = names_all[coord_type.lower()]
 
-    lat = data[latname].values.copy()
-
-    if return_name:
-        return latname
-    else:
-        return lat
-
-
-# ----------------------------------------------------------------------
-def get_lon(data, lonname=None, return_name=False):
-    """Return longitude array (or dimension name) from DataArray.
-
-    Parameters
-    ----------
-    data : xray.DataArray
-        Data array to search for longitude coords.
-    lonname : string, optional
-        Name of longitude coords in data.  If omitted, search through
-        a list of common names for a match.
-    return_name : bool, optional
-        Return the name of the longitude dimension rather than the
-        array of values.
-
-    Returns
-    -------
-    lon : ndarray or string
-        Longitude array or dimension name
-
-    Notes
-    -----
-    The longitude dimension names searched for are:
-      lonnames = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
-    """
-
-    lonnames = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
-
-    if lonname is None:
-        # Look for longitude names in data coordinates
-        found = [i for i, s in enumerate(lonnames) if s in data.coords]
+    if coord_name is None:
+        # Look in list of common coordinate names
+        found = [i for i, s in enumerate(names) if s in data.coords]
 
         if len(found) == 0:
-            raise ValueError("Can't find longitude names in data coords %s" %
+            raise ValueError("Can't find coordinate name in data coords %s" %
                              data.coords.keys())
         if len(found) > 1:
-            raise ValueError('Conflicting possible longitude names in coords %s'
+            raise ValueError('Conflicting possible coord names in coords %s'
                 % data.coords.keys())
         else:
-            lonname = lonnames[found[0]]
+            coord_name = names[found[0]]
 
-    lon = data[lonname].values.copy()
-
-    if return_name:
-        return lonname
+    if return_type == 'values':
+        output = data[coord_name].values.copy()
+    elif return_type == 'name':
+        output = coord_name
+    elif return_type == 'dim':
+        output = data.dims.index(coord_name)
     else:
-        return lon
+        raise ValueError('Invalid return_type ' + return_type)
+
+    return output
 
 
 # ----------------------------------------------------------------------
@@ -327,8 +293,10 @@ def latlon_equal(data1, data2, latname1=None, lonname1=None,
                  latname2=None, lonname2=None):
     """Return True if input DataArrays have the same lat-lon coordinates."""
 
-    lat1, lon1 = get_lat(data1, latname1), get_lon(data1, lonname1)
-    lat2, lon2 = get_lat(data2, latname2), get_lon(data2, lonname2)
+    lat1 = get_coord(data1, 'lat', coord_name=latname1),
+    lon1 = get_coord(data1, 'lon', coord_name=lonname1)
+    lat2 = get_coord(data2, 'lat', coord_name=latname2),
+    lon2 = get_coord(data2, 'lon', coord_name=lonname2)
     is_equal = np.array_equal(lat1, lat2) and np.array_equal(lon1, lon2)
     return is_equal
 
@@ -439,7 +407,8 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
     """
 
     if isinstance(data, xray.DataArray):
-        lat_in, lon_in = get_lat(data), get_lon(data)
+        lat_in = get_coord(data, 'lat'),
+        lon_in = get_coord(data, 'lon')
         vals = data.values.copy()
     else:
         vals = data
@@ -535,7 +504,7 @@ def mask_oceans(data, lat=None, lon=None, inlands=True, resolution='l',
     """
 
     if isinstance(data, xray.DataArray):
-        lat, lon = get_lat(data), get_lon(data)
+        lat, lon = get_coord(data, 'lat'), get_coord(data, 'lon')
         vals = data.values.copy()
     else:
         vals = data
@@ -622,8 +591,8 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
         attrs = data.attrs
         coords = data.coords
         dims = data.dims[:-2]
-        latname = get_lat(data, return_name=True)
-        lonname = get_lon(data, return_name=True)
+        latname = get_coord(data, 'lat', 'name')
+        lonname = get_coord(data, 'lon', 'name')
 
     data_out = subset(data_out, latname, lat1, lat2, lonname, lon1, lon2)
 
@@ -635,7 +604,7 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
 
     # Array of latitudes with same NaN mask as the data so that the
     # area calculation is correct
-    lat_rad = np.radians(get_lat(data_out))
+    lat_rad = np.radians(get_coord(data_out, 'lat'))
     lat_rad = biggify(lat_rad, data_out, tile=True)
     mdat = np.ma.masked_array(data_out, np.isnan(data_out))
     lat_rad = np.ma.masked_array(lat_rad, mdat.mask)
@@ -694,60 +663,6 @@ def pres_convert(pres, units_in, units_out):
     else:
         raise ValueError('Problem with input/output units.')
     return pres_out
-
-
-# ----------------------------------------------------------------------
-def get_plev(data, plevname=None, units='hPa', return_name=False):
-    """Return pressure level array (or dimension name) from DataArray.
-
-    Parameters
-    ----------
-    data : xray.DataArray
-        Data array to search for pressure level coords.
-    lonname : string, optional
-        Name of pressure level coords in data.  If omitted, search
-        through a list of common names for a match.
-    units: string, optional
-        Pressure units to use for output.
-    return_name : bool, optional
-        Return the name of the pressure dimension rather than the
-        array of values.
-
-    Returns
-    -------
-    plev : ndarray or string
-        Pressure level array or dimension name
-
-    Notes
-    -----
-    The pressure level dimension names searched for are:
-      plevnames = ['plev', 'plevel', 'plevels', 'Height']
-    """
-
-    plevnames = ['plev', 'plevel', 'plevels', 'Height']
-
-    if plevname is None:
-        # Look for pressure level names in data coordinates
-        found = [i for i, s in enumerate(plevnames) if s in data.coords]
-
-        if len(found) == 0:
-            raise ValueError(
-                "Can't find presure level names in data coords %s" %
-                             data.coords.keys())
-        if len(found) > 1:
-            raise ValueError(
-                'Conflicting possible pressure level names in coords %s'
-                % data.coords.keys())
-        else:
-            plevname = plevnames[found[0]]
-
-    plev = data[plevname].values.copy()
-    plev = pres_convert(plev, data[plevname].units, units)
-
-    if return_name:
-        return plevname
-    else:
-        return plev
 
 
 # ----------------------------------------------------------------------
@@ -889,7 +804,7 @@ def near_surface(data, pdim=-3, return_inds=False):
         coords, attrs, name = xr.meta(data)
         title = 'Near-surface data extracted from pressure level data'
         attrs = utils.odict_insert(attrs, 'title', title, pos=0)
-        pname = get_plev(data, return_name=True)
+        pname = get_coord(data, 'plev', 'name')
         del(coords[pname])
     else:
         i_DataArray = False
@@ -981,8 +896,8 @@ def interp_plevels(data, plev_new, plev_in=None, pdim=-3, kind='linear'):
         coords, attrs, name = xr.meta(data)
         title = 'Pressure-level data interpolated onto new pressure grid'
         attrs = utils.odict_insert(attrs, 'title', title, pos=0)
-        pname = get_plev(data, return_name=True)
-        plev_in = get_plev(data)
+        pname = get_coord(data, 'plev', 'name')
+        plev_in = get_coord(data, 'plev')
         coords[pname] = xray.DataArray(plev_new, coords={pname : plev_new},
             attrs=data.coords[pname].attrs)
     else:
