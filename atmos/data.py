@@ -375,7 +375,13 @@ def meta_DataArray(data):
 
     Returns
     -------
-    coords, attrs : tuple of OrderedDicts
+    coords : OrderedDict
+    attrs : OrderedDict
+    name : string
+
+    Usage
+    -----
+    coords, attrs, name = meta_DataArray(data)
     """
 
     # Create new variables and populate them to avoid inadvertent
@@ -390,7 +396,7 @@ def meta_DataArray(data):
     for key in data.dims:
         coords[key] = data.coords[key]
 
-    return coords, attrs
+    return coords, attrs, data.name
 
 
 # ----------------------------------------------------------------------
@@ -1211,7 +1217,7 @@ def interp_plevels(data, plev_new, plev_in=None, pdim=-3, kind='linear'):
     if isinstance(data, xray.DataArray):
         i_DataArray = True
         data = data.copy()
-        coords, attrs = meta_DataArray(data)
+        coords, attrs, name = meta_DataArray(data)
         title = 'Pressure-level data interpolated onto new pressure grid'
         attrs = utils.odict_insert(attrs, 'title', title, pos=0)
         pname = get_plev(data, return_name=True)
@@ -1220,6 +1226,11 @@ def interp_plevels(data, plev_new, plev_in=None, pdim=-3, kind='linear'):
             attrs=data.coords[pname].attrs)
     else:
         i_DataArray = False
+
+    # Make sure pressure units are consistent
+    if plev_new.min() < plev_in.min() or plev_new.max() > plev_in.max():
+        raise ValueError('Output pressure levels are not contained '
+            'within input pressure levels.  Check units on each.')
 
     # Add singleton dimensions for looping, if necessary
     for i in range(ndim, nmax):
@@ -1260,7 +1271,8 @@ def interp_plevels(data, plev_new, plev_in=None, pdim=-3, kind='linear'):
 
     # Pack data_s into an xray.DataArray if input was in that form
     if i_DataArray:
-        data_i = xray.DataArray(data_i, coords=coords, attrs=attrs)
+        data_i = xray.DataArray(data_i, name=name, coords=coords,
+                                attrs=attrs)
 
     return data_i
 
