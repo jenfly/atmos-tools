@@ -3,6 +3,7 @@ Some general purpose utility functions used by other modules in this package.
 '''
 
 import numpy as np
+import collections
 from datetime import datetime
 
 # ======================================================================

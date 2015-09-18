@@ -9,6 +9,7 @@ Utility functions for atmospheric data wrangling / preparation.
 
 import numpy as np
 import collections
+import scipy.interpolate as interp
 from mpl_toolkits import basemap
 import xray
 from xray import Dataset
@@ -358,6 +359,38 @@ def subset(data, dim_name, lower_or_list, upper=None,
                            incl_upper)
 
     return sub
+
+
+# ----------------------------------------------------------------------
+def meta_DataArray(data):
+    """Return the metadata from an xray.DataArray.
+
+    Returns copies of the coordinates and attributes, rather than
+    views, so that the output variables can be subsequently modified
+    without accidentally changing the original DataArray.
+
+    Parameters
+    ----------
+    data : xray.DataArray
+
+    Returns
+    -------
+    coords, attrs : tuple of OrderedDicts
+    """
+
+    # Create new variables and populate them to avoid inadvertent
+    # views that could modify the originals later on
+    attrs = collections.OrderedDict()
+    for d in data.attrs:
+        attrs[d] = data.attrs[d]
+
+    coords = collections.OrderedDict()
+    # Iterate in order of data.dims so that output is in the
+    # same order as the data dimensions
+    for key in data.dims:
+        coords[key] = data.coords[key]
+
+    return coords, attrs
 
 
 # ----------------------------------------------------------------------
@@ -1086,15 +1119,11 @@ def near_surface(data, pdim=-3, return_inds=False):
     if isinstance(data, xray.DataArray):
         i_DataArray = True
         data = data.copy()
+        coords, attrs = meta_DataArray(data)
         title = 'Near-surface data extracted from pressure level data'
-        attrs = collections.OrderedDict({'title' : title})
-        for d in data.attrs:
-            attrs[d] = data.attrs[d]
+        attrs = utils.odict_insert(attrs, 'title', title, pos=0)
         pname = get_plev(data, return_name=True)
-        coords = collections.OrderedDict()
-        for key in data.dims:
-            if key != pname:
-                coords[key] = data.coords[key]
+        del(coords[pname])
     else:
         i_DataArray = False
 
@@ -1143,16 +1172,105 @@ def near_surface(data, pdim=-3, return_inds=False):
     else:
         return data_s
 
+
+# ----------------------------------------------------------------------
+def interp_plevels(data, plev_new, plev_in=None, pdim=-3, kind='linear'):
+    """Return the data interpolated onto new pressure level grid.
+
+    Parameters
+    ----------
+    data : ndarray or xray.DataArray
+        Input data, maximum of 5 dimensions.  Pressure levels must
+        be the last, second-last or third-last dimension.
+    plev_new : ndarray
+        New pressure levels to interpolate onto.
+    plev_in : ndarray
+        Original pressure levels of data.  If data is an xray.DataArray,
+        then the values from data.coords are used.
+    pdim : {-3, -2, -1}, optional
+        Dimension of vertical levels in data.
+    kind : string, optional
+        Type of interpolation, e.g. 'linear', 'cubic', 'nearest', etc.
+        See scipy.interpolate.interp1d for all options.
+
+    Returns
+    -------
+    data_i : ndarray or xray.DataArray
+        Interpolated data. If input data is an xray.DataArray,
+        data_i is returned as an xray.DataArray, otherwise as
+        an ndarray.
+    """
+
+    # Maximum number of dimensions handled by this code
+    nmax = 5
+    ndim = data.ndim
+
+    if ndim > 5:
+        raise ValueError('Input data has too many dimensions. Max 5-D.')
+
+    if isinstance(data, xray.DataArray):
+        i_DataArray = True
+        data = data.copy()
+        coords, attrs = meta_DataArray(data)
+        title = 'Pressure-level data interpolated onto new pressure grid'
+        attrs = utils.odict_insert(attrs, 'title', title, pos=0)
+        pname = get_plev(data, return_name=True)
+        plev_in = get_plev(data)
+        coords[pname] = xray.DataArray(plev_new, coords={pname : plev_new},
+            attrs=data.coords[pname].attrs)
+    else:
+        i_DataArray = False
+
+    # Add singleton dimensions for looping, if necessary
+    for i in range(ndim, nmax):
+        data = np.expand_dims(data, axis=0)
+
+    # Make sure pdim is indexing from end
+    pdim_in = pdim
+    if pdim > 0:
+        pdim = pdim - nmax
+
+    # Iterate over all other dimensions
+    dims = list(data.shape)
+    dims[pdim] = len(plev_new)
+    data_i = np.nan*np.ones(dims, dtype=float)
+    dims.pop(pdim)
+    for i in range(dims[0]):
+        for j in range(dims[1]):
+            for k in range(dims[2]):
+                for m in range(dims[3]):
+                    if pdim == -3:
+                        sub = data[i,j,:,k,m]
+                        view = data_i[i,j,:,k,m]
+                    elif pdim == -2:
+                        sub = data[i,j,k,:,m]
+                        view = data_i[i,j,k,:,m]
+                    elif pdim == -1:
+                        sub = data[i,j,k,m,:]
+                        view = data_i[i,j,k,m,:]
+                    else:
+                        raise ValueError('Invalid p dimension ' + str(pdim_in))
+
+                    vals_i = interp.interp1d(plev_in, sub, kind=kind)(plev_new)
+                    view[:] = vals_i
+
+    # Collapse any additional dimensions that were added
+    for i in range(ndim, data_i.ndim):
+        data_i = data_i[0]
+
+    # Pack data_s into an xray.DataArray if input was in that form
+    if i_DataArray:
+        data_i = xray.DataArray(data_i, coords=coords, attrs=attrs)
+
+    return data_i
+
+
 # ----------------------------------------------------------------------
 
 # LAT-LON GEO
 # def average_over_country():
 #    """Return the data field averaged over a country."""
 
-
-
-def interp_plevels():
-    """Return the data interpolated onto new pressure level grid."""
 
 
 def int_pres():
