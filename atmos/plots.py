@@ -182,7 +182,8 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
     """
 
     if isinstance(data, xray.DataArray):
-        lat, lon = dat.get_lat(data), dat.get_lon(data)
+        lat = dat.get_coord(data, 'lat')
+        lon = dat.get_coord(data, 'lon')
         vals = np.squeeze(data.values)
     else:
         vals = np.squeeze(data)

@@ -24,8 +24,8 @@ from atmos.xrhelper import subset
 # ======================================================================
 
 # ----------------------------------------------------------------------
-def biggify(small, big, tile=False, debug=False):
-    """Add singleton dimensions or tile an array for broadcasting.
+def biggify(small, big, tile=False):
+    """Add dimensions or tile an array for broadcasting.
 
     Parameters
     ----------
@@ -38,8 +38,6 @@ def biggify(small, big, tile=False, debug=False):
     tile : bool, optional
         If True, tile the array along the additional dimensions.
         If False, add singleton dimensions.
-    debug : bool, optional
-        Print debugging output.
 
     Returns
     -------
@@ -48,6 +46,7 @@ def biggify(small, big, tile=False, debug=False):
         for any dimension that is in big but not in small.
     """
 
+    debug = False
     dbig, dsmall = big.shape, small.shape
 
     # Check that all of the dimensions of small are contained within big
@@ -391,8 +390,11 @@ def latlon_equal(data1, data2, latname1=None, lonname1=None,
                  latname2=None, lonname2=None):
     """Return True if input DataArrays have the same lat-lon coordinates."""
 
-    lat1, lon1 = get_lat(data1, latname1), get_lon(data1, lonname1)
-    lat2, lon2 = get_lat(data2, latname2), get_lon(data2, lonname2)
+    lat1 = get_coord(data1, 'lat', coord_name=latname1)
+    lon1 = get_coord(data1, 'lon', coord_name=lonname1)
+    lat2 = get_coord(data2, 'lat', coord_name=latname2)
+    lon2 = get_coord(data2, 'lon', coord_name=lonname2)
+
     is_equal = np.array_equal(lat1, lat2) and np.array_equal(lon1, lon2)
     return is_equal
 
@@ -411,7 +413,7 @@ def lon_convention(lon):
 
 
 # ----------------------------------------------------------------------
-def set_lon(data, lonmax=360, lon=None, lonname='lon'):
+def set_lon(data, lonmax=360, lon=None, lonname=None):
     """Set data longitudes to 0-360E or 180W-180E convention.
 
     Parameters
@@ -440,7 +442,10 @@ def set_lon(data, lonmax=360, lon=None, lonname='lon'):
     """
 
     if isinstance(data, xray.DataArray):
-        lon = data[lonname]
+        lon = get_coord(data, 'lon', coord_name=lonname)
+        if lonname is None:
+            lonname = get_coord(data, 'lon', 'name')
+        coords, attrs, name = xr.meta(data)
         vals = data.values
     else:
         vals = data
@@ -456,9 +461,9 @@ def set_lon(data, lonmax=360, lon=None, lonname='lon'):
     vals_out, lon_out = basemap.shiftgrid(lon0, vals, lon, start=start)
 
     if isinstance(data, xray.DataArray):
-        data_out = data.copy()
-        data_out[lonname].values = lon_out
-        data_out.values = vals_out
+        coords[lonname].values = lon_out
+        data_out = xray.DataArray(vals_out, name=name, coords=coords,
+                                  attrs=attrs)
         return data_out
     else:
         return vals_out, lon_out

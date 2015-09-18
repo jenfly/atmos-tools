@@ -47,7 +47,7 @@ def meta(data):
     # Iterate in order of data.dims so that output is in the
     # same order as the data dimensions
     for key in data.dims:
-        coords[key] = data.coords[key]
+        coords[key] = data.coords[key].copy()
 
     return coords, attrs, data.name
 
