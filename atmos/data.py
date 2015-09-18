@@ -508,7 +508,15 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
     """
 
     if isinstance(data, xray.DataArray):
-        lat_in, lon_in = get_lat(data), get_lon(data)
+        lat_in = get_coord(data, 'lat')
+        latname = get_coord(data, 'lat', 'name')
+        lon_in = get_coord(data, 'lon')
+        lonname = get_coord(data, 'lon', 'name')
+        coords, attrs, name = xr.meta(data)
+        coords[latname] = xray.DataArray(lat_out, coords={latname : lat_out},
+                                         attrs=data[latname].attrs)
+        coords[lonname] = xray.DataArray(lon_out, coords={lonname : lon_out},
+                                         attrs=data[lonname].attrs)
         vals = data.values.copy()
     else:
         vals = data
@@ -564,13 +572,8 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
         lat_out = lat_out[::-1]
 
     if isinstance(data, xray.DataArray):
-        coords = collections.OrderedDict()
-        for key in data.coords.dims:
-            if key != 'lat' and key != 'lon':
-                coords[key] = data[key].values
-        coords['lat'] = lat_out
-        coords['lon'] = lon_out
-        data_out = xray.DataArray(vals_out, name=data.name, coords=coords)
+        data_out = xray.DataArray(vals_out, name=name, coords=coords,
+                                  attrs=attrs)
     else:
         data_out = vals_out
 
