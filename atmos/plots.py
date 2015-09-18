@@ -9,7 +9,6 @@ from mpl_toolkits.basemap import Basemap
 import xray
 from atmos.utils import print_if
 import atmos.data as dat
-from atmos.data import get_coord
 
 # ----------------------------------------------------------------------
 def degree_sign():
@@ -382,7 +381,8 @@ def pcolor_latpres(data, lat=None, plev=None, init=True, cmap='RdBu_r',
 
     # Data to be plotted
     if isinstance(data, xray.DataArray):
-        lat, plev = dat.get_lat(data), dat.get_plev(data)
+        lat = dat.get_coord(data, 'lat')
+        plev = dat.get_coord(data, 'plev')
         vals = np.squeeze(data.values)
     else:
         vals = np.squeeze(data)
@@ -456,7 +456,8 @@ def contourf_latpres(data, lat=None, plev=None, clev=None, init=True,
 
     # Data to be contoured
     if isinstance(data, xray.DataArray):
-        lat, plev = dat.get_lat(data), dat.get_plev(data)
+        lat = dat.get_coord(data, 'lat')
+        plev = dat.get_coord(data, 'plev')
 
     # Contour levels
     if isinstance(clev, float) or isinstance(clev, int):
@@ -536,7 +537,8 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
 
     # Data to be contoured
     if isinstance(data, xray.DataArray):
-        lat, plev = dat.get_lat(data), dat.get_plev(data)
+        lat = dat.get_coord(data, 'lat')
+        plev = dat.get_coord(data, 'plev')
 
     # Initialize plot
     if init:
