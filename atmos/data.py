@@ -507,6 +507,13 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
         Data interpolated onto lat_out, lon_out grid
     """
 
+    # Maximum number of dimensions handled by this code
+    nmax = 5
+    ndim = data.ndim
+
+    if ndim > 5:
+        raise ValueError('Input data has too many dimensions. Max 5-D.')
+
     if isinstance(data, xray.DataArray):
         lat_in = get_coord(data, 'lat')
         latname = get_coord(data, 'lat', 'name')
@@ -533,38 +540,28 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
 
     x_out, y_out = np.meshgrid(lon_out, lat_out)
 
-    # Interp onto new lat-lon grid, iterating over all other dimensions
-    # -- Remove the lat-lon dimensions (last 2 dimensions)
+    # Initialize output array
     dims = vals.shape
     dims = dims[:-2]
-    ndim = len(dims)
     vals_out = np.empty(dims + x_out.shape)
 
-    # Iterate over up to 3 additional dimensions
-    if ndim > 3:
-        raise ValueError('Too many dimensions in data.  Max 5-D.')
-    if ndim == 3:
-        for i in range(dims[0]):
-            for j in range(dims[1]):
-                for k in range(dims[2]):
-                    vals_out[i, j, k] = basemap.interp(
-                        vals[i, j, k], lon_in, lat_in, x_out, y_out,
-                        order=order, checkbounds=checkbounds, masked=masked)
-    elif ndim == 2:
-        for i in range(dims[0]):
-            for j in range(dims[1]):
-                vals_out[i, j] = basemap.interp(
-                    vals[i, j], lon_in, lat_in, x_out, y_out, order=order,
-                    checkbounds=checkbounds, masked=masked)
-    elif ndim == 1:
-        for i in range(dims[0]):
-            vals_out[i] = basemap.interp(
-                vals[i], lon_in, lat_in, x_out, y_out, order=order,
-                checkbounds=checkbounds, masked=masked)
-    else:
-        vals_out = basemap.interp(
-            vals, lon_in, lat_in, x_out, y_out, order=order,
-            checkbounds=checkbounds, masked=masked)
+    # Add singleton dimensions for looping, if necessary
+    for i in range(ndim, nmax):
+        vals = np.expand_dims(vals, axis=0)
+        vals_out = np.expand_dims(vals_out, axis=0)
+
+    # Interp onto new lat-lon grid, iterating over all other dimensions
+    dims = vals_out.shape[:-2]
+    for i in range(dims[0]):
+        for j in range(dims[1]):
+            for k in range(dims[2]):
+                vals_out[i, j, k] = basemap.interp(
+                    vals[i, j, k], lon_in, lat_in, x_out, y_out,
+                    order=order, checkbounds=checkbounds, masked=masked)
+
+    # Collapse any additional dimensions that were added
+    for i in range(ndim, vals_out.ndim):
+        vals_out = vals_out[0]
 
     if flip:
         # Flip everything back to previous order
