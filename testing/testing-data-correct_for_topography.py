@@ -5,6 +5,7 @@ import xray
 import atmos.utils as utils
 import atmos.plots as ap
 import atmos.data as dat
+from atmos.data import get_ps_clim, correct_for_topography
 
 # ----------------------------------------------------------------------
 # Read monthly mean climatologies and do some test calcs
@@ -21,14 +22,15 @@ v = ds['v']
 T = ds['T']
 ps = ds['ps']
 
-topo = dat.get_ps_clim(lat, lon) / 100
-topo.units = 'hPa'
+topo = get_ps_clim(lat, lon)
+topo.values /= 100
+topo.attrs['units'] = 'hPa'
 
 # ----------------------------------------------------------------------
 # Correct for topography
 
 u_orig = u
-u = dat.correct_for_topography(u_orig, topo)
+u = correct_for_topography(u_orig, topo)
 
 m, k = 3, 1
 plt.figure(figsize=(7,8))

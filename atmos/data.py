@@ -889,13 +889,14 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
     """
 
     if isinstance(data, xray.DataArray):
-        lat = data['lat'].values.copy()
-        lon = data['lon'].values.copy()
+        lat = get_coord(data, 'lat')
+        lon = get_coord(data, 'lon')
+        coords, attrs, name = xr.meta(data)
         vals = data.values.copy()
-
-        # Pressure levels in Pascals
-        plev = data['plev'].values.copy()
-        plev = pres_convert(plev, data['plev'].units, 'Pa')
+        # -- Pressure levels in Pascals
+        plev = get_coord(data, 'plev')
+        pname = get_coord(data, 'plev', 'name')
+        plev = pres_convert(plev, data[pname].units, 'Pa')
     else:
         vals = data
 
@@ -916,8 +917,7 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
         vals[...,k,ibelow] = np.nan
 
     if isinstance(data, xray.DataArray):
-        data_out = data.copy()
-        data_out.values = vals
+        data_out = xray.DataArray(vals, name=name, coords=coords, attrs=attrs)
     else:
         data_out = vals
 
