@@ -121,11 +121,11 @@ def clevels(data, cint, posneg='both', symmetric=False, omitzero=False):
 
     # Define max and min contour levels
     if symmetric:
-        cabs = math.ceil(abs(data).max() / cint) * cint
+        cabs = math.ceil(np.nanmax(abs(data)) / cint) * cint
         cmin, cmax = -cabs, cabs
     else:
-        cmin = math.floor(data.min() / cint) * cint
-        cmax = math.ceil(data.max() / cint) * cint
+        cmin = math.floor(np.nanmin(data) / cint) * cint
+        cmax = math.ceil(np.nanmax(data) / cint) * cint
     if posneg == 'pos':
         cmin = 0
     elif posneg == 'neg':
