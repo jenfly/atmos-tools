@@ -287,102 +287,102 @@ def get_coord(data, coord_type, return_type='values', coord_name=None):
     return output
 
 
-# ----------------------------------------------------------------------
-def get_lat(data, latname=None, return_name=False):
-    """Return latitude array (or dimension name) from DataArray.
-
-    Parameters
-    ----------
-    data : xray.DataArray
-        Data array to search for latitude coords.
-    latname : string, optional
-        Name of latitude coord in data.  If omitted, search through
-        a list of common names for a match.
-    return_name : bool, optional
-        Return the name of the latitude dimension rather than the
-        array of values.
-
-    Returns
-    -------
-    lat : ndarray or string
-        Latitude array or name of latitude dimension
-
-    Notes
-    -----
-    The latitude dimension names searched for are:
-      latnames = ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
-    """
-
-    latnames = ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
-
-    if latname is None:
-        # Look for lat names in data coordinates
-        found = [i for i, s in enumerate(latnames) if s in data.coords]
-
-        if len(found) == 0:
-            raise ValueError("Can't find latitude names in data coords %s" %
-                             data.coords.keys())
-        if len(found) > 1:
-            raise ValueError('Conflicting possible latitude names in coords %s'
-                % data.coords.keys())
-        else:
-            latname = latnames[found[0]]
-
-    lat = data[latname].values.copy()
-
-    if return_name:
-        return latname
-    else:
-        return lat
-
-
-# ----------------------------------------------------------------------
-def get_lon(data, lonname=None, return_name=False):
-    """Return longitude array (or dimension name) from DataArray.
-
-    Parameters
-    ----------
-    data : xray.DataArray
-        Data array to search for longitude coords.
-    lonname : string, optional
-        Name of longitude coords in data.  If omitted, search through
-        a list of common names for a match.
-    return_name : bool, optional
-        Return the name of the longitude dimension rather than the
-        array of values.
-
-    Returns
-    -------
-    lon : ndarray or string
-        Longitude array or dimension name
-
-    Notes
-    -----
-    The longitude dimension names searched for are:
-      lonnames = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
-    """
-
-    lonnames = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
-
-    if lonname is None:
-        # Look for longitude names in data coordinates
-        found = [i for i, s in enumerate(lonnames) if s in data.coords]
-
-        if len(found) == 0:
-            raise ValueError("Can't find longitude names in data coords %s" %
-                             data.coords.keys())
-        if len(found) > 1:
-            raise ValueError('Conflicting possible longitude names in coords %s'
-                % data.coords.keys())
-        else:
-            lonname = lonnames[found[0]]
-
-    lon = data[lonname].values.copy()
-
-    if return_name:
-        return lonname
-    else:
-        return lon
+# # ----------------------------------------------------------------------
+# def get_lat(data, latname=None, return_name=False):
+#     """Return latitude array (or dimension name) from DataArray.
+#
+#     Parameters
+#     ----------
+#     data : xray.DataArray
+#         Data array to search for latitude coords.
+#     latname : string, optional
+#         Name of latitude coord in data.  If omitted, search through
+#         a list of common names for a match.
+#     return_name : bool, optional
+#         Return the name of the latitude dimension rather than the
+#         array of values.
+#
+#     Returns
+#     -------
+#     lat : ndarray or string
+#         Latitude array or name of latitude dimension
+#
+#     Notes
+#     -----
+#     The latitude dimension names searched for are:
+#       latnames = ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
+#     """
+#
+#     latnames = ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
+#
+#     if latname is None:
+#         # Look for lat names in data coordinates
+#         found = [i for i, s in enumerate(latnames) if s in data.coords]
+#
+#         if len(found) == 0:
+#             raise ValueError("Can't find latitude names in data coords %s" %
+#                              data.coords.keys())
+#         if len(found) > 1:
+#             raise ValueError('Conflicting possible latitude names in coords %s'
+#                 % data.coords.keys())
+#         else:
+#             latname = latnames[found[0]]
+#
+#     lat = data[latname].values.copy()
+#
+#     if return_name:
+#         return latname
+#     else:
+#         return lat
+#
+#
+# # ----------------------------------------------------------------------
+# def get_lon(data, lonname=None, return_name=False):
+#     """Return longitude array (or dimension name) from DataArray.
+#
+#     Parameters
+#     ----------
+#     data : xray.DataArray
+#         Data array to search for longitude coords.
+#     lonname : string, optional
+#         Name of longitude coords in data.  If omitted, search through
+#         a list of common names for a match.
+#     return_name : bool, optional
+#         Return the name of the longitude dimension rather than the
+#         array of values.
+#
+#     Returns
+#     -------
+#     lon : ndarray or string
+#         Longitude array or dimension name
+#
+#     Notes
+#     -----
+#     The longitude dimension names searched for are:
+#       lonnames = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
+#     """
+#
+#     lonnames = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
+#
+#     if lonname is None:
+#         # Look for longitude names in data coordinates
+#         found = [i for i, s in enumerate(lonnames) if s in data.coords]
+#
+#         if len(found) == 0:
+#             raise ValueError("Can't find longitude names in data coords %s" %
+#                              data.coords.keys())
+#         if len(found) > 1:
+#             raise ValueError('Conflicting possible longitude names in coords %s'
+#                 % data.coords.keys())
+#         else:
+#             lonname = lonnames[found[0]]
+#
+#     lon = data[lonname].values.copy()
+#
+#     if return_name:
+#         return lonname
+#     else:
+#         return lon
 
 
 # ----------------------------------------------------------------------
@@ -716,7 +716,7 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
 
     # Array of latitudes with same NaN mask as the data so that the
     # area calculation is correct
-    lat_rad = np.radians(get_lat(data_out))
+    lat_rad = np.radians(get_coord(data_out, 'lat'))
     lat_rad = biggify(lat_rad, data_out, tile=True)
     mdat = np.ma.masked_array(data_out, np.isnan(data_out))
     lat_rad = np.ma.masked_array(lat_rad, mdat.mask)
