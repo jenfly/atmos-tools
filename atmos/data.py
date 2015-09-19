@@ -18,6 +18,7 @@ from atmos.utils import print_if, disptime
 import atmos.utils as utils
 import atmos.xrhelper as xr
 from atmos.xrhelper import subset
+from atmos.constants import const as constants
 
 # ======================================================================
 # NDARRAYS
@@ -964,12 +965,37 @@ def interp_plevels(data, plev_new, plev_in=None, pdim=-3, kind='linear'):
 
 
 # ----------------------------------------------------------------------
+def int_pres(data, plev=None, pdim=-3):
+    """Return the data integrated vertically by pressure."""
+
+    if isinstance(data, xray.DataArray):
+        i_DataArray = True
+        vals = data.values.copy()
+        coords, attrs, name = xr.meta(data)
+        title = 'Vertically integrated by dp/g'
+        attrs = utils.odict_insert(attrs, 'title', title, pos=0)
+        pname = get_coord(data, 'plev', 'name')
+        del(coords[pname])
+        # -- Make sure pressure levels are in Pa
+        plev = get_coord(data, 'plev')
+        plev = pres_convert(plev, data[pname].units, 'Pa')
+    else:
+        i_DataArray = False
+        vals = data
+
+    vals_int = nantrapz(vals, plev, axis=pdim)
+    vals_int /= constants.g.values
+
+    if isinstance(data, xray.DataArray):
+        data_out = xray.DataArray(vals_int, name=name, coords=coords,
+                                  attrs=attrs)
+    else:
+        data_out = vals_int
+
+    return data_out
+
+# ----------------------------------------------------------------------
 
 # LAT-LON GEO
 # def average_over_country():
 #    """Return the data field averaged over a country."""
-
-
-
-def int_pres():
-    """Return the data integrated vertically by pressure."""
