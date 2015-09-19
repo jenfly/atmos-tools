@@ -967,7 +967,6 @@ def near_surface(data, pdim=-3, return_inds=False):
         title = 'Near-surface data extracted from pressure level data'
         attrs = utils.odict_insert(attrs, 'title', title, pos=0)
         pname = get_coord(data, 'plev', 'name')
-        #pname = get_plev(data, return_name=True)
         del(coords[pname])
     else:
         i_DataArray = False
@@ -1059,8 +1058,8 @@ def interp_plevels(data, plev_new, plev_in=None, pdim=-3, kind='linear'):
         coords, attrs, name = xr.meta(data)
         title = 'Pressure-level data interpolated onto new pressure grid'
         attrs = utils.odict_insert(attrs, 'title', title, pos=0)
-        pname = get_plev(data, return_name=True)
-        plev_in = get_plev(data)
+        pname = get_coord(data, 'plev', 'name')
+        plev_in = get_coord(data, 'plev')
         coords[pname] = xray.DataArray(plev_new, coords={pname : plev_new},
             attrs=data.coords[pname].attrs)
     else:
