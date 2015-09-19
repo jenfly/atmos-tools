@@ -966,7 +966,8 @@ def near_surface(data, pdim=-3, return_inds=False):
         coords, attrs, name = xr.meta(data)
         title = 'Near-surface data extracted from pressure level data'
         attrs = utils.odict_insert(attrs, 'title', title, pos=0)
-        pname = get_plev(data, return_name=True)
+        pname = get_coord(data, 'plev', 'name')
+        #pname = get_plev(data, return_name=True)
         del(coords[pname])
     else:
         i_DataArray = False
@@ -1008,7 +1009,7 @@ def near_surface(data, pdim=-3, return_inds=False):
 
     # Pack data_s into an xray.DataArray if input was in that form
     if i_DataArray:
-        data_s = xray.DataArray(data_s, coords=coords, attrs=attrs)
+        data_s = xray.DataArray(data_s, name=name, coords=coords, attrs=attrs)
 
     # Return data only, or tuple of data plus array of indices extracted
     if return_inds:

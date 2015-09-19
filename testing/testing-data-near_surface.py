@@ -5,6 +5,7 @@ import xray
 import atmos.utils as utils
 import atmos.plots as ap
 import atmos.data as dat
+from atmos.data import near_surface
 
 # ----------------------------------------------------------------------
 # Read monthly mean climatologies and do some test calcs
@@ -33,13 +34,19 @@ u = dat.correct_for_topography(u_orig, topo)
 # ----------------------------------------------------------------------
 # Near-surface data
 
-u_s, ind_s = dat.near_surface(u, pdim=-3, return_inds=True)
+# DataArray
+u_s, ind_s = near_surface(u, pdim=-3, return_inds=True)
+
+# ndarray
+u_s2 = near_surface(u.values, pdim=-3, return_inds=False)
 
 m = 0
-plt.figure(figsize=(7,10))
-plt.subplot(311)
+plt.figure(figsize=(12,10))
+plt.subplot(221)
 ap.pcolor_latlon(u[m,0], cmap='jet')
-plt.subplot(312)
+plt.subplot(222)
 ap.pcolor_latlon(u_s[m], cmap='jet')
-plt.subplot(313)
+plt.subplot(223)
+ap.pcolor_latlon(u_s2[m], lat, lon, cmap='jet')
+plt.subplot(224)
 ap.pcolor_latlon(ind_s[m], lat, lon, cmap='jet')
