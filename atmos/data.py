@@ -965,34 +965,69 @@ def interp_plevels(data, plev_new, plev_in=None, pdim=-3, kind='linear'):
 
 
 # ----------------------------------------------------------------------
-def int_pres(data, plev=None, pdim=-3):
-    """Return the data integrated vertically by pressure."""
+def int_pres(data, plev=None, pdim=-3, pmin=0, pmax=1e6):
+    """Return the mass-weighted vertical integral of the data.
+
+    Parameters
+    ----------
+    data : xray.DataArray or ndarray
+        Data to be integrated, on pressure levels.
+    plev : ndarray, optional
+        Vertical pressure levels in Pascals.  Only used if data
+        is an ndarray.  If data is a DataArray, plev is extracted
+        from data and converted to Pa if necessary.
+    pdim : int, optional
+        Dimension of vertical pressure levels in data.
+    pmin, pmax : float, optional
+        Lower and upper bounds (inclusive) of pressure levels (Pa)
+        to include in integration.
+
+    Returns
+    -------
+    data_int : xray.DataArray or ndarray
+        Mass-weighted vertical integral of data from pmin to pmax.
+    """
 
     if isinstance(data, xray.DataArray):
         i_DataArray = True
-        vals = data.values.copy()
-        coords, attrs, name = xr.meta(data)
+        data = data.copy()
+        coords, _, name = xr.meta(data)
+        attrs = collections.OrderedDict()
         title = 'Vertically integrated by dp/g'
-        attrs = utils.odict_insert(attrs, 'title', title, pos=0)
+        attrs['title'] = title
+        if 'long_name' in data.attrs.keys():
+            attrs['long_name'] = data.attrs['long_name']
+        if 'units' in data.attrs.keys():
+            attrs['units'] = '(' + data.attrs['units'] + ') * kg'
         pname = get_coord(data, 'plev', 'name')
         del(coords[pname])
         # -- Make sure pressure levels are in Pa
         plev = get_coord(data, 'plev')
         plev = pres_convert(plev, data[pname].units, 'Pa')
+        data[pname].values = plev
     else:
         i_DataArray = False
-        vals = data
+        # Pack into DataArray to easily extract pressure level subset
+        pname = 'plev'
+        coords = xr.coords_init(data)
+        coords = xr.coords_assign(coords, pdim, pname, plev)
+        data = xray.DataArray(data, coords=coords)
 
-    vals_int = nantrapz(vals, plev, axis=pdim)
+    # Extract subset and integrate
+    data = subset(data, pname, pmin, pmax)
+    vals_int = nantrapz(data.values, data[pname].values, axis=pdim)
     vals_int /= constants.g.values
 
-    if isinstance(data, xray.DataArray):
-        data_out = xray.DataArray(vals_int, name=name, coords=coords,
+    if utils.strictly_decreasing(plev):
+        vals_int = -vals_int
+
+    if i_DataArray:
+        data_int = xray.DataArray(vals_int, name=name, coords=coords,
                                   attrs=attrs)
     else:
-        data_out = vals_int
+        data_int = vals_int
 
-    return data_out
+    return data_int
 
 # ----------------------------------------------------------------------
 

@@ -5,6 +5,7 @@ import xray
 import atmos.utils as utils
 import atmos.plots as ap
 import atmos.data as dat
+from atmos.constants import const as constants
 from atmos.data import get_coord, int_pres
 
 # ----------------------------------------------------------------------
@@ -34,35 +35,45 @@ u = dat.correct_for_topography(u_orig, topo)
 # ----------------------------------------------------------------------
 # Integrated vertically dp/g
 
+# DataArray
 u_int = int_pres(u, pdim=-3)
 
-plev_new = np.arange(1000,0,-25.)
-
-# DataArray
-u_i = interp_plevels(u, plev_new, pdim=-3)
-
 # ndarray
-u_i2 = interp_plevels(u, plev_new, plev, pdim=-3)
+u_int2 = int_pres(u.values, plev*100, pdim=-3)
 
-m, i, j = 0, 35, 70
-cint=5
+p0=1e5
+g = constants.g.values
+scale = g/p0
 
-plt.figure(figsize=(7,8))
-plt.subplot(211)
-plt.plot(u[m,:,i,j], plev, 'b.-')
-plt.plot(u_i[m,:,i,j], plev_new, 'r*')
-plt.gca().invert_yaxis()
-plt.subplot(212)
-plt.plot(u[m,:,i,j], plev, 'b.-')
-plt.plot(u_i2[m,:,i,j], plev_new, 'r*')
-plt.gca().invert_yaxis()
-plt.draw()
-
+m = 7
+k = 5
+cint=2
 
 plt.figure(figsize=(7,10))
 plt.subplot(311)
-ap.contour_latpres(u[m,:,:,j], clev=cint)
+ap.contourf_latlon(u[m,k], clev=cint)
 plt.subplot(312)
-ap.contour_latpres(u_i[m,:,:,j], clev=cint)
+ap.contourf_latlon(scale*u_int[m], clev=cint)
 plt.subplot(313)
-ap.contour_latpres(u_i2[m,:,:,j], lat, plev, clev=cint)
+ap.contourf_latlon(scale*u_int2[m], lat, lon, clev=cint)
+
+# ----------------------------------------------------------------------
+# Integrate over subset
+# pmin = 400e2
+# pmax = 600e2
+# m, k = 3, 5
+pmin, pmax = 600e2, 1000e2
+m, k = 3, 2
+scale = g/(pmax-pmin)
+cint=1
+
+u_int = int_pres(u, pdim=-3, pmin=pmin, pmax=pmax)
+u_int2 = int_pres(u.values, plev*100, pdim=-3, pmin=pmin, pmax=pmax)
+
+plt.figure(figsize=(7,10))
+plt.subplot(311)
+ap.contourf_latlon(u[m,k], clev=cint)
+plt.subplot(312)
+ap.contourf_latlon(scale*u_int[m], clev=cint)
+plt.subplot(313)
+ap.contourf_latlon(scale*u_int2[m], lat, lon, clev=cint)
