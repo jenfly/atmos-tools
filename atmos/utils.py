@@ -58,6 +58,30 @@ def odict_insert(odict, newkey, newval, pos=0):
 
 
 # ----------------------------------------------------------------------
+def odict_delete(odict, key):
+    """Return an OrderedDict with selected key:value pair removed.
+
+    Parameters
+    ----------
+    odict : collections.OrderedDict
+        Ordered dictionary to copy and insert new value into.
+    key : string
+        Key to delete.
+
+    Returns
+    -------
+    odict_new : collections.OrderedDict
+        A copy of the dictionary the new key:value pair deleted.
+    """
+
+    odict_new = collections.OrderedDict()
+    for k in odict.keys():
+        if k != key:
+            odict_new[k] = odict[k]
+    return odict_new
+
+
+# ----------------------------------------------------------------------
 def disptime(fmt=None):
     now = datetime.now()
 
