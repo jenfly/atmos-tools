@@ -637,8 +637,9 @@ def mask_oceans(data, lat=None, lon=None, inlands=True, resolution='l',
     for i in range(dims[0]):
         for j in range(dims[1]):
             for k in range(dims[2]):
-                vals_out[i, j, k] = basemap.maskoceans(x, y, vals[i, j, k],
-                    inlands=inlands, resolution=resolution, grid=grid)
+                vals_out[i, j, k] = basemap.maskoceans(
+                    x, y, vals[i, j, k], inlands=inlands,
+                    resolution=resolution, grid=grid)
 
     # Convert from masked array to regular array with NaNs
     vals_out = vals_out.filled(np.nan)
@@ -699,16 +700,16 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
         data_out = xray.DataArray(data, coords=coords)
     else:
         data_out = data
-        attrs = data.attrs
-        coords = data.coords
-        dims = data.dims[:-2]
-        latname = get_lat(data, return_name=True)
-        lonname = get_lon(data, return_name=True)
-
-    data_out = subset(data_out, latname, lat1, lat2, lonname, lon1, lon2)
+        coords, attrs, name = xr.meta(data)
+        latname = get_coord(data, 'lat', 'name')
+        lonname = get_coord(data, 'lon', 'name')
+        coords = utils.odict_delete(coords, latname)
+        coords = utils.odict_delete(coords, lonname)
 
     if land_only:
         data_out = mask_oceans(data_out)
+
+    data_out = subset(data_out, latname, lat1, lat2, lonname, lon1, lon2)
 
     # Mean over longitudes
     data_out = data_out.mean(axis=-1)
@@ -734,9 +735,7 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
 
     # Pack output into DataArray with the metadata that was lost in np.trapz
     if isinstance(data, xray.DataArray) and not isinstance(avg, xray.DataArray):
-        avg = xray.DataArray(avg, dims=dims, attrs=attrs)
-        for d in dims:
-            avg[d] = coords[d]
+        avg = xray.DataArray(avg, name=name, coords=coords, attrs=attrs)
 
     return avg
 

@@ -1,4 +1,4 @@
-"""Testing mask_oceans and mean_over_geobox"""
+"""Testing mean_over_geobox"""
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,6 +6,8 @@ import xray
 
 import atmos.plots as ap
 import atmos.data as dat
+import atmos.utils as utils
+from atmos.data import get_coord, mean_over_geobox
 
 # ----------------------------------------------------------------------
 # Read data
@@ -16,18 +18,9 @@ ds = xray.open_dataset(url)
 T = ds['T']
 ps = ds['PS']
 q = ds['QV']
-plev = dat.get_plev(T, units='Pa')
-lat, lon = dat.get_lat(ps), dat.get_lon(ps)
-
-
-# ----------------------------------------------------------------------
-# Masking ocean
-
-T_land = dat.mask_oceans(T, inlands=True)
-
-t, k = 0, 10
-plt.figure()
-ap.pcolor_latlon(T_land[t,k], cmap='jet')
+lat = get_coord(ps, 'lat')
+lon = get_coord(ps, 'lon')
+plev = get_coord(T, 'plev')
 
 # ----------------------------------------------------------------------
 # Averaging over box - constant array
@@ -37,11 +30,11 @@ lat1, lat2 = 65, 85
 
 data = 2.5 * np.ones(ps.shape)
 
-avg1 = dat.mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=lat, lon=lon,
+avg1 = mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=lat, lon=lon,
     area_wtd=False)
-avg2 = dat.mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=lat, lon=lon,
+avg2 = mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=lat, lon=lon,
     area_wtd=True)
-avg3 = dat.mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=lat, lon=lon,
+avg3 = mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=lat, lon=lon,
     area_wtd=True, land_only=True)
 
 print(avg1)
@@ -52,8 +45,8 @@ print(avg3)
 # Averaging over box
 def testing(data, lat1, lat2, lon1, lon2, t, k):
 
-    latname = dat.get_lat(data, return_name=True)
-    lonname = dat.get_lon(data, return_name=True)
+    latname = get_coord(data, 'lat', 'name')
+    lonname = get_coord(data, 'lon', 'name')
 
     data_sub = dat.subset(data, latname, lat1, lat2, lonname, lon1, lon2)
 
@@ -61,9 +54,9 @@ def testing(data, lat1, lat2, lon1, lon2, t, k):
     ap.pcolor_latlon(data_sub[t,k], axlims=(lat1,lat2,lon1,lon2), cmap='jet')
 
     avg0 = data_sub.mean(axis=-1).mean(axis=-1)
-    avg1 = dat.mean_over_geobox(data, lat1, lat2, lon1, lon2, area_wtd=False)
-    avg2 = dat.mean_over_geobox(data, lat1, lat2, lon1, lon2, area_wtd=True)
-    avg3 = dat.mean_over_geobox(data, lat1, lat2, lon1, lon2, area_wtd=True,
+    avg1 = mean_over_geobox(data, lat1, lat2, lon1, lon2, area_wtd=False)
+    avg2 = mean_over_geobox(data, lat1, lat2, lon1, lon2, area_wtd=True)
+    avg3 = mean_over_geobox(data, lat1, lat2, lon1, lon2, area_wtd=True,
                             land_only=True)
 
     print(avg0[t, k].values)
