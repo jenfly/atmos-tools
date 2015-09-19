@@ -850,19 +850,17 @@ def get_ps_clim(lat, lon, datafile='data/topo/ncep2_ps.nc'):
 
     ds = ncload(datafile)
     ps = ds['ps']
+    ps.attrs = utils.odict_insert(ps.attrs, 'title', ds.attrs['title'], pos=0)
 
     # Check what longitude convention is used in the surface pressure
     # climatology and switch if necessary
     lonmax = lon_convention(lon)
-    if lon_convention(ps['lon'].values) != lonmax:
+    lon_ps = get_coord(ps, 'lon')
+    if lon_convention(lon_ps) != lonmax:
         ps = set_lon(ps, lonmax)
 
     # Interpolate ps onto lat-lon grid
     ps = interp_latlon(ps, lat, lon)
-
-    # Add metadata to output DataArray
-    ps.attrs = ds['ps'].attrs
-    ps.attrs['title'] = ds.attrs['title']
 
     return ps
 
