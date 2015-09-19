@@ -4,7 +4,7 @@ Utility functions for atmospheric data wrangling / preparation.
 - ndarrays
 - netCDF files
 - Lat-lon geophysical data
-- Topography
+- Pressure level data and topography
 """
 
 import numpy as np
@@ -285,104 +285,6 @@ def get_coord(data, coord_type, return_type='values', coord_name=None):
         raise ValueError('Invalid return_type ' + return_type)
 
     return output
-
-
-# # ----------------------------------------------------------------------
-# def get_lat(data, latname=None, return_name=False):
-#     """Return latitude array (or dimension name) from DataArray.
-#
-#     Parameters
-#     ----------
-#     data : xray.DataArray
-#         Data array to search for latitude coords.
-#     latname : string, optional
-#         Name of latitude coord in data.  If omitted, search through
-#         a list of common names for a match.
-#     return_name : bool, optional
-#         Return the name of the latitude dimension rather than the
-#         array of values.
-#
-#     Returns
-#     -------
-#     lat : ndarray or string
-#         Latitude array or name of latitude dimension
-#
-#     Notes
-#     -----
-#     The latitude dimension names searched for are:
-#       latnames = ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
-#     """
-#
-#     latnames = ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
-#
-#     if latname is None:
-#         # Look for lat names in data coordinates
-#         found = [i for i, s in enumerate(latnames) if s in data.coords]
-#
-#         if len(found) == 0:
-#             raise ValueError("Can't find latitude names in data coords %s" %
-#                              data.coords.keys())
-#         if len(found) > 1:
-#             raise ValueError('Conflicting possible latitude names in coords %s'
-#                 % data.coords.keys())
-#         else:
-#             latname = latnames[found[0]]
-#
-#     lat = data[latname].values.copy()
-#
-#     if return_name:
-#         return latname
-#     else:
-#         return lat
-#
-#
-# # ----------------------------------------------------------------------
-# def get_lon(data, lonname=None, return_name=False):
-#     """Return longitude array (or dimension name) from DataArray.
-#
-#     Parameters
-#     ----------
-#     data : xray.DataArray
-#         Data array to search for longitude coords.
-#     lonname : string, optional
-#         Name of longitude coords in data.  If omitted, search through
-#         a list of common names for a match.
-#     return_name : bool, optional
-#         Return the name of the longitude dimension rather than the
-#         array of values.
-#
-#     Returns
-#     -------
-#     lon : ndarray or string
-#         Longitude array or dimension name
-#
-#     Notes
-#     -----
-#     The longitude dimension names searched for are:
-#       lonnames = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
-#     """
-#
-#     lonnames = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
-#
-#     if lonname is None:
-#         # Look for longitude names in data coordinates
-#         found = [i for i, s in enumerate(lonnames) if s in data.coords]
-#
-#         if len(found) == 0:
-#             raise ValueError("Can't find longitude names in data coords %s" %
-#                              data.coords.keys())
-#         if len(found) > 1:
-#             raise ValueError('Conflicting possible longitude names in coords %s'
-#                 % data.coords.keys())
-#         else:
-#             lonname = lonnames[found[0]]
-#
-#     lon = data[lonname].values.copy()
-#
-#     if return_name:
-#         return lonname
-#     else:
-#         return lon
 
 
 # ----------------------------------------------------------------------
@@ -773,60 +675,6 @@ def pres_convert(pres, units_in, units_out):
     else:
         raise ValueError('Problem with input/output units.')
     return pres_out
-
-
-# ----------------------------------------------------------------------
-def get_plev(data, plevname=None, units='hPa', return_name=False):
-    """Return pressure level array (or dimension name) from DataArray.
-
-    Parameters
-    ----------
-    data : xray.DataArray
-        Data array to search for pressure level coords.
-    lonname : string, optional
-        Name of pressure level coords in data.  If omitted, search
-        through a list of common names for a match.
-    units: string, optional
-        Pressure units to use for output.
-    return_name : bool, optional
-        Return the name of the pressure dimension rather than the
-        array of values.
-
-    Returns
-    -------
-    plev : ndarray or string
-        Pressure level array or dimension name
-
-    Notes
-    -----
-    The pressure level dimension names searched for are:
-      plevnames = ['plev', 'plevel', 'plevels', 'Height']
-    """
-
-    plevnames = ['plev', 'plevel', 'plevels', 'Height']
-
-    if plevname is None:
-        # Look for pressure level names in data coordinates
-        found = [i for i, s in enumerate(plevnames) if s in data.coords]
-
-        if len(found) == 0:
-            raise ValueError(
-                "Can't find presure level names in data coords %s" %
-                             data.coords.keys())
-        if len(found) > 1:
-            raise ValueError(
-                'Conflicting possible pressure level names in coords %s'
-                % data.coords.keys())
-        else:
-            plevname = plevnames[found[0]]
-
-    plev = data[plevname].values.copy()
-    plev = pres_convert(plev, data[plevname].units, units)
-
-    if return_name:
-        return plevname
-    else:
-        return plev
 
 
 # ----------------------------------------------------------------------

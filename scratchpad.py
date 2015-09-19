@@ -14,6 +14,7 @@ import atmos.data as dat
 import atmos.variables as av
 from atmos.utils import print_if
 from atmos.constants import const as constants
+from atmos.data import get_coord
 
 # ----------------------------------------------------------------------
 # Linear regression
@@ -47,8 +48,9 @@ ds = xray.open_dataset(url)
 T = ds['T']
 ps = ds['PS']
 q = ds['QV']
-plev = dat.get_plev(T, units='Pa')
-lat, lon = dat.get_lat(ps), dat.get_lon(ps)
+plev = get_coord(T, 'plev')
+lat = get_coord(T, 'lat')
+lon = get_coord(T, 'lon')
 
 # t, k = 0, 6
 # t, k = 0, 22
