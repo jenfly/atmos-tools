@@ -643,6 +643,75 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
     return avg
 
 
+# ----------------------------------------------------------------------
+def divergence_spherical_2d(Fx, Fy, lat=None, lon=None, return_comp=False):
+    """Return the 2-D spherical divergence.
+
+    Parameters
+    ----------
+    Fx, Fy : ndarrays or xray.DataArrays
+        Longitude, latitude components of a vector function in
+        spherical coordinates.  Latitude and longitude should be the
+        second-last and last dimensions, respectively, of Fx and Fy.
+    lat, lon : ndarrays
+        Longitude and latitude in degrees.  If these are omitted, then
+        Fx and Fy must be xray.DataArrays with latitude and longitude
+        in degrees within the coordinates.
+    return_comp : bool, optional
+        If True, return the x and y components of the divergence
+        along with the total.  Otherwise, return only the total
+        divergence.
+
+    Returns
+    -------
+    If return_comp is True:
+    d, d1, d2 : ndarrays or xray.DataArrays
+        d1 = dFx/dx, d2 = dFy/dy, and d = d1 + d2.
+
+    If return_comp is False:
+    d : ndarray or xray.DataArray
+        d = dFx/dx + dFy/dy
+    """
+
+    if isinstance(Fx, xray.DataArray):
+        coords, attrs, name = xr.meta(Fx)
+    if lat is None:
+        lat = get_coord(Fx, 'lat')
+    if lon is None:
+        lon = get_coord(Fx, 'lon')
+
+    R = constants.radius_earth.values
+    lon_rad = np.radians(lon)
+    lat_rad = np.radians(lat)
+    dims = Fx.shape
+    nlon = dims[-1]
+    nlat = dims[-2]
+
+    d1 = np.zeros(dims, dtype=float)
+    d2 = np.zeros(dims, dtype=float)
+
+    for i in range(len(lat)):
+        dx = np.gradient(lon_rad)
+        coslat = np.cos(lat_rad[i])
+        d1[...,i,:] = np.gradient(np.squeeze(Fx[...,i,:]), dx) / (R*coslat)
+    for j in range(len(lon)):
+        dy = np.gradient(lat_rad)
+        coslat = np.cos(lat_rad)
+        d2[...,j] = np.gradient(np.squeeze(Fy[...,j])*coslat, dy) / (R*coslat)
+
+    d = d1 + d2
+
+    if isinstance(Fx, xray.DataArray):
+        d = xray.DataArray(d, coords=coords)
+        d1 = xray.DataArray(d1, coords=coords)
+        d2 = xray.DataArray(d2, coords=coords)
+
+    if return_comp:
+        return d, d1, d2
+    else:
+        return d
+
+        
 # ======================================================================
 # PRESSURE LEVEL DATA AND TOPOGRAPHY
 # ======================================================================
@@ -1029,7 +1098,8 @@ def int_pres(data, plev=None, pdim=-3, pmin=0, pmax=1e6):
 
     return data_int
 
-# ----------------------------------------------------------------------
+
+
 
 # LAT-LON GEO
 # def average_over_country():

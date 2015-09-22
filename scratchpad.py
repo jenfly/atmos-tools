@@ -16,6 +16,22 @@ from atmos.utils import print_if
 from atmos.constants import const as constants
 from atmos.data import get_coord
 
+
+# ----------------------------------------------------------------------
+# Gradients
+
+n = 100
+x = np.linspace(0, 2*np.pi, n)
+x[5] = np.nan
+x[60:70] = np.nan
+y = np.sin(x)
+dydx = np.gradient(y, np.gradient(x))
+
+plt.figure()
+plt.plot(x, y, 'b')
+plt.plot(x, dydx, 'r')
+plt.plot(x, np.cos(x), 'k--')
+
 # ----------------------------------------------------------------------
 # Linear regression
 
