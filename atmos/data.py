@@ -653,7 +653,7 @@ def divergence_spherical_2d(Fx, Fy, lat=None, lon=None, return_comp=False):
         Longitude, latitude components of a vector function in
         spherical coordinates.  Latitude and longitude should be the
         second-last and last dimensions, respectively, of Fx and Fy.
-    lat, lon : ndarrays
+    lat, lon : ndarrays, optional
         Longitude and latitude in degrees.  If these are omitted, then
         Fx and Fy must be xray.DataArrays with latitude and longitude
         in degrees within the coordinates.
@@ -711,7 +711,7 @@ def divergence_spherical_2d(Fx, Fy, lat=None, lon=None, return_comp=False):
     else:
         return d
 
-        
+
 # ======================================================================
 # PRESSURE LEVEL DATA AND TOPOGRAPHY
 # ======================================================================
