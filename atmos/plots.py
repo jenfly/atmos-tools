@@ -571,7 +571,7 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
 
     # Zero contour
     if not omitzero and zerolinewidth > 0:
-        plt.contour(y, z, data, 0, colors=colors, linewidths=zerolinewidth)
+        plt.contour(y, z, np.squeeze(data), 0, colors=colors, linewidths=zerolinewidth)
 
     plt.draw()
 
