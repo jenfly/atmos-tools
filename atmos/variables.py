@@ -86,8 +86,72 @@ def equiv_potential_temp(T, p, q, p0=1e5):
 
 
 # ----------------------------------------------------------------------
+def moisture_flux_conv(uq, vq, lat=None, lon=None, plev=None, pdim=-3,
+                       pmin=0, pmax=1e6, return_comp=False):
+    """Return the vertically integrated moisture flux convergence.
+
+    Parameters
+    ----------
+    uq : ndarray or xray.DataArray
+        Zonal moisture flux, with latitude as the second-last dimension,
+        longitude as the last dimension.
+        i.e. zonal wind (m/s) * specific humidity (kg/kg)
+    vq : ndarray or xray.DataArray
+        Meridional moisture flux, with latitude as the second-last dimension,
+        longitude as the last dimension.
+        i.e. meridional wind (m/s) * specific humidity (kg/kg)
+    lat, lon : ndarray, optional
+        Latitudes and longitudes in degrees.  If omitted, then uq and
+        vq must be xray.DataArrays and the coordinates are extracted
+        from them.
+    plev : ndarray, optional
+        Pressure levels in Pascals.  If omitted, then extracted from
+        DataArray inputs.
+    pdim : int, optional
+        Dimension of pressure levels in uq and vq.
+    pmin, pmax : float, optional
+        Lower and upper bounds (inclusive) of pressure levels (Pa)
+        to include in integration.
+    return_comp, bool, optional
+        If True, return additional components, otherwise just total
+        moisture flux convergence.
+
+    Returns
+    -------
+    If return_comp is False:
+    mfc : ndarray or xray.DataArray
+        Vertically integrated moisture flux convergence in mm/day.
+
+    If return_comp is True:
+    mfc, mfc_x, mfc_y, uq_int, vq_int : ndarrays or xray.DataArrays
+        Vertically integrated moisture flux convergence in mm/day
+        (total, x- and y- components) and vertically integrated
+        moisture fluxes.
+
+    """
+
+    # Convert from (kg/m^2)/s to mm/day
+    SCALE = 60 * 60 * 24
+
+    uq_int = dat.int_pres(uq, plev, pdim=pdim, pmin=pmin, pmax=pmax)
+    vq_int = dat.int_pres(vq, plev, pdim=pdim, pmin=pmin, pmax=pmax)
+
+    mfc, mfc_x, mfc_y = dat.divergence_spherical_2d(uq_int, vq_int, lat, lon,
+                                                    return_comp=True)
+
+    # Convert from divergence to convergence, and to mm/day
+    mfc, mfc_x, mfc_y = -SCALE * mfc, -SCALE * mfc_x, -SCALE * mfc_y
+
+    if isinstance(mfc, xray.DataArray):
+        mfc.name = 'Vertically integrated moisture flux convergence'
+        mfc.attrs['units'] = 'mm/day'
+
+    if return_comp:
+        return mfc, mfc_x, mfc_y, uq_int, vq_int
+    else:
+        return mfc
+
+# ----------------------------------------------------------------------
 # streamfunction - needs int_pres
 # Dry static energy, moist static energy
-# Moisture flux convergence
 # Vorticity
-
