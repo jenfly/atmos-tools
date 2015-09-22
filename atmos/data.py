@@ -1070,9 +1070,10 @@ def int_pres(data, plev=None, pdim=-3, pmin=0, pmax=1e6):
             attrs['units'] = '(' + data.attrs['units'] + ') * kg'
         pname = get_coord(data, 'plev', 'name')
         del(coords[pname])
-        # -- Make sure pressure levels are in Pa
-        plev = get_coord(data, 'plev')
-        plev = pres_convert(plev, data[pname].units, 'Pa')
+        if plev is None:
+            # -- Make sure pressure levels are in Pa
+            plev = get_coord(data, 'plev')
+            plev = pres_convert(plev, data[pname].units, 'Pa')
         data[pname].values = plev
     else:
         i_DataArray = False
