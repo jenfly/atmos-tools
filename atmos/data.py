@@ -263,7 +263,7 @@ def get_coord(data, coord_type=None, return_type='values', coord_name=None):
         if coord_type.lower() not in names_all.keys():
             raise ValueError('Invalid coord_type ' + coord_type + '. '
                 'Valid coord_types are ' + ', '.join(names_all.keys()))
-        names = names_all[coord_type.lower()]        
+        names = names_all[coord_type.lower()]
         found = [i for i, s in enumerate(names) if s in data.coords]
 
         if len(found) == 0:
@@ -286,6 +286,61 @@ def get_coord(data, coord_type=None, return_type='values', coord_name=None):
 
     return output
 
+
+# ----------------------------------------------------------------------
+def subset(data, dim_name, lower_or_list, upper=None,
+           dim_name2=None, lower_or_list2=None, upper2=None,
+           incl_lower=True, incl_upper=True, search=True):
+    """Extract a subset of a DataArray along 1 or 2 named dimensions.
+
+    Returns a DataArray sub extracted from input data, such that:
+        sub[dim_name] >= lower_or_list & sub[dim_name] <= upper,
+    OR  sub[dim_name] == lower_or_list (if lower_or_list is a list)
+    And similarly for dim_name2, if included.
+
+    This function calls atmos.xrhelper.subset with the additional
+    feature of calling the get_coord function to find common
+    dimension names (e.g. 'XDim' for latitude)
+
+    Parameters
+    ----------
+    data : xray.DataArray
+        Data source for extraction.
+    dim_name : string
+        Name of dimension to extract from.  If dim_name is not in
+        data.dims, then the get_coord() function is used
+        to search for a similar dimension name (if search is True).
+    lower_or_list : scalar or list of int or float
+        If scalar, then used as the lower bound for the   subset range.
+        If list, then the subset matching the list will be extracted.
+    upper : int or float, optional
+        Upper bound for subset range.
+    dim_name2, lower_or_list2, upper2 : optional
+        Parameters as described above for optional 2nd dimension.
+    incl_lower, incl_upper : bool, optional
+        If True lower / upper bound is inclusive, with >= or <=.
+        If False, lower / upper bound is exclusive with > or <.
+        If lower_or_list is a list, then the whole list is included
+        and these parameters are ignored.
+    search : bool, optional
+        If True, call the get_coord function if dim_name is not found
+        in the dimension names of data.
+
+    Returns
+    -------
+        sub : xray.DataArray
+    """
+
+    if search:
+        nms = ['lat', 'lon', 'plev']
+        if dim_name in nms and dim_name not in data.dims:
+            dim_name = get_coord(data, dim_name, 'name')
+        if dim_name2 in nms and dim_name2 not in data.dims:
+            dim_name2 = get_coord(data, dim_name2, 'name')
+
+    return xr.subset(data, dim_name, lower_or_list, upper, dim_name2,
+                    lower_or_list2, upper2, incl_lower, incl_upper)
+                    
 
 # ----------------------------------------------------------------------
 def latlon_equal(data1, data2, latname1=None, lonname1=None,
