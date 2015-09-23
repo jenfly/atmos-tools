@@ -4,7 +4,7 @@ import atmos.utils as utils
 import atmos.data as dat
 import atmos.xrhelper as xr
 from atmos.constants import const as constants
-
+from atmos.data import get_coord
 
 # ----------------------------------------------------------------------
 def coriolis(lat, degrees=True):
@@ -20,29 +20,6 @@ def coriolis(lat, degrees=True):
         lat_rad = lat
 
     return 2 * Omega * np.sin(lat_rad)
-
-
-# ----------------------------------------------------------------------
-def rel_vorticity(u, v, lat=None, lon=None):
-    """Return the vertical component of relative vorticity.
-
-    Parameters
-    ----------
-    u, v : ndarrays or xray.DataArrays
-        Zonal and meridional winds in m/s.
-    lat, lon : ndarrays, optional
-        Latitudes and longitudes in degrees.  If omitted, then u and
-        v must be xray.DataArrays and lat, lon are extracted from
-        the metadata.
-
-    Returns
-    -------
-    vort : ndarray or xray.DataArray
-        Vertical component of vorticity dv/dx - du/dy calculated in
-        spherical coordinates.
-    """
-
-    a = constants.radius_earth.values
 
 
 # ----------------------------------------------------------------------
@@ -77,10 +54,10 @@ def divergence_spherical_2d(Fx, Fy, lat=None, lon=None, return_comp=False):
 
     if isinstance(Fx, xray.DataArray):
         coords, attrs, name = xr.meta(Fx)
-    if lat is None:
-        lat = get_coord(Fx, 'lat')
-    if lon is None:
-        lon = get_coord(Fx, 'lon')
+        if lat is None:
+            lat = get_coord(Fx, 'lat')
+        if lon is None:
+            lon = get_coord(Fx, 'lon')
 
     R = constants.radius_earth.values
     lon_rad = np.radians(lon)
@@ -92,11 +69,11 @@ def divergence_spherical_2d(Fx, Fy, lat=None, lon=None, return_comp=False):
     d1 = np.zeros(dims, dtype=float)
     d2 = np.zeros(dims, dtype=float)
 
-    for i in range(len(lat)):
+    for i in range(nlat):
         dx = np.gradient(lon_rad)
         coslat = np.cos(lat_rad[i])
         d1[...,i,:] = np.gradient(np.squeeze(Fx[...,i,:]), dx) / (R*coslat)
-    for j in range(len(lon)):
+    for j in range(nlon):
         dy = np.gradient(lat_rad)
         coslat = np.cos(lat_rad)
         d2[...,j] = np.gradient(np.squeeze(Fy[...,j])*coslat, dy) / (R*coslat)
@@ -112,6 +89,32 @@ def divergence_spherical_2d(Fx, Fy, lat=None, lon=None, return_comp=False):
         return d, d1, d2
     else:
         return d
+
+
+# ----------------------------------------------------------------------
+def rel_vorticity(u, v, lat=None, lon=None):
+    """Return the vertical component of relative vorticity.
+
+    Parameters
+    ----------
+    u, v : ndarrays or xray.DataArrays
+        Zonal and meridional winds in m/s. Latitude and longitude
+        should be the second-last and last dimensions, respectively,
+        of u and v.
+    lat, lon : ndarrays, optional
+        Latitudes and longitudes in degrees.  If omitted, then u and
+        v must be xray.DataArrays and lat, lon are extracted from
+        the metadata.
+
+    Returns
+    -------
+    vort : ndarray or xray.DataArray
+        Vertical component of vorticity dv/dx - du/dy calculated in
+        spherical coordinates.
+    """
+
+    _, dvdx, dudy = divergence_spherical_2d(v, u, lat, lon, return_comp=True)
+    return dvdx - dudy
 
 
 # ----------------------------------------------------------------------
