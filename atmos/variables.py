@@ -235,7 +235,7 @@ def streamfunction(v, lat=None, pres=None, pdim=-3, scale=1e-9, topdown=True):
             sfctn[...,k,:,:] = sfctn[...,k+1,:,:] + vcos[...,k,:,:] * dp
     else:
         # Integrate from the surface up
-        for k in range(1, nlevel+1):
+        for k in range(1, nlevel):
             dp = pmid[...,k-1,:,:] - pmid[...,k,:,:]
             sfctn[...,k,:,:] = sfctn[...,k-1,:,:] + vcos[...,k,:,:] * dp
 

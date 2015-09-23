@@ -18,12 +18,12 @@ url = ('http://goldsmr3.sci.gsfc.nasa.gov/opendap/MERRA_MONTHLY/'
 ds = xray.open_dataset(url)
 #T = ds['T']
 #ps = ds['PS']
-u = ds['U']
+#u = ds['U']
 v = ds['V']
-q = ds['QV']
-lat = get_coord(u, 'lat')
-lon = get_coord(u, 'lon')
-plev = get_coord(u, 'plev')
+#q = ds['QV']
+lat = get_coord(v, 'lat')
+lon = get_coord(v, 'lon')
+plev = get_coord(v, 'plev')
 
 topo = dat.get_ps_clim(lat, lon) / 100
 topo.units = 'hPa'
@@ -56,7 +56,6 @@ cint=10
 
 vbar = dat.subset(v, 'lon', lon1, lon2).mean(axis=-1)
 
-psi = streamfunction(v)
 psibar = dat.subset(psi, 'lon', lon1, lon2).mean(axis=-1)
 psibar = psibar * (lon2-lon1)/360
 
@@ -75,3 +74,17 @@ ap.contour_latpres(psibar2, clev=cint, topo=topobar)
 # zonal/sector mean of v before computing the streamfunction.
 
 # ----------------------------------------------------------------------
+# Top-down and bottom-up
+
+psibar = psi.mean(axis=-1)
+psi2 = streamfunction(v, topdown=False)
+psibar2 = psi2.mean(axis=-1)
+
+topobar = topo.mean(axis=-1)
+
+cint = 50
+plt.figure(figsize=(7,8))
+plt.subplot(211)
+ap.contour_latpres(psibar, clev=cint, topo=topobar)
+plt.subplot(212)
+ap.contour_latpres(psibar2, lat, plev, clev=cint, topo=topobar)
