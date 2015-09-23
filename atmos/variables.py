@@ -2,6 +2,7 @@ import numpy as np
 import xray
 import atmos.utils as utils
 import atmos.data as dat
+import atmos.xrhelper as xr
 from atmos.constants import const as constants
 
 # ----------------------------------------------------------------------
@@ -151,7 +152,105 @@ def moisture_flux_conv(uq, vq, lat=None, lon=None, plev=None, pdim=-3,
     else:
         return mfc
 
+
 # ----------------------------------------------------------------------
-# streamfunction - needs int_pres
+def streamfunction(v, lat=None, pres=None, pdim=-3, scale=1e-9, topdown=True):
+    """Return the Eulerian mass streamfunction.
+
+    Parameters
+    ----------
+    v : ndarray or xray.DataArray
+        Meridional wind speed in m/s.
+    lat : ndarray, optional
+        Array of latitude in degrees.  If omitted, lat is extracted
+        from xray.DataArray input v.
+    pres : ndarray, optional
+        Pressures in Pa.  Can be a vector for pressure-level data, or
+        a grid of pressures of the same shape as v.  If omitted, pres
+        is extracted from xray.DataArray input v.
+    pdim : {-3, -2}, optional
+        Dimension of v corresponding to vertical levels.  Can be either
+        the second-last or third-last dimension.
+    scale : float, optional
+        Scale factor for output, e.g. 1e-9 to output streamfunction in
+        10^9 kg/s.
+    topdown : bool, optional
+        If True, integrate from the top of atmosphere down, assuming
+        that vertical levels are indexed from the surface up (i.e.
+        level 0 is the surface). Otherwise integrate from bottom up.
+
+    Returns
+    -------
+    psi : ndarray or xray.DataArray
+        Eulerian mass stream function in units of 1/scale kg/s.
+    """
+
+    R = constants.radius_earth.values
+    g = constants.g.values
+
+    if isinstance(v, xray.DataArray):
+        i_DataArray = True
+        coords, attrs, name = xr.meta(v)
+        if lat is None:
+            lat = dat.get_coord(v, 'lat')
+        if pres is None:
+            pres = dat.get_coord(v, 'plev')
+            pname = dat.get_coord(v, 'plev', 'name')
+            pres = dat.pres_convert(pres, v[pname].units, 'Pa')
+        v = v.values.copy()
+    else:
+        i_DataArray = False
+        if lat is None or pres is None:
+            raise ValueError('Inputs lat and pres must be provided when '
+                'v is an ndarray.')
+
+    # Standardize the shape of v
+    if pdim == -2:
+        v = np.expand_dims(v, axis=-1)
+        pdim = -3
+    elif pdim != -3:
+        raise ValueError('Invalid pdim %d.  Must be -2 or -3.' % pdim)
+
+    dims = list(v.shape)
+    nlevel = dims[pdim]
+    dims[pdim] += 1
+    nlat = dims[-2]
+
+    # Tile the pressure levels to make a grid
+    pmid = np.zeros(dims, dtype=float)
+    pmid[...,:-1,:,:] = dat.biggify(pres, v, tile=True)
+
+    # Cosine-weighted meridional velocity
+    coslat = np.cos(np.radians(lat))
+    vcos = np.zeros(v.shape, dtype=float)
+    for j in range(nlat):
+        vcos[...,j,:] = v[...,j,:] * coslat[j]
+
+    # Compute streamfunction
+    sfctn = np.zeros(dims, dtype=float)
+    if topdown:
+        # Integrate from top of atmosphere down
+        for k in range(nlevel-1, -1, -1):
+            dp = pmid[...,k+1,:,:] - pmid[...,k,:,:]
+            sfctn[...,k,:,:] = sfctn[...,k+1,:,:] + vcos[...,k,:,:] * dp
+    else:
+        # Integrate from the surface up
+        for k in range(1, nlevel+1):
+            dp = pmid[...,k-1,:,:] - pmid[...,k,:,:]
+            sfctn[...,k,:,:] = sfctn[...,k-1,:,:] + vcos[...,k,:,:] * dp
+
+    # Scale the output and remove the added dimension(s)
+    sfctn *= scale * 2 * np.pi * R / g
+    psi = sfctn[...,:-1,:,:]
+    if psi.ndim > v.ndim:
+        psi = psi[...,0]
+
+    if i_DataArray:
+        psi = xray.DataArray(psi, name='Eulerian mass streamfunction',
+            coords=coords)
+        psi.attrs['units'] = '%.1e kg/s' % (1/scale)
+
+    return psi
+# ----------------------------------------------------------------------
 # Dry static energy, moist static energy
 # Vorticity
