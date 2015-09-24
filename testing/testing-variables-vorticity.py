@@ -58,7 +58,7 @@ Ro2 = rossby_num(u.values, v.values, lat, lon)
 t, k = 0, 22
 lon1, lon2 = 60, 100
 lat1, lat2 = 10, 50
-cmax = 1.5
+cmax = 0.8
 axlims = (lat1, lat2, lon1, lon2)
 plt.figure(figsize=(7,8))
 plt.subplot(211)
