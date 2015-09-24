@@ -859,7 +859,7 @@ def near_surface(data, pdim=-3, return_inds=False):
     nmax = 5
     ndim = data.ndim
 
-    if ndim > 5:
+    if ndim > nmax:
         raise ValueError('Input data has too many dimensions. Max 5-D.')
 
     # Save metadata for output DataArray, if applicable

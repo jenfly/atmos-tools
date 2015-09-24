@@ -23,7 +23,7 @@ def coriolis(lat, degrees=True):
 
 
 # ----------------------------------------------------------------------
-def divergence_spherical_2d(Fx, Fy, lat=None, lon=None, return_comp=False):
+def divergence_spherical_2d(Fx, Fy, lat=None, lon=None):
     """Return the 2-D spherical divergence.
 
     Parameters
@@ -32,36 +32,51 @@ def divergence_spherical_2d(Fx, Fy, lat=None, lon=None, return_comp=False):
         Longitude, latitude components of a vector function in
         spherical coordinates.  Latitude and longitude should be the
         second-last and last dimensions, respectively, of Fx and Fy.
+        Maximum size 5-D.
     lat, lon : ndarrays, optional
         Longitude and latitude in degrees.  If these are omitted, then
         Fx and Fy must be xray.DataArrays with latitude and longitude
         in degrees within the coordinates.
-    return_comp : bool, optional
-        If True, return the x and y components of the divergence
-        along with the total.  Otherwise, return only the total
-        divergence.
 
     Returns
     -------
-    If return_comp is True:
     d, d1, d2 : ndarrays or xray.DataArrays
         d1 = dFx/dx, d2 = dFy/dy, and d = d1 + d2.
 
-    If return_comp is False:
-    d : ndarray or xray.DataArray
-        d = dFx/dx + dFy/dy
+    Reference
+    ---------
+    Atmospheric and Oceanic Fluid Dynamics: Fundamentals and
+    Large-Scale Circulation, by Geoffrey K. Vallis, Cambridge
+    University Press, 2006 -- Equation 2.30.
     """
 
+    nmax = 5
+    ndim = Fx.ndim
+    if ndim > nmax:
+        raise ValueError('Input data has too many dimensions. Max 5-D.')
+
     if isinstance(Fx, xray.DataArray):
+        i_DataArray = True
         coords, attrs, name = xr.meta(Fx)
         if lat is None:
             lat = get_coord(Fx, 'lat')
         if lon is None:
             lon = get_coord(Fx, 'lon')
+    else:
+        i_DataArray = False
+        if lat is None or lon is None:
+            raise ValueError('Lat/lon inputs must be provided when input '
+                'data is an ndarray.')
 
     R = constants.radius_earth.values
     lon_rad = np.radians(lon)
     lat_rad = np.radians(lat)
+
+    # Add singleton dimensions for looping, if necessary
+    for i in range(ndim, nmax):
+        Fx = np.expand_dims(Fx, axis=0)
+        Fy = np.expand_dims(Fy, axis=0)
+
     dims = Fx.shape
     nlon = dims[-1]
     nlat = dims[-2]
@@ -72,23 +87,32 @@ def divergence_spherical_2d(Fx, Fy, lat=None, lon=None, return_comp=False):
     for i in range(nlat):
         dx = np.gradient(lon_rad)
         coslat = np.cos(lat_rad[i])
-        d1[...,i,:] = np.gradient(np.squeeze(Fx[...,i,:]), dx) / (R*coslat)
+        for k1 in range(dims[0]):
+            for k2 in range(dims[1]):
+                for k3 in range(dims[2]):
+                    sub = Fx[k1,k2,k3,i,:]
+                    d1[k1,k2,k3,i,:] = np.gradient(sub, dx) / (R*coslat)
     for j in range(nlon):
         dy = np.gradient(lat_rad)
         coslat = np.cos(lat_rad)
-        d2[...,j] = np.gradient(np.squeeze(Fy[...,j])*coslat, dy) / (R*coslat)
+        for k1 in range(dims[0]):
+            for k2 in range(dims[1]):
+                for k3 in range(dims[2]):
+                    sub = Fy[k1,k2,k3,:,j] * coslat
+                    d2[k1,k2,k3,:,j] = np.gradient(sub, dy) / (R*coslat)
+
+    # Collapse any additional dimensions that were added
+    for i in range(ndim, d1.ndim):
+        d1, d2 = d1[0], d2[0]
 
     d = d1 + d2
 
-    if isinstance(Fx, xray.DataArray):
+    if i_DataArray:
         d = xray.DataArray(d, coords=coords)
         d1 = xray.DataArray(d1, coords=coords)
         d2 = xray.DataArray(d2, coords=coords)
 
-    if return_comp:
-        return d, d1, d2
-    else:
-        return d
+    return d, d1, d2
 
 
 # ----------------------------------------------------------------------
@@ -249,8 +273,7 @@ def moisture_flux_conv(uq, vq, lat=None, lon=None, plev=None, pdim=-3,
     uq_int = dat.int_pres(uq, plev, pdim=pdim, pmin=pmin, pmax=pmax)
     vq_int = dat.int_pres(vq, plev, pdim=pdim, pmin=pmin, pmax=pmax)
 
-    mfc, mfc_x, mfc_y = divergence_spherical_2d(uq_int, vq_int, lat, lon,
-                                                return_comp=True)
+    mfc, mfc_x, mfc_y = divergence_spherical_2d(uq_int, vq_int, lat, lon)
 
     # Convert from divergence to convergence, and to mm/day
     mfc, mfc_x, mfc_y = -SCALE * mfc, -SCALE * mfc_x, -SCALE * mfc_y
