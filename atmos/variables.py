@@ -1,3 +1,6 @@
+"""Compute dynamic and thermodynamic atmospheric variables."""
+
+from __future__ import division
 import numpy as np
 import xray
 import atmos.utils as utils

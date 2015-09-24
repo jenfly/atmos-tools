@@ -2,6 +2,7 @@
 Utility functions for xray DataArrays and Dataset.
 """
 
+from __future__ import division
 import numpy as np
 import collections
 import xray

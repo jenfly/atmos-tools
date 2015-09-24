@@ -7,6 +7,7 @@ Utility functions for atmospheric data wrangling / preparation.
 - Pressure level data and topography
 """
 
+from __future__ import division
 import numpy as np
 import collections
 import scipy.interpolate as interp

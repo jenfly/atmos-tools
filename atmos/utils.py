@@ -2,6 +2,7 @@
 Some general purpose utility functions used by other modules in this package.
 '''
 
+from __future__ import division
 import numpy as np
 import collections
 from datetime import datetime
