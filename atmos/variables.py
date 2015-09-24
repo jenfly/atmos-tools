@@ -116,8 +116,8 @@ def divergence_spherical_2d(Fx, Fy, lat=None, lon=None):
 
 
 # ----------------------------------------------------------------------
-def rel_vorticity(u, v, lat=None, lon=None):
-    """Return the vertical component of relative vorticity.
+def vorticity(u, v, lat=None, lon=None):
+    """Return the relative and absolute vorticity (vertical component).
 
     Parameters
     ----------
@@ -132,9 +132,13 @@ def rel_vorticity(u, v, lat=None, lon=None):
 
     Returns
     -------
-    vort : ndarray or xray.DataArray
-        Vertical component of vorticity dv/dx - du/dy calculated in
+    rel_vort, abs_vort : ndarrays or xray.DataArrays
+        Vertical component of relative vorticity dv/dx - du/dy
+        and absolute vorticity f + dv/dx - du/dy, calculated in
         spherical coordinates.
+    f : ndarray
+        Array of Coriolis parameters corresponding to latitude
+        grid.
 
     Reference
     ---------
@@ -143,8 +147,56 @@ def rel_vorticity(u, v, lat=None, lon=None):
     University Press, 2006 -- Equation 2.33.
     """
 
+    # Relative vorticity
     _, dvdx, dudy = divergence_spherical_2d(v, u, lat, lon)
-    return dvdx - dudy
+    rel_vort = dvdx - dudy
+
+    # Coriolis parameter
+    if lat is None:
+        if isinstance(u, xray.DataArray):
+            lat = get_coord(u, 'lat')
+        else:
+            raise ValueError('Lat/lon inputs must be provided when input '
+                'data is an ndarray.')
+    f = coriolis(lat)
+
+    # Absolute vorticity
+    abs_vort = rel_vort + dat.biggify(f, rel_vort)
+
+    return rel_vort, abs_vort, f
+
+
+# ----------------------------------------------------------------------
+def rossby_num(u, v, lat=None, lon=None):
+    """Return the local Rossby number.
+
+    Parameters
+    ----------
+    u, v : ndarrays or xray.DataArrays
+        Zonal and meridional winds in m/s. Latitude and longitude
+        should be the second-last and last dimensions, respectively,
+        of u and v.
+    lat, lon : ndarrays, optional
+        Latitudes and longitudes in degrees.  If omitted, then u and
+        v must be xray.DataArrays and lat, lon are extracted from
+        the metadata.
+
+    Returns
+    -------
+    Ro : ndarray or xray.DataArray
+        Local Rossby number (Ro = -relative_vorticity / f), calculated
+        in spherical coordinates.
+
+    Reference
+    ---------
+    Schneider, T. (2006). The General Circulation of the Atmosphere.
+    Annual Review of Earth and Planetary Sciences, 34(1), 655-688.
+    doi:10.1146/annurev.earth.34.031405.125144
+    """
+
+    rel_vort, _, f = vorticity(u, v, lat, lon)
+    Ro = - rel_vort / dat.biggify(f, rel_vort)
+    return Ro
 
 
 # ----------------------------------------------------------------------

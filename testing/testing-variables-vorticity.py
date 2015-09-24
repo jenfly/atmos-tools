@@ -7,7 +7,7 @@ import atmos.plots as ap
 import atmos.data as dat
 from atmos.constants import const as constants
 from atmos.data import get_coord
-from atmos.variables import rel_vorticity
+from atmos.variables import vorticity, rossby_num
 
 
 # ----------------------------------------------------------------------
@@ -29,18 +29,41 @@ topo = dat.get_ps_clim(lat, lon) / 100
 topo.units = 'hPa'
 
 # ----------------------------------------------------------------------
-# Relative vorticity
+# Relative and absolute vorticity
 
 # DataArray
-vort = rel_vorticity(u, v)
+rel_vort, abs_vort, f = vorticity(u, v)
 
 # ndarray
-vort2 = rel_vorticity(u, v, lat, lon)
+rel_vort2, abs_vort2, f2 = vorticity(u.values, v.values, lat, lon)
 
 
 t, k = 0, 22
+plt.figure(figsize=(12,8))
+plt.subplot(221)
+ap.pcolor_latlon(rel_vort[t,k])
+plt.subplot(222)
+ap.pcolor_latlon(abs_vort[t,k])
+plt.subplot(223)
+ap.pcolor_latlon(rel_vort2[t,k], lat, lon)
+plt.subplot(224)
+ap.pcolor_latlon(abs_vort2[t,k], lat, lon)
+
+# ----------------------------------------------------------------------
+# Rossby number
+
+Ro = rossby_num(u, v)
+Ro2 = rossby_num(u.values, v.values, lat, lon)
+
+t, k = 0, 22
+lon1, lon2 = 60, 100
+lat1, lat2 = 10, 50
+cmax = 1.5
+axlims = (lat1, lat2, lon1, lon2)
 plt.figure(figsize=(7,8))
 plt.subplot(211)
-ap.pcolor_latlon(vort[t,k])
+ap.pcolor_latlon(Ro[t,k], axlims=axlims)
+plt.clim(-cmax, cmax)
 plt.subplot(212)
-ap.pcolor_latlon(vort2[t,k], lat, lon)
+ap.pcolor_latlon(Ro2[t,k], lat, lon, axlims=axlims)
+plt.clim(-cmax, cmax)
