@@ -135,9 +135,15 @@ def rel_vorticity(u, v, lat=None, lon=None):
     vort : ndarray or xray.DataArray
         Vertical component of vorticity dv/dx - du/dy calculated in
         spherical coordinates.
+
+    Reference
+    ---------
+    Atmospheric and Oceanic Fluid Dynamics: Fundamentals and
+    Large-Scale Circulation, by Geoffrey K. Vallis, Cambridge
+    University Press, 2006 -- Equation 2.33.
     """
 
-    _, dvdx, dudy = divergence_spherical_2d(v, u, lat, lon, return_comp=True)
+    _, dvdx, dudy = divergence_spherical_2d(v, u, lat, lon)
     return dvdx - dudy
 
 
