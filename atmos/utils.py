@@ -137,19 +137,36 @@ def month_str(month, upper=True):
         mstr = mstr.upper()
     return mstr
 
+
 # ----------------------------------------------------------------------
 def days_per_month(leap=False):
-    '''Returns array with number of days per month.'''
+    '''Return array with number of days per month.'''
 
     ndays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     if leap:
         ndays[1]+= 1
     return ndays
 
+
+# ----------------------------------------------------------------------
+def days_this_month(year, month):
+    """Return the number of days in a selected month and year.
+
+    Both inputs must be integers, and month is the numeric month 1-12.
+    """
+
+    if year % 4 == 0:
+        leap = True
+    else:
+        leap = False
+    ndays = days_per_month(leap)
+    return ndays[month - 1]
+
+
 # ----------------------------------------------------------------------
 def season_months(season):
     '''
-    Returns list of months (1-12) for the selected season.
+    Return list of months (1-12) for the selected season.
 
     Valid input seasons are:
     ssn=['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug',
@@ -171,6 +188,7 @@ def season_months(season):
         raise ValueError('Season not found! Valid seasons: ' + ', '.join(ssn))
 
     return imon[ifind]
+
 
 # ----------------------------------------------------------------------
 def season_days(season, leap=False):
