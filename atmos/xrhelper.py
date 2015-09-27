@@ -184,7 +184,7 @@ def subset(data, dim_name, lower_or_list, upper=None,
 # ======================================================================
 
 # ----------------------------------------------------------------------
-def ds_print(ds, indent=2, width=20):
+def ds_print(ds, indent=2, width=None):
     """Print attributes of xray dataset and each of its variables."""
     line = '-' * 60
 

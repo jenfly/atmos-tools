@@ -147,7 +147,7 @@ def nantrapz(y, x=None, axis=-1):
 # ======================================================================
 
 # ----------------------------------------------------------------------
-def ncdisp(filename, verbose=True, decode_cf=False, indent=2, width=20):
+def ncdisp(filename, verbose=True, decode_cf=False, indent=2, width=None):
     """Display the attributes of data in a netcdf file."""
     with xray.open_dataset(filename, decode_cf=decode_cf) as ds:
         if verbose:

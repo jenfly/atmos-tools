@@ -21,8 +21,17 @@ def print_if(msg, condition, printfunc=None):
             print(msg)
 
 # ----------------------------------------------------------------------
-def print_odict(od, indent=2, width=20):
+def print_odict(od, indent=2, width=None):
     '''Pretty print the contents of an ordered dictionary.'''
+
+    if width is None:
+        defwidth = 20
+        widths = [len(key) for key in od]
+        if len(widths) == 0:
+            width = defwidth
+        else:
+            width = max(widths) + indent + 1        
+
     for key in od:
         s = ' ' * indent + key
         print(s.ljust(width) + str(od[key]))
