@@ -143,112 +143,7 @@ def nantrapz(y, x=None, axis=-1):
 
 
 # ======================================================================
-# NETCDF FILE I/O
-# ======================================================================
-
-# ----------------------------------------------------------------------
-def ncdisp(filename, verbose=True, decode_cf=False, indent=2, width=None):
-    """Display the attributes of data in a netcdf file."""
-    with xray.open_dataset(filename, decode_cf=decode_cf) as ds:
-        if verbose:
-            xr.ds_print(ds, indent, width)
-        else:
-            print(ds)
-
-
-# ----------------------------------------------------------------------
-def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
-           offset_name=u'add_offset', scale_name=u'scale_factor',
-           decode_cf=False):
-    """
-    Read data from netcdf file into xray dataset.
-
-    If options are selected, unpacks from compressed form and/or replaces
-    missing values with NaN.  Returns data as an xray.Dataset object.
-    """
-    with xray.open_dataset(filename, decode_cf=decode_cf) as ds:
-        print_if('****** Reading file: ' + filename + '********', verbose)
-        print_if(ds, verbose, printfunc=xr.ds_print)
-        if unpack:
-            print_if('****** Unpacking data *********', verbose)
-            ds = xr.ds_unpack(ds, verbose=verbose, missing_name=missing_name,
-                offset_name=offset_name, scale_name=scale_name)
-
-        # Use the load() function so that the dataset is available after
-        # the file is closed
-        ds.load()
-        return ds
-
-
-# ----------------------------------------------------------------------
-def load_concat(paths, var, concat_dim='TIME', verbose=False):
-    """Load a variable from multiple files and concatenate into one.
-
-    Especially useful for extracting variables split among multiple
-    OpenDAP files.
-
-    *** Bug:  doesn't work when concat_dim=None.  Fix later when
-    this functionality is needed. ***
-
-    Parameters
-    ----------
-    paths : list of strings
-        List of file paths or OpenDAP urls to process.
-    var : str
-        Name of variable to extract.
-    concat_dim : str, optional
-        Dimension to concatenate along.  If None, a new dimension is
-        created for concatenation.
-    verbose : bool, optional
-        If True, print updates while processing files.
-
-    Returns:
-    --------
-    data : xray.DataArray
-        Data extracted from input files.
-    """
-
-    pieces = list()
-    for p in paths:
-        print_if(None, verbose, printfunc=disptime)
-        print_if('Loading ' + p, verbose)
-        with xray.open_dataset(p) as ds:
-            print_if('Appending data', verbose)
-            pieces.append(ds[var].load())
-
-    print_if('Concatenating data', verbose)
-    data = xray.concat(pieces, dim=concat_dim)
-    print_if(None, verbose, printfunc=disptime)
-    return data
-
-
-# ----------------------------------------------------------------------
-def save_nc(filename, *args):
-    """Save xray.DataArray variables to a netcdf file.
-
-    Call Signatures
-    ---------------
-    save_nc(filename, var1)
-    save_nc(filename, var1, var2)
-    save_nc(filename, var1, var2, var3)
-    etc...
-
-    Parameters
-    ----------
-    filename : string
-        File path for saving.
-    var1, var2, ... : xray.DataArrays
-        List of xray.DataArrays with compatible coordinates.
-    """
-
-    ds = xr.vars_to_dataset(*args)
-    ds.to_netcdf(filename)
-    return None
-
-
-
-# ======================================================================
-# LAT-LON GEOPHYSICAL DATA
+# COORDINATES AND SUBSETS
 # ======================================================================
 
 # ----------------------------------------------------------------------
@@ -368,6 +263,129 @@ def subset(data, dim_name, lower_or_list, upper=None,
     return xr.subset(data, dim_name, lower_or_list, upper, dim_name2,
                     lower_or_list2, upper2, incl_lower, incl_upper)
 
+
+# ======================================================================
+# NETCDF FILE I/O
+# ======================================================================
+
+# ----------------------------------------------------------------------
+def ncdisp(filename, verbose=True, decode_cf=False, indent=2, width=None):
+    """Display the attributes of data in a netcdf file."""
+    with xray.open_dataset(filename, decode_cf=decode_cf) as ds:
+        if verbose:
+            xr.ds_print(ds, indent, width)
+        else:
+            print(ds)
+
+
+# ----------------------------------------------------------------------
+def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
+           offset_name=u'add_offset', scale_name=u'scale_factor',
+           decode_cf=False):
+    """
+    Read data from netcdf file into xray dataset.
+
+    If options are selected, unpacks from compressed form and/or replaces
+    missing values with NaN.  Returns data as an xray.Dataset object.
+    """
+    with xray.open_dataset(filename, decode_cf=decode_cf) as ds:
+        print_if('****** Reading file: ' + filename + '********', verbose)
+        print_if(ds, verbose, printfunc=xr.ds_print)
+        if unpack:
+            print_if('****** Unpacking data *********', verbose)
+            ds = xr.ds_unpack(ds, verbose=verbose, missing_name=missing_name,
+                offset_name=offset_name, scale_name=scale_name)
+
+        # Use the load() function so that the dataset is available after
+        # the file is closed
+        ds.load()
+        return ds
+
+
+# ----------------------------------------------------------------------
+def load_concat(paths, var, concat_dim='TIME', subset1=(None, None, None),
+                subset2=(None, None, None), verbose=True):
+    """Load a variable from multiple files and concatenate into one.
+
+    Especially useful for extracting variables split among multiple
+    OpenDAP files.
+
+    *** Note:  doesn't work when concat_dim=None.  Add this in future
+    if needed, so that concat_dim=None creates a new dimension for
+    concatenation. ***
+
+    Parameters
+    ----------
+    paths : list of strings
+        List of file paths or OpenDAP urls to process.
+    var : str
+        Name of variable to extract.
+    concat_dim : str
+        Name of dimension to concatenate along.
+    subset1, subset2 : (str, float(s), float(s)), optional
+        Tuple to indicate subset(s) to extract, in the form:
+        (dim_name, lower_or_list, upper)
+        e.g. subset1 = ('lon', 0, 120)
+             subset2 = ('lat', -45, 45)
+        e.g. subset1 = ('plev', 200, 200)
+        The dimension name can be the actual dimension name
+        (e.g. 'XDim') or a generic name (e.g. 'lon') and get_coord()
+        is called to find the specific name.
+    verbose : bool, optional
+        If True, print updates while processing files.
+
+    Returns:
+    --------
+    data : xray.DataArray
+        Data extracted from input files.
+    """
+
+    pieces = list()
+    for p in paths:
+        print_if(None, verbose, printfunc=disptime)
+        print_if('Loading ' + p, verbose)
+        with xray.open_dataset(p) as ds:
+            print_if('Appending data', verbose)
+            piece = ds[var]
+            if subset1[0] is not None:
+                piece = subset(piece, subset1[0], subset1[1], subset1[2],
+                               subset2[0], subset2[1], subset2[2])
+            pieces.append(piece.load())
+
+    print_if('Concatenating data', verbose)
+    data = xray.concat(pieces, dim=concat_dim)
+    print_if(None, verbose, printfunc=disptime)
+    return data
+
+
+# ----------------------------------------------------------------------
+def save_nc(filename, *args):
+    """Save xray.DataArray variables to a netcdf file.
+
+    Call Signatures
+    ---------------
+    save_nc(filename, var1)
+    save_nc(filename, var1, var2)
+    save_nc(filename, var1, var2, var3)
+    etc...
+
+    Parameters
+    ----------
+    filename : string
+        File path for saving.
+    var1, var2, ... : xray.DataArrays
+        List of xray.DataArrays with compatible coordinates.
+    """
+
+    ds = xr.vars_to_dataset(*args)
+    ds.to_netcdf(filename)
+    return None
+
+
+
+# ======================================================================
+# LAT-LON GEOPHYSICAL DATA
+# ======================================================================
 
 # ----------------------------------------------------------------------
 def latlon_equal(data1, data2, latname1=None, lonname1=None,
