@@ -221,6 +221,32 @@ def load_concat(paths, var, concat_dim='TIME', verbose=False):
     print_if(None, verbose, printfunc=disptime)
     return data
 
+
+# ----------------------------------------------------------------------
+def save_nc(filename, *args):
+    """Save xray.DataArray variables to a netcdf file.
+
+    Call Signatures
+    ---------------
+    save_nc(filename, var1)
+    save_nc(filename, var1, var2)
+    save_nc(filename, var1, var2, var3)
+    etc...
+
+    Parameters
+    ----------
+    filename : string
+        File path for saving.
+    var1, var2, ... : xray.DataArrays
+        List of xray.DataArrays with compatible coordinates.
+    """
+
+    ds = xr.vars_to_dataset(*args)
+    ds.to_netcdf(filename)
+    return None
+
+
+
 # ======================================================================
 # LAT-LON GEOPHYSICAL DATA
 # ======================================================================

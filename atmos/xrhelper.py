@@ -257,3 +257,34 @@ def ds_unpack(dataset, missing_name=u'missing_value', offset_name=u'add_offset',
         ds[var].values = vals.astype(dtype)
 
     return ds
+
+
+# ----------------------------------------------------------------------
+def vars_to_dataset(*args):
+    """Combine xray.DataArray variables into an xray.Dataset.
+
+    Call Signatures
+    ---------------
+    vars_to_dataset(var1)
+    vars_to_dataset(var1, var2)
+    vars_to_dataset(var1, var2, var3)
+    etc...
+
+    Parameters
+    ----------
+    var1, var2, ... : xray.DataArrays
+
+    Returns
+    -------
+    ds : xray.Dataset
+    """
+
+    # Get the first variable and initialize the dataset with it
+    args = list(args)
+    var = args.pop(0)
+    ds = var.to_dataset()
+
+    # Add the rest of the variables to the dataset
+    for arg in args:
+        ds[arg.name] = arg
+    return ds
