@@ -181,7 +181,7 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
 
 
 # ----------------------------------------------------------------------
-def load_concat(paths, var, concat_dim=None, verbose=False):
+def load_concat(paths, var, concat_dim='TIME', verbose=False):
     """Load a variable from multiple files and concatenate into one.
 
     Especially useful for extracting variables split among multiple
