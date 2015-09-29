@@ -14,6 +14,7 @@ import scipy.interpolate as interp
 from mpl_toolkits import basemap
 import xray
 from xray import Dataset
+import time
 
 from atmos.utils import print_if, disptime
 import atmos.utils as utils
@@ -340,17 +341,34 @@ def load_concat(paths, var, concat_dim='TIME', subset1=(None, None, None),
         Data extracted from input files.
     """
 
+    # Number of times to attempt opening file (in case of server problems)
+    NMAX = 3
+    # Wait time (seconds) between attempts
+    WAIT = 60
+
     pieces = list()
     for p in paths:
         print_if(None, verbose, printfunc=disptime)
         print_if('Loading ' + p, verbose)
-        with xray.open_dataset(p) as ds:
-            print_if('Appending data', verbose)
-            piece = ds[var]
-            if subset1[0] is not None:
-                piece = subset(piece, subset1[0], subset1[1], subset1[2],
-                               subset2[0], subset2[1], subset2[2])
-            pieces.append(piece.load())
+        attempt = 0
+        while attempt < NMAX:
+            try:
+                with xray.open_dataset(p) as ds:
+                    print_if('Appending data', verbose)
+                    piece = ds[var]
+                    if subset1[0] is not None:
+                        piece = subset(piece, subset1[0], subset1[1],
+                                       subset1[2], subset2[0], subset2[1],
+                                       subset2[2])
+                    pieces.append(piece.load())
+                    attempt = NMAX
+            except RuntimeError as err:
+                attempt += 1
+                if attempt < NMAX:
+                    print('File error.  Attempting again in %d s' % WAIT)
+                    time.sleep(WAIT)
+                else:
+                    raise err
 
     print_if('Concatenating data', verbose)
     data = xray.concat(pieces, dim=concat_dim)
