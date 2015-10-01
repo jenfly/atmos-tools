@@ -114,27 +114,6 @@ def coords_assign(coords, dim, new_name, new_val):
 
 
 # ----------------------------------------------------------------------
-def _subset_1dim(data, dim_name, lower_or_list, upper=None,
-                 incl_lower=True, incl_upper=True):
-    """Extract a subset of a DataArray along a named dimension."""
-
-    vals = data[dim_name]
-    if upper is None:
-        valrange = lower_or_list
-    else:
-        if incl_lower:
-            ind1 = vals >= lower_or_list
-        else:
-            ind1 = vals > lower_or_list
-        if incl_upper:
-            ind2 = vals <= upper
-        else:
-            ind2 = vals < upper
-        valrange = vals[ind1 & ind2]
-
-    return data.sel(**{dim_name : valrange}).copy()
-
-
 def subset(data, dim_name, lower_or_list, upper=None,
            dim_name2=None, lower_or_list2=None, upper2=None,
            incl_lower=True, incl_upper=True):
@@ -169,11 +148,29 @@ def subset(data, dim_name, lower_or_list, upper=None,
         sub : xray.DataArray
     """
 
-    sub = _subset_1dim(data, dim_name, lower_or_list, upper, incl_lower,
+    def subset_1dim(data, dim_name, lower_or_list, upper=None,
+                     incl_lower=True, incl_upper=True):
+        """Extract a subset of a DataArray along a named dimension."""
+        vals = data[dim_name]
+        if upper is None:
+            valrange = lower_or_list
+        else:
+            if incl_lower:
+                ind1 = vals >= lower_or_list
+            else:
+                ind1 = vals > lower_or_list
+            if incl_upper:
+                ind2 = vals <= upper
+            else:
+                ind2 = vals < upper
+            valrange = vals[ind1 & ind2]
+        return data.sel(**{dim_name : valrange}).copy()
+
+    sub = subset_1dim(data, dim_name, lower_or_list, upper, incl_lower,
                        incl_upper)
 
     if dim_name2 is not None:
-        sub = _subset_1dim(sub, dim_name2, lower_or_list2, upper2, incl_lower,
+        sub = subset_1dim(sub, dim_name2, lower_or_list2, upper2, incl_lower,
                            incl_upper)
 
     return sub
