@@ -231,6 +231,7 @@ def potential_temp(T, p, p0=1e5):
     theta = T * dat.biggify(scale, T)
 
     if isinstance(T, xray.DataArray):
+        theta.name = 'theta'
         theta.attrs['long_name'] = 'Potential Temperature'
         theta.attrs['units'] = 'K'
 
@@ -277,6 +278,7 @@ def equiv_potential_temp(T, p, q, p0=1e5):
     theta_e = theta * np.exp((L*q) / (Cp*T))
 
     if isinstance(T, xray.DataArray):
+        theta_e.name = 'theta_e'
         theta_e.attrs['long_name'] = 'Equivalent Potential Temperature'
         theta_e.attrs['units'] = 'K'
 
