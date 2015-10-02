@@ -117,16 +117,17 @@ def coords_assign(coords, dim, new_name, new_val):
 def subset(data, dim_name, lower_or_list, upper=None,
            dim_name2=None, lower_or_list2=None, upper2=None,
            incl_lower=True, incl_upper=True):
-    """Extract a subset of a DataArray along 1 or 2 named dimensions.
+    """Extract a subset of a DataArray or Dataset along named dimensions.
 
-    Returns a DataArray sub extracted from input data, such that:
+    Returns a DataArray or Dataset sub extracted from input data,
+    such that:
         sub[dim_name] >= lower_or_list & sub[dim_name] <= upper,
     OR  sub[dim_name] == lower_or_list (if lower_or_list is a list)
     And similarly for dim_name2, if included.
 
     Parameters
     ----------
-    data : xray.DataArray
+    data : xray.DataArray or xray.Dataset
         Data source for extraction.
     dim_name : string
         Name of dimension to extract from.
@@ -145,7 +146,7 @@ def subset(data, dim_name, lower_or_list, upper=None,
 
     Returns
     -------
-        sub : xray.DataArray
+        sub : xray.DataArray or xray.Dataset
     """
 
     def subset_1dim(data, dim_name, lower_or_list, upper=None,
