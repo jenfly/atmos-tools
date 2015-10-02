@@ -305,25 +305,23 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
 
 
 # ----------------------------------------------------------------------
-def load_concat(paths, var, concat_dim='TIME', subset1=(None, None, None),
+def load_concat(paths, var=None, concat_dim='TIME', subset1=(None, None, None),
                 subset2=(None, None, None), verbose=True):
     """Load a variable from multiple files and concatenate into one.
 
     Especially useful for extracting variables split among multiple
     OpenDAP files.
 
-    *** Note:  doesn't work when concat_dim=None.  Add this in future
-    if needed, so that concat_dim=None creates a new dimension for
-    concatenation. ***
-
     Parameters
     ----------
     paths : list of strings
         List of file paths or OpenDAP urls to process.
-    var : str
-        Name of variable to extract.
+    var : str, optional
+        Name of variable to extract.  If None then all variables are
+        extracted and a Dataset is returned.
     concat_dim : str
-        Name of dimension to concatenate along.
+        Name of dimension to concatenate along. If this dimension
+        doesn't exist in the input data, a new one is created.
     subset1, subset2 : (str, float(s), float(s)), optional
         Tuple to indicate subset(s) to extract, in the form:
         (dim_name, lower_or_list, upper)
@@ -338,7 +336,7 @@ def load_concat(paths, var, concat_dim='TIME', subset1=(None, None, None),
 
     Returns:
     --------
-    data : xray.DataArray
+    data : xray.DataArray or xray.Dataset
         Data extracted from input files.
     """
 
@@ -356,7 +354,10 @@ def load_concat(paths, var, concat_dim='TIME', subset1=(None, None, None),
             try:
                 with xray.open_dataset(p) as ds:
                     print_if('Appending data', verbose)
-                    piece = ds[var]
+                    if var is None:
+                        piece = ds
+                    else:
+                        piece = ds[var]
                     if subset1[0] is not None:
                         piece = subset(piece, subset1[0], subset1[1],
                                        subset1[2], subset2[0], subset2[1],
