@@ -20,6 +20,11 @@ def print_if(msg, condition, printfunc=None):
         else:
             print(msg)
 
+
+# ======================================================================
+# ORDERED DICTIONARIES
+# ======================================================================
+
 # ----------------------------------------------------------------------
 def print_odict(od, indent=2, width=None):
     '''Pretty print the contents of an ordered dictionary.'''
@@ -30,7 +35,7 @@ def print_odict(od, indent=2, width=None):
         if len(widths) == 0:
             width = defwidth
         else:
-            width = max(widths) + indent + 1        
+            width = max(widths) + indent + 1
 
     for key in od:
         s = ' ' * indent + key
@@ -91,17 +96,6 @@ def odict_delete(odict, key):
     return odict_new
 
 
-# ----------------------------------------------------------------------
-def disptime(fmt=None):
-    now = datetime.now()
-
-    if fmt == None:
-        fmt = '%02d/%02d/%02d %02d:%02d:%02d'
-    now = (fmt % (now.month, now.day, now.year, now.hour, now.minute,
-           now.second))
-    print(now)
-
-
 # ======================================================================
 # INCREASING / DECREASING LISTS
 # ======================================================================
@@ -128,6 +122,30 @@ def non_increasing(L):
 def non_decreasing(L):
     """Return True if list L is non-decreasing."""
     return all(x <= y for x, y in zip(L, L[1:]))
+
+
+# ======================================================================
+# DATE/TIME
+# ======================================================================
+
+# ----------------------------------------------------------------------
+def disptime(fmt=None):
+    now = datetime.now()
+
+    if fmt == None:
+        fmt = '%02d/%02d/%02d %02d:%02d:%02d'
+    now = (fmt % (now.month, now.day, now.year, now.hour, now.minute,
+           now.second))
+    print(now)
+
+
+# ----------------------------------------------------------------------
+def timedelta_convert(dt, units='s'):
+    """Return an np.timedelta64 time in the selected units.
+
+    Valid units: 'ns', 'ms', 's', 'm', 'h', 'D'
+    """
+    return dt / np.timedelta64(1, units)
 
 
 # ======================================================================
