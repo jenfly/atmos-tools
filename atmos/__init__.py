@@ -49,6 +49,7 @@ from data import (
     near_surface,
     interp_plevels,
     int_pres,
+    split_timedim,
 )
 
 from variables import (
