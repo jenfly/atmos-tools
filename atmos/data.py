@@ -1160,7 +1160,7 @@ def split_timedim(data, n, slowfast=True, timename='time', time0_name='time0',
 
     Parameters
     ----------
-    data : ndarray
+    data : ndarray or xray.DataArray
         Data array with time as the first dimension.
     n : int
         Number of periods per split (e.g. 12 for months).
@@ -1168,15 +1168,22 @@ def split_timedim(data, n, slowfast=True, timename='time', time0_name='time0',
         If True, then the slowest changing time index is first, e.g.
         year, month.  If False, then the fastest changing time index is
         first, e.g. month, year.
+    timename : str, optional
+        Name of time dimension. Only used if data is a DataArray.
+    time0_name, time1_name : str, optional
+        Names for new time dimensions. Only used if data is a
+        DataArray.
+    time0_vals, time1_vals : ndarray, optional
+        Values for new time dimensions.  Defaults to array of
+        integers.  Only used if data is a DataArray.
 
     Returns
     -------
-    data_out : ndarray
+    data_out : ndarray or xray.DataArray
         Data array with the first dimension split into two.  If dims
         is the shape of the input data, and nt = dims[0], then:
         - If slowfast=True: data_out.shape is [nt/n, n] + dims[1:]
         - If slowfast=False: data_out.shape is [n, nt/n] + dims[1:]
-
     """
 
     if isinstance(data, xray.DataArray):
@@ -1209,5 +1216,50 @@ def split_timedim(data, n, slowfast=True, timename='time', time0_name='time0',
         dim_names = [time0_name, time1_name] + dim_names
         data_out = xray.DataArray(data_out, name=name, dims=dim_names,
                                   coords=coords, attrs=attrs)
+
+    return data_out
+
+
+# ----------------------------------------------------------------------
+def daily_from_subdaily(data, n, method='mean', timename='time', dayname='day',
+                        dayvals=None):
+    """Return daily data from sub-daily data.
+
+    Parameters
+    ----------
+    data : ndarray or xray.DataArray
+        Data array with time as the first dimension.
+    n : int
+        Number of values per day (e.g. n=8 for 3-hourly data).
+    method : {'mean'} or int, optional
+        Method for computing daily values from sub-daily values.
+        Default is the daily mean.  If method is an integer in
+        range(n), then the daily value is the sub-sample at that
+        index (e.g. method=0 returns the first sub-daily value from
+        each day).
+    timename : str, optional
+        Name of time dimension in input. Only used if data is a DataArray.
+    dayname : str, optional
+        Name of time dimension in output.  Only used if data is a DataArray.
+    dayvals : ndarray, optional
+        Values for time dimension in output, e.g. np.arange(1, 366).
+        Only used if data is a DataArray.
+
+    Returns
+    -------
+    data_out : ndarray or xray.DataArray
+        Daily values of data (mean or subsample).
+    """
+
+    # Split the time dimension
+    data_out = split_timedim(data, n, slowfast=False, timename=timename)
+
+    if method in range(n):
+        data_out = data_out[method]
+    elif method.lower() == 'mean':
+        if isinstance(data, xray.DataArray):
+            data_out = data_out.mean(axis=0)
+        else:
+            data_out = np.nanmean(data_out, axis=0)
 
     return data_out
