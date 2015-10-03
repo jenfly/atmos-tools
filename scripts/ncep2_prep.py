@@ -6,9 +6,7 @@ from mpl_toolkits.basemap import Basemap
 import xray
 
 # My modules:
-import atmos.utils as utils
-import atmos.xrhelper as xr
-import atmos.plots as aplt
+import atmos as atm
 
 # ----------------------------------------------------------------------
 # Read data from netcdf and unpack
@@ -17,19 +15,25 @@ miss = u'missing_value'
 offset = u'add_offset'
 scale = u'scale_factor'
 
-ds = xr.ncload('data/more/uwnd.mon.mean.nc', verbose=True, unpack=True,
+def filename(var):
+    datadir = '~/datastore/atmos-tools/'
+    filen = datadir + var + '.mon.mean.nc'
+    print('Loading ' + filen)
+    return filen
+
+ds = atm.ncload(filename('uwnd'), verbose=True, unpack=True,
     missing_name=miss, offset_name=offset, scale_name=scale, decode_cf=False)
 ds.rename({'uwnd': 'u'}, inplace=True)
 
-ds2 = xr.ncload('data/more/vwnd.mon.mean.nc', verbose=True, unpack=True,
+ds2 = atm.ncload(filename('vwnd'), verbose=True, unpack=True,
     missing_name=miss, offset_name=offset, scale_name=scale, decode_cf=False)
 ds['v'] = ds2['vwnd']
 
-ds2 = xr.ncload('data/more/air.mon.mean.nc', verbose=True, unpack=True,
+ds2 = atm.ncload(filename('air'), verbose=True, unpack=True,
     missing_name=miss, offset_name=offset, scale_name=scale, decode_cf=False)
 ds['T'] = ds2['air']
 
-ds2 = xr.ncload('data/more/pres.sfc.mon.mean.nc', verbose=True, unpack=True,
+ds2 = atm.ncload(filename('pres.sfc'), verbose=True, unpack=True,
     missing_name=miss, offset_name=offset, scale_name=scale, decode_cf=False)
 ds['ps'] = ds2['pres']
 
