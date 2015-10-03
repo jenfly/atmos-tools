@@ -19,7 +19,6 @@ import time
 from atmos.utils import print_if, disptime
 import atmos.utils as utils
 import atmos.xrhelper as xr
-#from atmos.xrhelper import subset
 from atmos.constants import const as constants
 
 # ======================================================================
@@ -1150,8 +1149,65 @@ def int_pres(data, plev=None, pdim=-3, pmin=0, pmax=1e6):
     return data_int
 
 
+# ======================================================================
+# TIME
+# ======================================================================
 
+# ----------------------------------------------------------------------
+def split_timedim(data, n, slowfast=True, timename='time', time0_name='time0',
+                  time0_vals=None, time1_name='time1', time1_vals=None):
+    """Split time dimension into two dimensions.
 
-# LAT-LON GEO
-# def average_over_country():
-#    """Return the data field averaged over a country."""
+    Parameters
+    ----------
+    data : ndarray
+        Data array with time as the first dimension.
+    n : int
+        Number of periods per split (e.g. 12 for months).
+    slowfast : bool, optional
+        If True, then the slowest changing time index is first, e.g.
+        year, month.  If False, then the fastest changing time index is
+        first, e.g. month, year.
+
+    Returns
+    -------
+    data_out : ndarray
+        Data array with the first dimension split into two.  If dims
+        is the shape of the input data, and nt = dims[0], then:
+        - If slowfast=True: data_out.shape is [nt/n, n] + dims[1:]
+        - If slowfast=False: data_out.shape is [n, nt/n] + dims[1:]
+
+    """
+
+    if isinstance(data, xray.DataArray):
+        i_DataArray = True
+        coords, attrs, name = xr.meta(data)
+        dim_names = list(data.dims)
+        dim_names.remove(timename)
+        coords = utils.odict_delete(coords, timename)
+        data = data.values.copy()
+    else:
+        i_DataArray = False
+
+    dims = list(data.shape)
+    nt = dims[0]
+    nn = nt /n
+
+    data_out = np.reshape(data, [nn, n] + dims[1:])
+    if not slowfast:
+        data_out = np.swapaxes(data_out, 0, 1)
+
+    def time_coord(name, size, vals, coords):
+        if vals is None:
+            vals = np.arange(size)
+        time_arr = xray.DataArray(vals, coords={name : vals}, name=name)
+        return utils.odict_insert(coords, name, time_arr)
+
+    if i_DataArray:
+        coords = time_coord(time0_name, data_out.shape[0], time0_vals, coords)
+        coords = time_coord(time1_name, data_out.shape[1], time1_vals, coords)
+        dim_names = [time0_name, time1_name] + dim_names
+        data_out = xray.DataArray(data_out, name=name, dims=dim_names,
+                                  coords=coords, attrs=attrs)
+
+    return data_out
