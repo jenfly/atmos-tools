@@ -29,13 +29,14 @@ def meta(data):
 
     Returns
     -------
-    coords : OrderedDict
-    attrs : OrderedDict
     name : string
+    attrs : OrderedDict
+    coords : OrderedDict of xray.DataArrays
+    dims : tuple of strings
 
     Usage
     -----
-    coords, attrs, name = meta(data)
+    name, attrs, coords, dims = meta(data)
     """
 
     # Create new variables and populate them to avoid inadvertent
@@ -50,7 +51,7 @@ def meta(data):
     for key in data.dims:
         coords[key] = data.coords[key].copy(deep=True)
 
-    return coords, attrs, data.name
+    return data.name, attrs, coords, data.dims
 
 
 # ----------------------------------------------------------------------

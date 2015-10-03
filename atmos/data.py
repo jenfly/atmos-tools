@@ -466,7 +466,7 @@ def set_lon(data, lonmax=360, lon=None, lonname=None):
         lon = get_coord(data, 'lon', coord_name=lonname)
         if lonname is None:
             lonname = get_coord(data, 'lon', 'name')
-        coords, attrs, name = xr.meta(data)
+        name, attrs, coords, _ = xr.meta(data)
         vals = data.values
     else:
         vals = data
@@ -540,7 +540,7 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
         latname = get_coord(data, 'lat', 'name')
         lon_in = get_coord(data, 'lon')
         lonname = get_coord(data, 'lon', 'name')
-        coords, attrs, name = xr.meta(data)
+        name, attrs, coords, _ = xr.meta(data)
         coords[latname] = xray.DataArray(lat_out, coords={latname : lat_out},
                                          attrs=data[latname].attrs)
         coords[lonname] = xray.DataArray(lon_out, coords={lonname : lon_out},
@@ -634,7 +634,7 @@ def mask_oceans(data, lat=None, lon=None, inlands=True, resolution='l',
     if isinstance(data, xray.DataArray):
         lat = get_coord(data, 'lat')
         lon = get_coord(data, 'lon')
-        coords, attrs, name = xr.meta(data)
+        name, attrs, coords, _ = xr.meta(data)
         vals = data.values.copy()
     else:
         vals = data
@@ -721,7 +721,7 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
         data_out = xray.DataArray(data, coords=coords)
     else:
         data_out = data
-        coords, attrs, name = xr.meta(data)
+        name, attrs, coords, _ = xr.meta(data)
         latname = get_coord(data, 'lat', 'name')
         lonname = get_coord(data, 'lon', 'name')
         coords = utils.odict_delete(coords, latname)
@@ -858,7 +858,7 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
     if isinstance(data, xray.DataArray):
         lat = get_coord(data, 'lat')
         lon = get_coord(data, 'lon')
-        coords, attrs, name = xr.meta(data)
+        name, attrs, coords, _ = xr.meta(data)
         vals = data.values.copy()
         # -- Pressure levels in Pascals
         plev = get_coord(data, 'plev')
@@ -930,7 +930,7 @@ def near_surface(data, pdim=-3, return_inds=False):
     if isinstance(data, xray.DataArray):
         i_DataArray = True
         data = data.copy()
-        coords, attrs, name = xr.meta(data)
+        name, attrs, coords, _ = xr.meta(data)
         title = 'Near-surface data extracted from pressure level data'
         attrs = utils.odict_insert(attrs, 'title', title, pos=0)
         pname = get_coord(data, 'plev', 'name')
@@ -1022,7 +1022,7 @@ def interp_plevels(data, plev_new, plev_in=None, pdim=-3, kind='linear'):
     if isinstance(data, xray.DataArray):
         i_DataArray = True
         data = data.copy()
-        coords, attrs, name = xr.meta(data)
+        name, attrs, coords, _ = xr.meta(data)
         title = 'Pressure-level data interpolated onto new pressure grid'
         attrs = utils.odict_insert(attrs, 'title', title, pos=0)
         pname = get_coord(data, 'plev', 'name')
@@ -1109,7 +1109,7 @@ def int_pres(data, plev=None, pdim=-3, pmin=0, pmax=1e6):
     if isinstance(data, xray.DataArray):
         i_DataArray = True
         data = data.copy()
-        coords, _, name = xr.meta(data)
+        name, _, coords, _ = xr.meta(data)
         attrs = collections.OrderedDict()
         title = 'Vertically integrated by dp/g'
         attrs['title'] = title
@@ -1181,7 +1181,7 @@ def split_timedim(data, n, slowfast=True, timename='time', time0_name='time0',
 
     if isinstance(data, xray.DataArray):
         i_DataArray = True
-        coords, attrs, name = xr.meta(data)
+        name, attrs, coords, _ = xr.meta(data)
         dim_names = list(data.dims)
         dim_names.remove(timename)
         coords = utils.odict_delete(coords, timename)
