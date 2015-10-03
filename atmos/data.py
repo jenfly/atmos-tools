@@ -1181,8 +1181,8 @@ def split_timedim(data, n, slowfast=True, timename='time', time0_name='time0',
 
     if isinstance(data, xray.DataArray):
         i_DataArray = True
-        name, attrs, coords, _ = xr.meta(data)
-        dim_names = list(data.dims)
+        name, attrs, coords, dim_names = xr.meta(data)
+        dim_names = list(dim_names)
         dim_names.remove(timename)
         coords = utils.odict_delete(coords, timename)
         data = data.values.copy()
