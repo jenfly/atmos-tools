@@ -154,7 +154,7 @@ def get_coord(data, coord_type=None, return_type='values', coord_name=None):
     ----------
     data : xray.DataArray
         Data array to search for latitude coords.
-    coord_type : {'lat', 'lon', 'plev'}, optional
+    coord_type : {'lat', 'lon', 'plev', 'time'}, optional
         Type of coordinate to extract.  If omitted, then coord_name
         must be provided.
     return_type : {'values', 'name', 'dim'}, optional
@@ -172,13 +172,17 @@ def get_coord(data, coord_type=None, return_type='values', coord_name=None):
     The coordinate names searched through are:
     'lat' : ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
     'lon' : ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
-    'plev' : ['plev', 'plevel', 'plevels', 'Height']
+    'plev' : ['plev', 'plevel', 'plevels', 'lev', 'level', 
+              'levels', 'Height']
+    'time' : ['time', 'TIME', 'Time']
     """
 
-    names_all = dict()
+    names_all = {}
     names_all['lat'] = ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
     names_all['lon'] = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
-    names_all['plev'] = ['plev', 'plevel', 'plevels', 'Height']
+    names_all['plev'] = ['plev', 'plevel', 'plevels', 'lev', 'level', 
+                         'levels', 'Height']
+    names_all['time'] = ['time', 'TIME', 'Time']
 
     # Look in list of common coordinate names
     if coord_name is None:
