@@ -50,6 +50,7 @@ from data import (
     interp_plevels,
     int_pres,
     split_timedim,
+    daily_from_subdaily,
 )
 
 from variables import (
