@@ -214,7 +214,13 @@ def season_months(season):
     except ValueError:
         raise ValueError('Season not found! Valid seasons: ' + ', '.join(ssn))
 
-    return imon[ifind]
+    months = imon[ifind]
+
+    # Make sure the output is a list
+    if isinstance(months, int):
+        months =[months]
+
+    return months
 
 
 # ----------------------------------------------------------------------
