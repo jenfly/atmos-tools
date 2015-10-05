@@ -1260,14 +1260,21 @@ def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
     """
 
     # Split the time dimension
-    data_out = split_timedim(data, n, slowfast=False, timename=timename)
+    data_out = split_timedim(data, n, slowfast=False, timename=timename,
+                             time1_name=dayname, time1_vals=dayvals)
 
-    if method in range(n):
-        data_out = data_out[method]
-    elif method.lower() == 'mean':
+    if isinstance(method, int):
+        if method in range(n):
+            data_out = data_out[method]
+        else:
+            msg = 'Subsample index %d exceeds valid range 0-%d.'
+            raise ValueError(msg % (method, n)) 
+    elif isinstance(method, str) and method.lower() == 'mean':
         if isinstance(data, xray.DataArray):
             data_out = data_out.mean(axis=0)
         else:
             data_out = np.nanmean(data_out, axis=0)
+    else:
+        raise ValueError('Invalid method ' + str(method))
 
     return data_out
