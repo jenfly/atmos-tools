@@ -1158,7 +1158,7 @@ def int_pres(data, plev=None, pdim=-3, pmin=0, pmax=1e6):
 # ======================================================================
 
 # ----------------------------------------------------------------------
-def split_timedim(data, n, slowfast=True, timename='time', time0_name='time0',
+def split_timedim(data, n, slowfast=True, timename=None, time0_name='time0',
                   time0_vals=None, time1_name='time1', time1_vals=None):
     """Split time dimension into two dimensions.
 
@@ -1174,6 +1174,7 @@ def split_timedim(data, n, slowfast=True, timename='time', time0_name='time0',
         first, e.g. month, year.
     timename : str, optional
         Name of time dimension. Only used if data is a DataArray.
+        If omitted, the name is extracted from data with get_coord().
     time0_name, time1_name : str, optional
         Names for new time dimensions. Only used if data is a
         DataArray.
@@ -1192,6 +1193,8 @@ def split_timedim(data, n, slowfast=True, timename='time', time0_name='time0',
 
     if isinstance(data, xray.DataArray):
         i_DataArray = True
+        if timename is None:
+            timename = get_coord(data, 'time', 'name')
         name, attrs, coords, dim_names = xr.meta(data)
         dim_names = list(dim_names)
         dim_names.remove(timename)
@@ -1225,7 +1228,7 @@ def split_timedim(data, n, slowfast=True, timename='time', time0_name='time0',
 
 
 # ----------------------------------------------------------------------
-def daily_from_subdaily(data, n, method='mean', timename='time', dayname='day',
+def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
                         dayvals=None):
     """Return daily data from sub-daily data.
 
@@ -1243,6 +1246,7 @@ def daily_from_subdaily(data, n, method='mean', timename='time', dayname='day',
         each day).
     timename : str, optional
         Name of time dimension in input. Only used if data is a DataArray.
+        If omitted, the name is extracted from data with get_coord().
     dayname : str, optional
         Name of time dimension in output.  Only used if data is a DataArray.
     dayvals : ndarray, optional
