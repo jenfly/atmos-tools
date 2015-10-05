@@ -4,11 +4,17 @@ import matplotlib.pyplot as plt
 import atmos as atm
 from atmos import split_timedim
 
-filename = '/home/jennifer/datastore/atmos-tools/uwnd.mon.mean.nc'
+datadir = '/home/jwalker/eady/datastore/'
+#datadir = '/home/jennifer/datastore/'
+
+# ----------------------------------------------------------------------
+# NCEP2 Monthly
+filename = datadir + 'atmos-tools/uwnd.mon.mean.nc'
 ds = atm.ncload(filename)
-lat = ds['lat'].values.astype(np.float64)
-lon = ds['lon'].values.astype(np.float64)
 u = ds['uwnd']
+lat = atm.get_coord(u, 'lat')
+lon = atm.get_coord(u, 'lon')
+
 # Remove Jan-Jun of 2015
 tlast = -7
 u = u[:tlast]
@@ -56,3 +62,36 @@ plt.subplot(211)
 atm.pcolor_latlon(data1, cmap='jet')
 plt.subplot(212)
 atm.pcolor_latlon(data2, cmap='jet')
+
+# ----------------------------------------------------------------------
+# MERRA Daily
+filename = datadir + 'merra/daily/merra_u200_198601.nc'
+ds = atm.ncload(filename)
+u = ds['U']
+lat = atm.get_coord(u, 'lat')
+lon = atm.get_coord(u, 'lon')
+
+# Number of time points per day
+n = 8
+days = np.arange(1, 32)
+hrs = np.arange(0, 24, 3)
+unew = split_timedim(u, n, time0_name='days', time0_vals=days,
+                     time1_name='hours', time1_vals=hrs)
+unew2 = split_timedim(u, n, slowfast=False)
+
+# Check that reshaping worked properly
+dy, hr, k = 1, 3, 0
+data1 = u[dy*n + hr, k]
+data2 = unew[dy, hr, k]
+data3 = unew2[hr, dy, k]
+print(np.array_equal(data1,data2))
+print(np.array_equal(data2, data3))
+
+# Plot data to check
+plt.figure()
+plt.subplot(211)
+atm.pcolor_latlon(data1, cmap='jet')
+plt.subplot(212)
+atm.pcolor_latlon(data2, cmap='jet')
+
+
