@@ -18,7 +18,7 @@ def degree_sign():
 
 
 # ----------------------------------------------------------------------
-def latlon_labels(vals, latlon='lat', fmt='%.0f'):
+def latlon_labels(vals, latlon='lat', fmt='%.0f', deg_symbol=True):
     """Return a label string for list of latitudes or longitudes."""
 
     if latlon.lower() == 'lat':
@@ -36,7 +36,10 @@ def latlon_labels(vals, latlon='lat', fmt='%.0f'):
         else:
             suffix = neg
             x = fmt % abs(num)
-        labels.append(x + degree_sign() + suffix)
+        if deg_symbol:
+            labels.append(x + degree_sign() + suffix)
+        else:
+            labels.append(x + suffix)
     return labels
 
 
