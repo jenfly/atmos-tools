@@ -166,6 +166,12 @@ def vorticity(u, v, lat=None, lon=None):
     # Absolute vorticity
     abs_vort = rel_vort + dat.biggify(f, rel_vort)
 
+    if isinstance(u, xray.DataArray):
+        abs_vort.name = 'abs_vort'
+        abs_vort.attrs['longname'] = 'Absolute vorticity'
+        rel_vort.name = 'rel_vort'
+        rel_vort.attrs['longname'] = 'Relative vorticity'
+
     return rel_vort, abs_vort, f
 
 
@@ -199,6 +205,10 @@ def rossby_num(u, v, lat=None, lon=None):
 
     rel_vort, _, f = vorticity(u, v, lat, lon)
     Ro = - rel_vort / dat.biggify(f, rel_vort)
+
+    if isinstance(u, xray.DataArray):
+        Ro.name = 'Ro'
+        Ro.attrs['longname'] = 'Local Rossby number'
     return Ro
 
 
