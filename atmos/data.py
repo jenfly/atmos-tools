@@ -172,7 +172,7 @@ def get_coord(data, coord_type=None, return_type='values', coord_name=None):
     The coordinate names searched through are:
     'lat' : ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
     'lon' : ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
-    'plev' : ['plev', 'plevel', 'plevels', 'lev', 'level', 
+    'plev' : ['plev', 'plevel', 'plevels', 'lev', 'level',
               'levels', 'Height']
     'time' : ['time', 'TIME', 'Time']
     """
@@ -180,7 +180,7 @@ def get_coord(data, coord_type=None, return_type='values', coord_name=None):
     names_all = {}
     names_all['lat'] = ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
     names_all['lon'] = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
-    names_all['plev'] = ['plev', 'plevel', 'plevels', 'lev', 'level', 
+    names_all['plev'] = ['plev', 'plevel', 'plevels', 'lev', 'level',
                          'levels', 'Height']
     names_all['time'] = ['time', 'TIME', 'Time']
 
@@ -1268,10 +1268,12 @@ def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
             data_out = data_out[method]
         else:
             msg = 'Subsample index %d exceeds valid range 0-%d.'
-            raise ValueError(msg % (method, n)) 
+            raise ValueError(msg % (method, n))
     elif isinstance(method, str) and method.lower() == 'mean':
         if isinstance(data, xray.DataArray):
+            _, attrs, _, _ = meta(data)
             data_out = data_out.mean(axis=0)
+            data_out.attrs = attrs
         else:
             data_out = np.nanmean(data_out, axis=0)
     else:
