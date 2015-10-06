@@ -1271,7 +1271,7 @@ def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
             raise ValueError(msg % (method, n))
     elif isinstance(method, str) and method.lower() == 'mean':
         if isinstance(data, xray.DataArray):
-            _, attrs, _, _ = meta(data)
+            _, attrs, _, _ = xr.meta(data)
             data_out = data_out.mean(axis=0)
             data_out.attrs = attrs
         else:
