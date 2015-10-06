@@ -97,7 +97,7 @@ def odict_delete(odict, key):
 
 
 # ======================================================================
-# INCREASING / DECREASING LISTS
+# LISTS / NDARRAYS
 # ======================================================================
 
 # ----------------------------------------------------------------------
@@ -122,6 +122,22 @@ def non_increasing(L):
 def non_decreasing(L):
     """Return True if list L is non-decreasing."""
     return all(x <= y for x, y in zip(L, L[1:]))
+
+
+# ----------------------------------------------------------------------
+def find_closest(arr, val):
+    """Return the closest value to val and its index in a 1D array.
+
+    If the closest value occurs more than once in the array, the index
+    of the first occurrence is returned.
+
+    Usage: closest_val, ind = find_closest(arr, val)
+
+    """
+    diff = abs(arr-val)
+    ind = diff.argmin()
+    closest_val = arr[ind]
+    return closest_val, ind
 
 
 # ======================================================================
