@@ -730,6 +730,12 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
         lonname = get_coord(data, 'lon', 'name')
         coords = utils.odict_delete(coords, latname)
         coords = utils.odict_delete(coords, lonname)
+        attrs['description'] = 'Mean over lat-lon subset'
+        attrs['lon1'], attrs['lon2'] = lon1, lon2
+        attrs['lat1'], attrs['lat2'] = lat1, lat2
+        attrs['area_weighted'] = area_wtd
+        attrs['land_only'] = land_only
+        
 
     if land_only:
         data_out = mask_oceans(data_out)
