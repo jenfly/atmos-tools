@@ -698,7 +698,7 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
         longitude as last dimension.
     lat1, lat2, lon1, lon2 : float
         Latitude and longitude limits for averaging region, with
-        lon1 < lon2 and lat1 < lat2.
+        lon1 <= lon2 and lat1 <= lat2.
     lat, lon : ndarray, optional
         Latitude and longitude arrays.  Only used if data is an
         ndarray and not an xray.DataArray.
@@ -723,11 +723,14 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
         coords = xr.coords_assign(coords, -1, lonname, lon)
         coords = xr.coords_assign(coords, -2, latname, lat)
         data_out = xray.DataArray(data, coords=coords)
+        attrs = {}
     else:
         data_out = data
         name, attrs, coords, _ = xr.meta(data)
         latname = get_coord(data, 'lat', 'name')
         lonname = get_coord(data, 'lon', 'name')
+        lon = get_coord(data, 'lon')
+        lat = get_coord(data, 'lat')
         coords = utils.odict_delete(coords, latname)
         coords = utils.odict_delete(coords, lonname)
         attrs['description'] = 'Mean over lat-lon subset'
@@ -735,34 +738,49 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
         attrs['lat1'], attrs['lat2'] = lat1, lat2
         attrs['area_weighted'] = area_wtd
         attrs['land_only'] = land_only
-        
+
 
     if land_only:
         data_out = mask_oceans(data_out)
 
+    if lat1 == lat2:
+        if not lat1 in lat:
+            raise ValueError('lat1=lat2=%f not in latitude grid' % lat1)
+    if lon1 == lon2:
+        if not lon1 in lon:
+            raise ValueError('lon1=lon2=%f not in longitude grid' % lon1)
+
     data_out = subset(data_out, latname, lat1, lat2, lonname, lon1, lon2)
+    attrs['subset_lons'] = get_coord(data_out, 'lon')
+    attrs['subset_lats'] = get_coord(data_out, 'lat')
 
     # Mean over longitudes
     data_out = data_out.mean(axis=-1)
 
-    # Array of latitudes with same NaN mask as the data so that the
-    # area calculation is correct
-    lat_rad = np.radians(get_coord(data_out, 'lat'))
-    lat_rad = biggify(lat_rad, data_out, tile=True)
-    mdat = np.ma.masked_array(data_out, np.isnan(data_out))
-    lat_rad = np.ma.masked_array(lat_rad, mdat.mask)
-    lat_rad = lat_rad.filled(np.nan)
-
-    if area_wtd:
-        # Weight by area with cos(lat)
-        coslat = np.cos(lat_rad)
-        data_out = data_out * coslat
-        area = nantrapz(coslat, lat_rad, axis=-1)
-    else:
-        area = nantrapz(np.ones(lat_rad.shape, dtype=float), lat_rad, axis=-1)
-
     # Mean over latitudes
-    avg = nantrapz(data_out, lat_rad, axis=-1) / area
+    if lat1 == lat2:
+        # Eliminate singleton dimension
+        avg = data_out.mean(axis=-1)
+        avg.attrs = attrs
+    else:
+        # Array of latitudes with same NaN mask as the data so that the
+        # area calculation is correct
+        lat_rad = np.radians(get_coord(data_out, 'lat'))
+        lat_rad = biggify(lat_rad, data_out, tile=True)
+        mdat = np.ma.masked_array(data_out, np.isnan(data_out))
+        lat_rad = np.ma.masked_array(lat_rad, mdat.mask)
+        lat_rad = lat_rad.filled(np.nan)
+
+        if area_wtd:
+            # Weight by area with cos(lat)
+            coslat = np.cos(lat_rad)
+            data_out = data_out * coslat
+            area = nantrapz(coslat, lat_rad, axis=-1)
+        else:
+            area = nantrapz(np.ones(lat_rad.shape, dtype=float), lat_rad, axis=-1)
+
+        # Integrate with trapezoidal method
+        avg = nantrapz(data_out, lat_rad, axis=-1) / area
 
     # Pack output into DataArray with the metadata that was lost in np.trapz
     if isinstance(data, xray.DataArray) and not isinstance(avg, xray.DataArray):

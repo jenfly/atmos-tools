@@ -77,3 +77,22 @@ testing(T, lat1, lat2, lon1, lon2, t, k)
 lat1, lat2 = 10, 50
 lon1, lon2 = 60, 100
 testing(T, lat1, lat2, lon1, lon2, t, k)
+
+# Single longitude
+delta = 5
+lat1, lat2 = 10, 50
+lon1, _ = utils.find_closest(lon, 80)
+avg1 = mean_over_geobox(T, lat1, lat2, lon1, lon1)
+avg2 = mean_over_geobox(T, lat1, lat2, lon1-delta, lon1+delta)
+plt.figure()
+plt.plot(avg1[t])
+plt.plot(avg2[t])
+
+# Single latitude
+lat1, _ = utils.find_closest(lat, 20)
+lon1, lon2 = 60, 100
+avg3 = mean_over_geobox(T, lat1, lat1, lon1, lon2)
+avg4 = mean_over_geobox(T, lat1-delta, lat1+delta, lon1, lon2)
+plt.figure()
+plt.plot(avg3[t])
+plt.plot(avg4[t])
