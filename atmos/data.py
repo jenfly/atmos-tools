@@ -441,7 +441,7 @@ def load_concat(paths, var_ids=None, concat_dim='TIME',
         return data
 
     pieces = []
-    for p in paths:
+    for p in utils.makelist(paths):
         print_if(None, verbose, printfunc=disptime)
         print_if('Loading ' + p, verbose)
         attempt = 0
