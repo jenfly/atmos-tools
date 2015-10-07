@@ -144,7 +144,7 @@ def nantrapz(y, x=None, axis=-1):
 
 # ======================================================================
 # UNIT CONVERSIONS
-# ======================================================================    
+# ======================================================================
 
 # ----------------------------------------------------------------------
 def pres_units(units):
@@ -182,7 +182,7 @@ def precip_units(units):
     """
     Return a standardized name for precip units.
     """
-    kgm2s = ['kg/m2/s', '(kg/m^2)/s', 'kg/m^2/s', 'kg m^-2 s^-1', 
+    kgm2s = ['kg/m2/s', '(kg/m^2)/s', 'kg/m^2/s', 'kg m^-2 s^-1',
              'kg/(m^2 s)']
     mmday = ['mm/day', 'mm day^-1']
 
@@ -197,13 +197,13 @@ def precip_units(units):
 # ----------------------------------------------------------------------
 def precip_convert(precip, units_in, units_out):
     """Convert precipitation from units_in to units_out."""
-    
+
     kgm2s = 'kg m^-2 s^-1'
     mmday = 'mm day^-1'
-    
+
     # Convert between (kg/m^2)/s to mm/day
     SCALE = 60 * 60 * 24
-    
+
     if precip_units(units_in) == precip_units(units_out):
         precip_out = precip
     elif precip_units(units_in) == kgm2s and precip_units(units_out) == mmday:
@@ -211,7 +211,7 @@ def precip_convert(precip, units_in, units_out):
     elif precip_units(units_in) == mmday and precip_units(units_out) == kgm2s:
         precip_out = precip / SCALE
     else:
-        msg = "Don't know how to convert between %s and %s"        
+        msg = "Don't know how to convert between %s and %s"
         raise ValueError(msg % (units_in, units_out))
     return precip_out
 
@@ -382,8 +382,9 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
 
 
 # ----------------------------------------------------------------------
-def load_concat(paths, var=None, concat_dim='TIME', subset1=(None, None, None),
-                subset2=(None, None, None), verbose=True):
+def load_concat(paths, var_ids=None, concat_dim='TIME',
+                subset1=(None, None, None), subset2=(None, None, None),
+                verbose=True):
     """Load a variable from multiple files and concatenate into one.
 
     Especially useful for extracting variables split among multiple
@@ -393,9 +394,9 @@ def load_concat(paths, var=None, concat_dim='TIME', subset1=(None, None, None),
     ----------
     paths : list of strings
         List of file paths or OpenDAP urls to process.
-    var : str, optional
-        Name of variable to extract.  If None then all variables are
-        extracted and a Dataset is returned.
+    var_ids : str or list of str, optional
+        Name(s) of variable(s) to extract.  If None then all variables
+        are extracted and a Dataset is returned.
     concat_dim : str
         Name of dimension to concatenate along. If this dimension
         doesn't exist in the input data, a new one is created.
@@ -420,31 +421,41 @@ def load_concat(paths, var=None, concat_dim='TIME', subset1=(None, None, None),
     # Number of times to attempt opening file (in case of server problems)
     NMAX = 3
     # Wait time (seconds) between attempts
-    WAIT = 60
+    WAIT = 5
 
-    pieces = list()
+    def get_data(path, var_ids, subset1, subset2):
+        with xray.open_dataset(path) as ds:
+            if var_ids is None:
+                # All variables
+                data = ds
+            else:
+                # Extract specific variables
+                var_ids = utils.makelist(var_ids)
+                data = xray.Dataset()
+                for var in var_ids:
+                    data[var] = ds[var]
+            if subset1[0] is not None:
+                data = subset(data, subset1[0], subset1[1], subset1[2],
+                              subset2[0], subset2[1], subset2[2])
+            data.load()
+        return data
+
+    pieces = []
     for p in paths:
         print_if(None, verbose, printfunc=disptime)
         print_if('Loading ' + p, verbose)
         attempt = 0
         while attempt < NMAX:
             try:
-                with xray.open_dataset(p) as ds:
-                    print_if('Appending data', verbose)
-                    if var is None:
-                        piece = ds
-                    else:
-                        piece = ds[var]
-                    if subset1[0] is not None:
-                        piece = subset(piece, subset1[0], subset1[1],
-                                       subset1[2], subset2[0], subset2[1],
-                                       subset2[2])
-                    pieces.append(piece.load())
-                    attempt = NMAX
+                piece = get_data(p, var_ids, subset1, subset2)
+                print_if('Appending data', verbose)
+                pieces.append(piece)
+                attempt = NMAX
             except RuntimeError as err:
                 attempt += 1
                 if attempt < NMAX:
-                    print('File error.  Attempting again in %d s' % WAIT)
+                    print('Error reading file.  Attempting again in %d s' %
+                          WAIT)
                     time.sleep(WAIT)
                 else:
                     raise err
@@ -452,6 +463,11 @@ def load_concat(paths, var=None, concat_dim='TIME', subset1=(None, None, None),
     print_if('Concatenating data', verbose)
     data = xray.concat(pieces, dim=concat_dim)
     print_if(None, verbose, printfunc=disptime)
+
+    if len(var_ids) == 1:
+        # Convert from Dataset to DataArray for output
+        data = data[var_ids[0]]
+
     return data
 
 
@@ -1351,6 +1367,3 @@ def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
         raise ValueError('Invalid method ' + str(method))
 
     return data_out
-
-    
-
