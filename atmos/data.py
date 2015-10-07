@@ -143,6 +143,80 @@ def nantrapz(y, x=None, axis=-1):
 
 
 # ======================================================================
+# UNIT CONVERSIONS
+# ======================================================================    
+
+# ----------------------------------------------------------------------
+def pres_units(units):
+    """
+    Return a standardized name (hPa or Pa) for the input pressure units.
+    """
+    hpa = ['mb', 'millibar', 'millibars', 'hpa', 'hectopascal', 'hectopascals']
+    pa = ['pascal', 'pascals', 'pa']
+
+    if units.lower() in hpa:
+        return 'hPa'
+    elif units.lower() in pa:
+        return 'Pa'
+    else:
+        raise ValueError('Unknown units ' + units)
+
+
+# ----------------------------------------------------------------------
+def pres_convert(pres, units_in, units_out):
+    """Convert pressure array from units_in to units_out."""
+
+    if pres_units(units_in) == pres_units(units_out):
+        pres_out = pres
+    elif pres_units(units_in) == 'hPa' and pres_units(units_out) == 'Pa':
+        pres_out = pres * 100
+    elif pres_units(units_in) == 'Pa' and pres_units(units_out) == 'hPa':
+        pres_out = pres / 100
+    else:
+        raise ValueError('Problem with input/output units.')
+    return pres_out
+
+
+# ----------------------------------------------------------------------
+def precip_units(units):
+    """
+    Return a standardized name for precip units.
+    """
+    kgm2s = ['kg/m2/s', '(kg/m^2)/s', 'kg/m^2/s', 'kg m^-2 s^-1', 
+             'kg/(m^2 s)']
+    mmday = ['mm/day', 'mm day^-1']
+
+    if units.lower() in kgm2s:
+        return 'kg m^-2 s^-1'
+    elif units.lower() in mmday:
+        return 'mm day^-1'
+    else:
+        raise ValueError('Unknown units ' + units)
+
+
+# ----------------------------------------------------------------------
+def precip_convert(precip, units_in, units_out):
+    """Convert precipitation from units_in to units_out."""
+    
+    kgm2s = 'kg m^-2 s^-1'
+    mmday = 'mm day^-1'
+    
+    # Convert between (kg/m^2)/s to mm/day
+    SCALE = 60 * 60 * 24
+    
+    if precip_units(units_in) == precip_units(units_out):
+        precip_out = precip
+    elif precip_units(units_in) == kgm2s and precip_units(units_out) == mmday:
+        precip_out = precip * SCALE
+    elif precip_units(units_in) == mmday and precip_units(units_out) == kgm2s:
+        precip_out = precip / SCALE
+    else:
+        msg = "Don't know how to convert between %s and %s"        
+        raise ValueError(msg % (units_in, units_out))
+    return precip_out
+
+
+# ======================================================================
 # COORDINATES AND SUBSETS
 # ======================================================================
 
@@ -789,40 +863,13 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
     return avg
 
 
+
+
+
+
 # ======================================================================
 # PRESSURE LEVEL DATA AND TOPOGRAPHY
 # ======================================================================
-
-# ----------------------------------------------------------------------
-def pres_units(units):
-    """
-    Return a standardized name (hPa or Pa) for the input pressure units.
-    """
-    hpa = ['mb', 'millibar', 'millibars', 'hpa', 'hectopascal', 'hectopascals']
-    pa = ['pascal', 'pascals', 'pa']
-
-    if units.lower() in hpa:
-        return 'hPa'
-    elif units.lower() in pa:
-        return 'Pa'
-    else:
-        raise ValueError('Unknown units ' + units)
-
-
-# ----------------------------------------------------------------------
-def pres_convert(pres, units_in, units_out):
-    """Convert pressure array from units_in and return in units_out."""
-
-    if pres_units(units_in) == pres_units(units_out):
-        pres_out = pres
-    elif pres_units(units_in) == 'hPa' and pres_units(units_out) == 'Pa':
-        pres_out = pres * 100
-    elif pres_units(units_in) == 'Pa' and pres_units(units_out) == 'hPa':
-        pres_out = pres / 100
-    else:
-        raise ValueError('Problem with input/output units.')
-    return pres_out
-
 
 # ----------------------------------------------------------------------
 def get_ps_clim(lat, lon, datafile='data/topo/ncep2_ps.nc'):
@@ -1304,3 +1351,6 @@ def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
         raise ValueError('Invalid method ' + str(method))
 
     return data_out
+
+    
+
