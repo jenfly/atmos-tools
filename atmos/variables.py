@@ -340,16 +340,15 @@ def moisture_flux_conv(uq, vq, lat=None, lon=None, plev=None, pdim=-3,
 
     """
 
-    # Convert from (kg/m^2)/s to mm/day
-    SCALE = 60 * 60 * 24
-
     uq_int = dat.int_pres(uq, plev, pdim=pdim, pmin=pmin, pmax=pmax)
     vq_int = dat.int_pres(vq, plev, pdim=pdim, pmin=pmin, pmax=pmax)
 
     mfc, mfc_x, mfc_y = divergence_spherical_2d(uq_int, vq_int, lat, lon)
 
     # Convert from divergence to convergence, and to mm/day
-    mfc, mfc_x, mfc_y = -SCALE * mfc, -SCALE * mfc_x, -SCALE * mfc_y
+    mfc = -dat.precip_convert(mfc, 'kg/m2/s', 'mm/day')
+    mfc_x = -dat.precip_convert(mfc_x, 'kg/m2/s', 'mm/day')
+    mfc_y = -dat.precip_convert(mfc_y, 'kg/m2/s', 'mm/day')
 
     if isinstance(mfc, xray.DataArray):
         mfc.name = 'Vertically integrated moisture flux convergence'
