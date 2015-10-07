@@ -423,6 +423,9 @@ def load_concat(paths, var_ids=None, concat_dim='TIME',
     # Wait time (seconds) between attempts
     WAIT = 5
 
+    if var_ids is not None:
+        var_ids = utils.makelist(var_ids)
+
     def get_data(path, var_ids, subset1, subset2):
         with xray.open_dataset(path) as ds:
             if var_ids is None:
@@ -430,7 +433,6 @@ def load_concat(paths, var_ids=None, concat_dim='TIME',
                 data = ds
             else:
                 # Extract specific variables
-                var_ids = utils.makelist(var_ids)
                 data = xray.Dataset()
                 for var in var_ids:
                     data[var] = ds[var]
@@ -464,7 +466,7 @@ def load_concat(paths, var_ids=None, concat_dim='TIME',
     data = xray.concat(pieces, dim=concat_dim)
     print_if(None, verbose, printfunc=disptime)
 
-    if len(var_ids) == 1:
+    if var_ids is not None and len(var_ids) == 1:
         # Convert from Dataset to DataArray for output
         data = data[var_ids[0]]
 
