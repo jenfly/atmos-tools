@@ -97,8 +97,23 @@ def odict_delete(odict, key):
 
 
 # ======================================================================
-# LISTS / NDARRAYS
+# LISTS / 1D NUMPY ARRAYS
 # ======================================================================
+
+# ----------------------------------------------------------------------
+def makelist(input):
+    """Return a list object from the input.
+
+    If input is a single value (e.g. int, str, etc.) then output
+    is a list of length 1.  If input is already a list, then
+    output is the same as input.
+    """
+    if isinstance(input, list):
+        output = input
+    else:
+        output = [input]
+    return output
+
 
 # ----------------------------------------------------------------------
 def strictly_increasing(L):
