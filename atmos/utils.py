@@ -184,6 +184,12 @@ def timedelta_convert(dt, units='s'):
 # ======================================================================
 
 # ----------------------------------------------------------------------
+def isleap(year):
+    """Return True if year is a leap year, False otherwise."""
+    return year % 4 == 0
+
+
+# ----------------------------------------------------------------------
 def month_str(month, upper=True):
     '''Returns the string e.g. 'JAN' corresponding to month'''
 
@@ -212,12 +218,7 @@ def days_this_month(year, month):
 
     Both inputs must be integers, and month is the numeric month 1-12.
     """
-
-    if year % 4 == 0:
-        leap = True
-    else:
-        leap = False
-    ndays = days_per_month(leap)
+    ndays = days_per_month(isleap(year))
     return ndays[month - 1]
 
 
