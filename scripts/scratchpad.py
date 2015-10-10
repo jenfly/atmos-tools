@@ -19,12 +19,19 @@ from atmos.data import get_coord
 # ----------------------------------------------------------------------
 # Harmonic analysis
 
-def harmonic_coeffs(y):
+def fourier_from_scratch(y, dt=1.0, ntrunc=None):
+    """ Wilks Atm Stats eqs..."""
+
+    # Make sure we're working with an ndarray and not a DataArray
+    if isinstance(y, xray.DataArray):
+        y = y.values
+
     n = len(y)
     nhalf = n // 2
     t = np.arange(1, n+1)
     omega1 = 2 * np.pi / n
 
+    # Fourier coefficients
     Ak = np.zeros(nhalf + 1, dtype=float)
     Bk = np.zeros(nhalf + 1, dtype=float)
     Ak[0] = np.mean(y)
@@ -34,30 +41,27 @@ def harmonic_coeffs(y):
         Ak[k] = (2.0/n) * np.sum(y * np.cos(omega * t))
         Bk[k] = (2.0/n) * np.sum(y * np.sin(omega * t))
 
-    return Ak, Bk
+    Ck = Ak + 1j * Bk
 
-def harmonic_freqs(n, dt=1.0):
-    T = float(n * dt)
-    freqs = np.arange(n//2 + 1) / T
-    return freqs
+    # Frequencies
+    freqs = np.arange(n//2 + 1) / float(n * dt)
 
-def harmonic_vals(y, Ak, Bk):
-    n = len(y)
-    t = np.arange(1, n+1)
-    omega1 = 2 * np.pi / n
+    # Harmonics
     harmonics = {}
-    for k, AB in enumerate(zip(Ak, Bk)):
-        A, B = AB
+    for k, C in enumerate(Ck):
+        A, B = C.real, C.imag
         omega = k * omega1
         harmonics[k] = A * np.cos(omega*t) + B * np.sin(omega*t)
-    return harmonics
 
-def harmonic_decomp(y, dt=1.0):
-    Ak, Bk = harmonic_coeffs(y)
-    Ck = np.sqrt(Ak**2 + Bk**2)
-    freqs = harmonic_freqs(len(y), dt)
-    harmonics = harmonic_vals(y, Ak, Bk)
-    return freqs, harmonics, Ak, Bk, Ck
+    # Predicted y and smoothed truncated predicted y
+    ypred = np.zeros(n, dtype=float)
+    ytrunc = np.zeros(n, dtype=float)
+    for k in harmonics:
+        ypred += harmonics[k]
+        if ntrunc is not None and k <= ntrunc:
+            ytrunc += harmonics[k]
+
+    return freqs, harmonics, Ck, ypred, ytrunc
 
 # ----------------------------------------------------------------------
 N = 365
@@ -66,24 +70,30 @@ x = np.arange(1, N+1)
 omega1 = 2 * np.pi / N
 y = 3.1 + 2.5 * np.sin(omega1 * x) + np.cos(2 * omega1 * x)
 
-freqs, harmonics, Ak, Bk, Ck = harmonic_decomp(y, dt)
+ntrunc = 1
+freqs, harmonics, Ck, ypred, ytrunc = fourier_from_scratch(y, dt, ntrunc)
 plt.figure(figsize=(7,8))
 plt.subplot(211)
 plt.plot(x,y)
 plt.plot(x, harmonics[1])
 plt.plot(x, harmonics[2])
-plt.plot(x, harmonics[0] + harmonics[1] + harmonics[2], '--')
+plt.plot(x, ytrunc)
+plt.plot(x, ypred, 'r--')
 plt.subplot(212)
-plt.plot(freqs[:10], Ck[:10])
+plt.plot(freqs, np.abs(Ck)**2)
 
 # Compare with FFT
-#Hk = np.fft.fft(y)
-Hk = np.fft.fftpack.rfft(y)
-Ak2, Bk2 = Hk.real, Hk.imag
-freqs2 = np.fft.fftfreq(len(y), dt)
-Ck2 = np.sqrt(Hk * Hk.conjugate())
-plt.figure()
-plt.plot(freqs2[:10], Ck2[:10])
+Ck2 = np.fft.rfft(y)
+freqs2 = np.fft.rfftfreq(len(y), dt)
+ypred2 = np.fft.irfft(Ck2, len(y))
+ytrunc = np.fft.irfft(Ck2[:2], len(y))
+plt.figure(figsize=(7,8))
+plt.subplot(211)
+plt.plot(x,y)
+plt.plot(x,ytrunc)
+plt.plot(x, ypred2, '--')
+plt.subplot(212)
+plt.plot(freqs2, np.abs(Ck2)**2)
 
 # ----------------------------------------------------------------------
 datadir = '/home/jennifer/datastore/cmap/'
@@ -93,20 +103,14 @@ cmap = ds['precip'].sel(lat=11.25, lon=91.25)
 
 npentad = 73 # pentads/year
 dt = 5.0/365
-nyears = 3
+nyears = 1
 precip = cmap[:nyears*npentad]
-y = precip.values
-freqs, harmonics, Ak, Bk, Ck = harmonic_decomp(y, dt)
+y = precip
 ntrunc = 12
-ypred = np.zeros(len(y))
-ytrunc = np.zeros(len(y))
-for k in harmonics:
-    ypred += harmonics[k]
-    if k <= ntrunc:
-        ytrunc += harmonics[k]
+freqs, harmonics, Ck, ypred, ytrunc = fourier_from_scratch(y, dt, ntrunc)
 
 t = precip.time
-plt.figure(figsize=(14,8))
+plt.figure(figsize=(7,8))
 plt.subplot(211)
 plt.plot(t,y)
 for k in range(1, ntrunc+1):
@@ -114,13 +118,21 @@ for k in range(1, ntrunc+1):
 plt.plot(t, ytrunc, '--')
 plt.plot(t, ypred, 'r--')
 plt.subplot(212)
-plt.plot(freqs[:ntrunc], Ck[:ntrunc])
+plt.plot(freqs, np.abs(Ck)**2)
 
 # Compare with FFT
-Hk = np.fft.fft(y)
-Ak2, Bk2 = Hk.real, Hk.imag
-freqs2 = np.fft.fftfreq(len(y), dt)
-Ck2 = np.sqrt(Hk * Hk.conjugate())
+Ck2 = np.fft.rfft(y)
+freqs2 = np.fft.rfftfreq(len(y), dt)
+ypred2 = np.fft.irfft(Ck2, len(y))
+ytrunc2 = np.fft.irfft(Ck2[:ntrunc+1], len(y))
+plt.figure(figsize=(7,8))
+plt.subplot(211)
+plt.plot(t,y)
+plt.plot(t,ytrunc2, '--')
+plt.plot(t, ypred2, 'r--')
+plt.subplot(212)
+plt.plot(freqs2, np.abs(Ck2)**2)
+
 # ----------------------------------------------------------------------
 # Gradients
 
