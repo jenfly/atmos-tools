@@ -6,6 +6,7 @@ from mpl_toolkits.basemap import Basemap
 import xray
 from datetime import datetime
 import statsmodels.api as sm
+from __future__ import division
 
 # My modules:
 import atmos.utils as utils
@@ -19,6 +20,29 @@ from atmos.data import get_coord
 # ----------------------------------------------------------------------
 # Harmonic analysis
 
+def fft_spectrum(y, dt=1.0, normalize=False):
+    n = len(y)
+    Ck = np.fft.rfft(y)
+    freqs = np.fft.rfftfreq(n, dt)
+    ypred = np.fft.irfft(Ck, n)
+
+    # Power spectrum
+    ps = np.abs(Ck / n)**2
+
+    # Account for pos/neg frequencies (exclude 0 and Nyquist frequency because
+    # they only appear once in the full spectrum)
+    ps[1:-1] = 2 * ps[1:-1]
+
+    if normalize:
+        ps = n * ps / np.sum((y - np.mean(y))**2)
+
+    return freqs, ps, Ck, ypred
+
+def fft_smooth(y, kmax):
+    Ck, _, _, _ = fourier_transform(y)
+    ysmooth = np.fft.irfft(Ck[:kmax+1], len(y))
+    return ysmooth
+
 def fourier_from_scratch(y, dt=1.0, ntrunc=None):
     """ Wilks Atm Stats eqs..."""
 
@@ -31,27 +55,26 @@ def fourier_from_scratch(y, dt=1.0, ntrunc=None):
     t = np.arange(1, n+1)
     omega1 = 2 * np.pi / n
 
-    # Fourier coefficients
+    # Fourier transform and harmonics
     Ak = np.zeros(nhalf + 1, dtype=float)
     Bk = np.zeros(nhalf + 1, dtype=float)
     Ak[0] = np.mean(y)
     Bk[0] = 0.0
+    harmonics = {0 : np.mean(y)}
     for k in range(1, nhalf + 1):
         omega = k * omega1
-        Ak[k] = (2.0/n) * np.sum(y * np.cos(omega * t))
-        Bk[k] = (2.0/n) * np.sum(y * np.sin(omega * t))
+        Ak[k] = (2.0/n) * np.sum(y * np.cos(omega*t))
+        Bk[k] = (2.0/n) * np.sum(y * np.sin(omega*t))
+        harmonics[k] = Ak[k] * np.cos(omega*t) + Bk[k] * np.sin(omega*t)
 
+    # Fourier coefficients scaled to be consistent with FFT output
     Ck = Ak + 1j * Bk
+
+    # Normalized power spectrum
+    ps = nhalf * np.abs(Ck)**2 / np.sum((y - np.mean(y))**2)
 
     # Frequencies
     freqs = np.arange(n//2 + 1) / float(n * dt)
-
-    # Harmonics
-    harmonics = {}
-    for k, C in enumerate(Ck):
-        A, B = C.real, C.imag
-        omega = k * omega1
-        harmonics[k] = A * np.cos(omega*t) + B * np.sin(omega*t)
 
     # Predicted y and smoothed truncated predicted y
     ypred = np.zeros(n, dtype=float)
@@ -61,7 +84,7 @@ def fourier_from_scratch(y, dt=1.0, ntrunc=None):
         if ntrunc is not None and k <= ntrunc:
             ytrunc += harmonics[k]
 
-    return freqs, harmonics, Ck, ypred, ytrunc
+    return freqs, harmonics, Ck, ps, ypred, ytrunc
 
 # ----------------------------------------------------------------------
 N = 365
@@ -71,7 +94,7 @@ omega1 = 2 * np.pi / N
 y = 3.1 + 2.5 * np.sin(omega1 * x) + np.cos(2 * omega1 * x)
 
 ntrunc = 1
-freqs, harmonics, Ck, ypred, ytrunc = fourier_from_scratch(y, dt, ntrunc)
+freqs, harmonics, Ck, ps, ypred, ytrunc = fourier_from_scratch(y, dt, ntrunc)
 plt.figure(figsize=(7,8))
 plt.subplot(211)
 plt.plot(x,y)
@@ -80,20 +103,53 @@ plt.plot(x, harmonics[2])
 plt.plot(x, ytrunc)
 plt.plot(x, ypred, 'r--')
 plt.subplot(212)
-plt.plot(freqs, np.abs(Ck)**2)
+plt.plot(freqs, ps)
+plt.xlim(0, 5)
 
 # Compare with FFT
-Ck2 = np.fft.rfft(y)
-freqs2 = np.fft.rfftfreq(len(y), dt)
-ypred2 = np.fft.irfft(Ck2, len(y))
-ytrunc = np.fft.irfft(Ck2[:2], len(y))
+freqs2, ps2, Ck2, ypred2 = fft_spectrum(y, dt, normalize=True)
+ytrunc2 = fft_smooth(y, ntrunc)
 plt.figure(figsize=(7,8))
 plt.subplot(211)
 plt.plot(x,y)
-plt.plot(x,ytrunc)
+plt.plot(x,ytrunc2)
 plt.plot(x, ypred2, '--')
 plt.subplot(212)
-plt.plot(freqs2, np.abs(Ck2)**2)
+plt.plot(freqs2, ps2)
+plt.xlim(0, 5)
+
+# ----------------------------------------------------------------------
+
+df = pd.read_csv('data/SOI_index.csv',header=4, index_col=0)
+soi = df.stack()
+
+plt.figure()
+soi.plot()
+
+t = 1876 + np.arange(1, len(y)+1) / 12
+y = soi.values
+dt = 1.0/12
+
+ntrunc = 40
+freqs, harmonics, Ck, ps, ypred, ytrunc = fourier_from_scratch(y, dt, ntrunc)
+plt.figure(figsize=(14,8))
+plt.subplot(211)
+plt.plot(t,y)
+plt.plot(t, ytrunc)
+plt.plot(t, ypred, 'r--')
+plt.subplot(212)
+plt.plot(freqs, ps)
+
+# Compare with FFT
+freqs2, ps2, Ck2, ypred2 = fft_spectrum(y, dt, normalize=True)
+ytrunc2 = fft_smooth(y, ntrunc)
+plt.figure(figsize=(14,8))
+plt.subplot(211)
+plt.plot(t,y)
+plt.plot(t,ytrunc2)
+plt.plot(t, ypred2, '--')
+plt.subplot(212)
+plt.plot(freqs2, ps2)
 
 # ----------------------------------------------------------------------
 datadir = '/home/jennifer/datastore/cmap/'
@@ -107,7 +163,7 @@ nyears = 1
 precip = cmap[:nyears*npentad]
 y = precip
 ntrunc = 12
-freqs, harmonics, Ck, ypred, ytrunc = fourier_from_scratch(y, dt, ntrunc)
+freqs, harmonics, Ck, Rk_sq, ypred, ytrunc = fourier_from_scratch(y, dt, ntrunc)
 
 t = precip.time
 plt.figure(figsize=(7,8))
