@@ -6,6 +6,8 @@ from mpl_toolkits.basemap import Basemap
 import xray
 from datetime import datetime
 import statsmodels.api as sm
+import scipy.signal as signal
+import collections
 from __future__ import division
 
 # My modules:
@@ -19,6 +21,63 @@ from atmos.data import get_coord
 
 # ----------------------------------------------------------------------
 # Harmonic analysis
+
+# ----------------------------------------------------------------------
+
+def fourier(y, dt=1.0, t=None, normalize_ps=False, time_units=None,
+            data_name=None):
+
+    n = len(y)
+
+    # Coordinates
+    if t is None:
+        t = dt * np.arange(n)
+    t = xray.DataArray(t, coords={'t' : t}, name='t',
+                       attrs={'long_name' : 'time'})
+    f_k = np.fft.rfftfreq(n, dt)
+    f_k = xray.DataArray(f_k, coords={'f_k' : f_k}, name='f_k',
+                       attrs={'long_name' : 'frequency'})
+    tau_k = np.concatenate(([np.nan], 1/f_k[1:]))
+    tau_k = xray.DataArray(tau_k, coords={'f_k' : f_k}, name='tau_k',
+                       attrs={'long_name' : 'period'})
+    if time_units is not None:
+        t.attrs['units'] = time_units
+        f_k.attrs['units'] = time_units + '^-1'
+        tau_k.attrs['units'] = time_units
+
+    # Fourier coefficients
+    C_k = np.fft.rfft(y)
+
+    # Power spectral density
+    ps_k = 2 * np.abs(C_k / n)**2
+    if normalize_ps:
+        ps_k = n * ps_k / np.sum((y - np.mean(y))**2)
+
+    # Pack all the data into a dataset
+    spec = xray.Dataset()
+    spec.attrs['dt'] = dt
+    spec.attrs['time_units'] = time_units
+    spec.attrs['data_name'] = data_name
+    k = np.arange(len(f_k))
+    spec.coords['k'] = k
+    spec.coords['f_k'] = f_k
+    spec.coords['tau_k'] = tau_k
+    spec['tseries'] = xray.DataArray(
+        y, name='tseries', dims=['t'], coords={'t' : t},
+        attrs={'long_name' : 'Timeseries data'})
+    spec['C_k'] = xray.DataArray(
+        C_k, name='C_k', dims=['f_k'], coords= {'f_k': f_k},
+        attrs={'long_name' : 'Fourier coefficient'})
+    spec['ps_k'] = xray.DataArray(
+        ps_k, name='ps_k', dims=['f_k'], coords={'f_k' : f_k},
+        attrs={'long_name' : 'Power spectral density',
+               'normalized' : normalize_ps})
+
+    return spec
+
+
+# ----------------------------------------------------------------------
+
 
 def fft_spectrum(y, dt=1.0, normalize=False):
     n = len(y)
@@ -126,9 +185,10 @@ soi = df.stack()
 plt.figure()
 soi.plot()
 
-t = 1876 + np.arange(1, len(y)+1) / 12
 y = soi.values
 dt = 1.0/12
+t = 1876 + np.arange(1, len(y)+1)*dt
+
 
 ntrunc = 40
 freqs, harmonics, Ck, ps, ypred, ytrunc = fourier_from_scratch(y, dt, ntrunc)
