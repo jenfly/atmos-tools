@@ -39,7 +39,7 @@ def fft_spectrum(y, dt=1.0, normalize=False):
     return freqs, ps, Ck, ypred
 
 def fft_smooth(y, kmax):
-    Ck, _, _, _ = fourier_transform(y)
+    Ck = np.fft.rfft(y)
     ysmooth = np.fft.irfft(Ck[:kmax+1], len(y))
     return ysmooth
 
@@ -67,7 +67,7 @@ def fourier_from_scratch(y, dt=1.0, ntrunc=None):
         Bk[k] = (2.0/n) * np.sum(y * np.sin(omega*t))
         harmonics[k] = Ak[k] * np.cos(omega*t) + Bk[k] * np.sin(omega*t)
 
-    # Fourier coefficients scaled to be consistent with FFT output
+    # Fourier coefficients
     Ck = Ak + 1j * Bk
 
     # Normalized power spectrum
