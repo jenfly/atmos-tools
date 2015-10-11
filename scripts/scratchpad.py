@@ -24,56 +24,53 @@ from atmos.data import get_coord
 
 # ----------------------------------------------------------------------
 
-def fourier(y, dt=1.0, t=None, normalize_ps=False, time_units=None,
-            data_name=None):
+class Fourier:
+    def __init__(self, y, dt=1.0, t=None, normalize_ps=True, time_units=None,
+                 data_name=None):
 
-    n = len(y)
+        n = len(y)
+        if t is None:
+            t = dt * np.arange(n)
+        self.t = t
+        self.tseries = y
+        self.f_k = np.fft.rfftfreq(n, dt)
+        self.tau_k = np.concatenate(([np.nan], 1/self.f_k[1:]))
+        self.attrs = {'data_name' : data_name, 'time_units' : time_units,
+                      'dt' : dt, 'normalize_ps' : normalize_ps}
 
-    # Coordinates
-    if t is None:
-        t = dt * np.arange(n)
-    t = xray.DataArray(t, coords={'t' : t}, name='t',
-                       attrs={'long_name' : 'time'})
-    f_k = np.fft.rfftfreq(n, dt)
-    f_k = xray.DataArray(f_k, coords={'f_k' : f_k}, name='f_k',
-                       attrs={'long_name' : 'frequency'})
-    tau_k = np.concatenate(([np.nan], 1/f_k[1:]))
-    tau_k = xray.DataArray(tau_k, coords={'f_k' : f_k}, name='tau_k',
-                       attrs={'long_name' : 'period'})
-    if time_units is not None:
-        t.attrs['units'] = time_units
-        f_k.attrs['units'] = time_units + '^-1'
-        tau_k.attrs['units'] = time_units
+        # Fourier coefficients
+        self.C_k = np.fft.rfft(y)
 
-    # Fourier coefficients
-    C_k = np.fft.rfft(y)
+        # Power spectral density
+        ps_k = 2 * np.abs(self.C_k / n)**2
+        if normalize_ps:
+            ps_k = n * ps_k / np.sum((y - np.mean(y))**2)
+        self.ps_k = ps_k
 
-    # Power spectral density
-    ps_k = 2 * np.abs(C_k / n)**2
-    if normalize_ps:
-        ps_k = n * ps_k / np.sum((y - np.mean(y))**2)
 
-    # Pack all the data into a dataset
-    spec = xray.Dataset()
-    spec.attrs['dt'] = dt
-    spec.attrs['time_units'] = time_units
-    spec.attrs['data_name'] = data_name
-    k = np.arange(len(f_k))
-    spec.coords['k'] = k
-    spec.coords['f_k'] = f_k
-    spec.coords['tau_k'] = tau_k
-    spec['tseries'] = xray.DataArray(
-        y, name='tseries', dims=['t'], coords={'t' : t},
-        attrs={'long_name' : 'Timeseries data'})
-    spec['C_k'] = xray.DataArray(
-        C_k, name='C_k', dims=['f_k'], coords= {'f_k': f_k},
-        attrs={'long_name' : 'Fourier coefficient'})
-    spec['ps_k'] = xray.DataArray(
-        ps_k, name='ps_k', dims=['f_k'], coords={'f_k' : f_k},
-        attrs={'long_name' : 'Power spectral density',
-               'normalized' : normalize_ps})
+    def __repr__(self):
 
-    return spec
+        def var_str(name, x):
+            width = 10
+            return '%s [%d] : %f, %f, ..., %f\n' % (name.ljust(width), len(x),
+                                                    x[0], x[1], x[-1])
+
+        s = 'Attributes\n' + str(self.attrs) + '\n\nData\n'
+        s = s + (var_str('t', self.t) + var_str('tseries', self.tseries) +
+                 var_str('f_k', self.f_k) + var_str('tau_k', self.tau_k) +
+                 var_str('C_k', self.C_k) + var_str('ps_k', self.ps_k))
+
+        return s
+
+    def smooth(self, kmax):
+        return np.fft.irfft(self.C_k[:kmax+1], len(self.tseries))
+
+    def harmonic(self, k):
+        if k == 0:
+            y = self.smooth(k)
+        else:
+            y = self.smooth(k) - self.smooth(k - 1)
+        return y
 
 
 # ----------------------------------------------------------------------
@@ -221,7 +218,7 @@ npentad = 73 # pentads/year
 dt = 5.0/365
 nyears = 1
 precip = cmap[:nyears*npentad]
-y = precip
+y = precip.values
 ntrunc = 12
 freqs, harmonics, Ck, Rk_sq, ypred, ytrunc = fourier_from_scratch(y, dt, ntrunc)
 
