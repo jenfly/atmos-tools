@@ -19,15 +19,50 @@ import xray
 # ======================================================================
 
 class Fourier:
-    def __init__(self, y, dt=1.0, t=None, normalize_ps=False, time_units=None,
-                 data_name=None):
+    def __init__(self, y, dt=1.0, t=None, time_units=None, data_name=None):
+        """Return Fourier transform of a timeseries.
+        
+        Uses the numpy FFT function for real-valued inputs,
+        numpy.fft.rfft().
+    
+        Parameters
+        ----------
+        y : ndarray
+            1-D array of timeseries data.
+        dt : float, optional
+            Time spacing of data.
+        t : ndarray
+            Array of times (e.g. datetimes for plotting timeseries).
+        time_units : str, optional
+            Time units.
+        data_name : str, optional
+            Name of timeseries data.
+        
+        Returns
+        -------
+        self : Fourier object
+            The Fourier object has the following data attributes:
+              t, tseries : ndarray
+                Time values and data from input timeseries
+              f_k, tau_k : ndarray
+                Frequencies and periods in Fourier transform.
+              C_k : complex ndarray
+                Fourier coefficients.
+              ps_k : ndarray
+                Power spectral density at each frequency.
+            
+            And it has the following methods:
+              smooth() : Smooth a timeseries with truncated FFT.
+              harmonic() : Return the k'th harmonic of the FFT.
+              Rsquared() : Return the Rsquared values of the FFT.              
+        """
 
         # Make sure we're working with an ndarray and not a DataArray
         if isinstance(y, xray.DataArray):
             y = y.values
 
         self.attrs = {'data_name' : data_name, 'time_units' : time_units,
-                      'dt' : dt, 'normalize_ps' : normalize_ps}
+                      'dt' : dt}
         n = len(y)
         if t is None:
             t = dt * np.arange(n)
@@ -43,16 +78,15 @@ class Fourier:
 
         # Power spectral density
         ps_k = 2 * np.abs(self.C_k / n)**2
-        if normalize_ps:
-            ps_k = n * ps_k / np.sum((y - np.mean(y))**2)
         self.ps_k = ps_k
 
 
     def __repr__(self):
         def var_str(name, x):
             width = 10
-            return '%s [%d] : %f, %f, ..., %f\n' % (name.ljust(width), len(x),
-                                                    x[0], x[1], x[-1])
+            fmt = '  %s [%d] : %f, %f, ..., %f\n'
+            return fmt  % (name.ljust(width),len(x), x[0], x[1], x[-1])
+            
         s = 'Attributes\n' + str(self.attrs) + '\n\nData\n'
         s = s + (var_str('t', self.t) + var_str('tseries', self.tseries) +
                  var_str('f_k', self.f_k) + var_str('tau_k', self.tau_k) +
@@ -60,14 +94,29 @@ class Fourier:
         return s
 
     def smooth(self, kmax):
+        """Return a smooth timeseries from the FFT truncated at kmax."""
         return np.fft.irfft(self.C_k[:kmax+1], len(self.tseries))
 
     def harmonic(self, k):
+        """Return the k'th Fourier harmonic of the timeseries."""
         if k == 0:
             y = self.smooth(k)
         else:
             y = self.smooth(k) - self.smooth(k - 1)
         return y
+        
+    def Rsquared(self):
+        """Return the coefficients of determination of the FFT."""
+        y = self.tseries
+        n = len(y)
+        #Rsq = self.ps_k * (n-1) / np.sum((y - np.mean(y))**2)
+        Rsq = self.ps_k * n / np.sum((y - np.mean(y))**2)
+        
+        # The k=0 harmonic (i.e. constant function) does not contribute
+        # to the variance in the timeseries.
+        Rsq[0] = 0.0
+        
+        return Rsq            
 
 
 # ----------------------------------------------------------------------
