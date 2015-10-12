@@ -85,3 +85,8 @@ from plots import (
     contour_latpres,
     contourf_timelat,
 )
+
+from analysis import (
+    Fourier,
+    fourier_from_scratch,
+)
