@@ -19,25 +19,28 @@ import xray
 # ======================================================================
 
 class Fourier:
-    def __init__(self, y, dt=1.0, t=None, time_units=None, data_name=None):
+    def __init__(self, y, dt=1.0, t=None, axis=0, time_units=None,
+                 data_name=None):
         """Return Fourier transform of a timeseries.
-        
+
         Uses the numpy FFT function for real-valued inputs,
         numpy.fft.rfft().
-    
+
         Parameters
         ----------
         y : ndarray
             1-D array of timeseries data.
         dt : float, optional
             Time spacing of data.
+        axis : int, optional
+            Axis to use for FFT.
         t : ndarray
             Array of times (e.g. datetimes for plotting timeseries).
         time_units : str, optional
             Time units.
         data_name : str, optional
             Name of timeseries data.
-        
+
         Returns
         -------
         self : Fourier object
@@ -50,11 +53,11 @@ class Fourier:
                 Fourier coefficients.
               ps_k : ndarray
                 Power spectral density at each frequency.
-            
+
             And it has the following methods:
               smooth() : Smooth a timeseries with truncated FFT.
               harmonic() : Return the k'th harmonic of the FFT.
-              Rsquared() : Return the Rsquared values of the FFT.              
+              Rsquared() : Return the Rsquared values of the FFT.
         """
 
         # Make sure we're working with an ndarray and not a DataArray
@@ -63,15 +66,18 @@ class Fourier:
 
         self.attrs = {'data_name' : data_name, 'time_units' : time_units,
                       'dt' : dt}
-        n = len(y)
+        dims = y.shape
+        n = dims[axis]
         if t is None:
             t = dt * np.arange(n)
         self.t = t
         self.tseries = y
+        self.n = n
 
         # Fourier frequencies and coefficients
         self.f_k = np.fft.rfftfreq(n, dt)
-        self.C_k = np.fft.rfft(y)
+        self.C_k = np.fft.rfft(y, axis=axis)
+        self.axis = axis
 
         # Periods corresponding to Fourier frequencies
         self.tau_k = np.concatenate(([np.nan], 1/self.f_k[1:]))
@@ -84,18 +90,25 @@ class Fourier:
     def __repr__(self):
         def var_str(name, x):
             width = 10
-            fmt = '  %s [%d] : %f, %f, ..., %f\n'
-            return fmt  % (name.ljust(width),len(x), x[0], x[1], x[-1])
-            
-        s = 'Attributes\n' + str(self.attrs) + '\n\nData\n'
+            return '  %s %s\n'  % (name.ljust(width),str(x.shape))
+
+        s = 'Attributes\n' + str(self.attrs)
+        s = s + '\n  Axis: %d\n  n: %d\n' % (self.axis, self.n)
+        s = s + '\nData\n'
         s = s + (var_str('t', self.t) + var_str('tseries', self.tseries) +
                  var_str('f_k', self.f_k) + var_str('tau_k', self.tau_k) +
                  var_str('C_k', self.C_k) + var_str('ps_k', self.ps_k))
+
         return s
 
     def smooth(self, kmax):
         """Return a smooth timeseries from the FFT truncated at kmax."""
-        return np.fft.irfft(self.C_k[:kmax+1], len(self.tseries))
+        n = self.n
+        ax = self.axis
+        C_k = self.C_k
+        C_k = np.split(C_k, [kmax + 1], axis=ax)[0]
+        ysmooth = np.fft.irfft(C_k, n, axis=ax)
+        return ysmooth
 
     def harmonic(self, k):
         """Return the k'th Fourier harmonic of the timeseries."""
@@ -104,25 +117,27 @@ class Fourier:
         else:
             y = self.smooth(k) - self.smooth(k - 1)
         return y
-        
+
     def Rsquared(self):
-        """Return the coefficients of determination of the FFT."""
-        y = self.tseries
-        n = len(y)
-        #Rsq = self.ps_k * (n-1) / np.sum((y - np.mean(y))**2)
-        Rsq = self.ps_k * n / np.sum((y - np.mean(y))**2)
-        
+        """Return the coefficients of determination of the FFT.
+
+        The sum of the Rsq values up to and including the k-th Fourier
+        harmonic gives the amount of variance explained by those
+        harmonics.
+        """
+        Rsq = self.ps_k / np.var(self.tseries, axis=self.axis)
+
         # The k=0 harmonic (i.e. constant function) does not contribute
         # to the variance in the timeseries.
         Rsq[0] = 0.0
-        
-        return Rsq            
+
+        return Rsq
 
 
 # ----------------------------------------------------------------------
 def fourier_from_scratch(y, dt=1.0, ntrunc=None):
     """Calculate Fourier transform from scratch and smooth a timeseries.
-    
+
     Parameters
     ----------
     y : ndarray
@@ -131,7 +146,7 @@ def fourier_from_scratch(y, dt=1.0, ntrunc=None):
         Time spacing of data.
     ntrunc : int, optional
         Maximum harmonics to include in smoothed output.
-        
+
     Returns
     -------
     f_k : ndarray
@@ -143,16 +158,16 @@ def fourier_from_scratch(y, dt=1.0, ntrunc=None):
     harmonics : dict of ndarrays
         Timeseries of harmonics corresponding to each Fourier frequency.
     ypred : ndarray
-        Timeseries of data predicted by Fourier coefficients, to 
+        Timeseries of data predicted by Fourier coefficients, to
         check that the reverse Fourier transform matches the input
         timeseries.
     ytrunc : ndarray
         Smoothed timeseries of data predicted by the Fourier harmonics
-        truncated at maximum frequency f_k where k = ntrunc.    
-    
+        truncated at maximum frequency f_k where k = ntrunc.
+
     Reference
     ---------
-    Wilks, D. S. (2011). Statistical Methods in the Atmospheric Sciences. 
+    Wilks, D. S. (2011). Statistical Methods in the Atmospheric Sciences.
     International Geophysics (Vol. 100).
     """
 
@@ -162,6 +177,7 @@ def fourier_from_scratch(y, dt=1.0, ntrunc=None):
     omega1 = 2 * np.pi / n
 
     # Fourier transform and harmonics
+    # --------------------------------
     # Calculate according to equations 9.62-9.65 in Wilks (2011) and
     # rescale to be consistent with scaling in the output from
     # numpy's FFT function.

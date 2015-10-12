@@ -5,8 +5,8 @@ import pandas as pd
 import atmos as atm
 from atmos import Fourier, fourier_from_scratch
 
-#datadir = '/home/jennifer/datastore/cmap/'
-datadir = '/home/jwalker/datastore/cmap/'
+datadir = '/home/jennifer/datastore/cmap/'
+#datadir = '/home/jwalker/datastore/cmap/'
 cmap_file = datadir + 'cmap.precip.pentad.mean.nc'
 
 def test_fourier(spec, ntrunc):
@@ -34,7 +34,7 @@ def plot_fourier(spec, nharm, ntrunc):
     plt.plot(spec.f_k[:ntrunc+1], spec.Rsq[:ntrunc+1])
     print(np.sum(spec.Rsq))
     print(np.sum(spec.Rsq[:ntrunc+1]))
-    
+
 
 class Struct(object):
     pass
@@ -66,8 +66,8 @@ plot_fourier(spec2, ntrunc, ntrunc)
 # ----------------------------------------------------------------------
 df = pd.read_csv('data/SOI_index.csv',header=4, index_col=0)
 soi = df.stack()
-plt.figure()
-soi.plot()
+#plt.figure()
+#soi.plot()
 y = soi.values
 dt = 1.0/12
 t = 1876 + np.arange(1, len(y)+1)*dt
@@ -84,7 +84,12 @@ plot_fourier(spec2, nharm, ntrunc)
 
 with xray.open_dataset(cmap_file) as ds:
     ds.load()
-cmap = ds['precip'].sel(lat=11.25, lon=91.25)
+
+#lat0, lon0 = 12.5, 90.0
+lat0, lon0 = 11.25, 91.25
+latval, ilat0 = atm.find_closest(ds.lat, lat0)
+lonval, ilon0 = atm.find_closest(ds.lon, lon0)
+cmap = ds['precip'].sel(lat=latval, lon=lonval)
 
 npentad = 73 # pentads/year
 dt = 5.0/365
@@ -99,3 +104,27 @@ spec1 = test_fourier(spec1, ntrunc)
 spec2 = fromscratch(y, dt, ntrunc, spec1.t)
 plot_fourier(spec1, nharm, ntrunc)
 plot_fourier(spec2, nharm, ntrunc)
+
+# ----------------------------------------------------------------------
+# Test with multi-dim data
+
+cmap = ds['precip']
+npentad = 73 # pentads/year
+dt = 5.0/365
+nyears = 1
+precip = cmap[:nyears*npentad]
+y = precip.values
+ntrunc = 12
+nharm = 3
+
+spec1 = Fourier(y, dt, axis=0)
+print(spec1)
+
+# Extract one grid point
+spec1.tseries = spec1.tseries[:, ilat0, ilon0]
+spec1.C_k = spec1.C_k[:, ilat0, ilon0]
+spec1.ps_k = spec1.ps_k[:, ilat0, ilon0]
+print(spec1)
+
+spec1 = test_fourier(spec1, ntrunc)
+plot_fourier(spec1, nharm, ntrunc)
