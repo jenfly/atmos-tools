@@ -72,7 +72,40 @@ class Fourier:
 
 # ----------------------------------------------------------------------
 def fourier_from_scratch(y, dt=1.0, ntrunc=None):
-    """ Wilks Atm Stats eqs..."""
+    """Calculate Fourier transform from scratch and smooth a timeseries.
+    
+    Parameters
+    ----------
+    y : ndarray
+        1-D array of timeseries data.
+    dt : float, optional
+        Time spacing of data.
+    ntrunc : int, optional
+        Maximum harmonics to include in smoothed output.
+        
+    Returns
+    -------
+    f_k : ndarray
+        Frequencies in Fourier transform.
+    C_k : complex ndarray
+        Fourier coefficients.
+    ps_k : ndarray
+        Power spectral density at each frequency.
+    harmonics : dict of ndarrays
+        Timeseries of harmonics corresponding to each Fourier frequency.
+    ypred : ndarray
+        Timeseries of data predicted by Fourier coefficients, to 
+        check that the reverse Fourier transform matches the input
+        timeseries.
+    ytrunc : ndarray
+        Smoothed timeseries of data predicted by the Fourier harmonics
+        truncated at maximum frequency f_k where k = ntrunc.    
+    
+    Reference
+    ---------
+    Wilks, D. S. (2011). Statistical Methods in the Atmospheric Sciences. 
+    International Geophysics (Vol. 100).
+    """
 
     n = len(y)
     nhalf = n // 2
@@ -80,17 +113,16 @@ def fourier_from_scratch(y, dt=1.0, ntrunc=None):
     omega1 = 2 * np.pi / n
 
     # Fourier transform and harmonics
+    # Calculate according to equations 9.62-9.65 in Wilks (2011) and
+    # rescale to be consistent with scaling in the output from
+    # numpy's FFT function.
     Ak = np.zeros(nhalf + 1, dtype=float)
     Bk = np.zeros(nhalf + 1, dtype=float)
-    #Ak[0] = np.mean(y)
     Ak[0] = np.sum(y) / 2.0
     Bk[0] = 0.0
     harmonics = {0 : np.mean(y)}
     for k in range(1, nhalf + 1):
         omega = k * omega1
-        # Ak[k] = (2.0/n) * np.sum(y * np.cos(omega*t))
-        # Bk[k] = (2.0/n) * np.sum(y * np.sin(omega*t))
-        # harmonics[k] = Ak[k] * np.cos(omega*t) + Bk[k] * np.sin(omega*t)
         Ak[k] = np.sum(y * np.cos(omega*t))
         Bk[k] = np.sum(y * np.sin(omega*t))
         harmonics[k] = ((2.0/n) * Ak[k] * np.cos(omega*t) +
