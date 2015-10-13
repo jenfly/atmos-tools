@@ -110,6 +110,47 @@ def biggify(small, big, tile=False):
 
 
 # ----------------------------------------------------------------------
+def collapse(axis, *args):
+    """Collapse singleton dimensions (first or last) in arrays.
+
+    Parameters
+    ----------
+    axis : {0, -1}
+        Axis to collapse.
+    *args : ndarrays
+        Arrays to collapse.
+
+    Returns
+    -------
+    output : tuple of arrays
+        Arrays with singleton dimension at beginning or end removed.
+
+    Example
+    -------
+    arr1, arr2 = collapse(0, arr1, arr2)
+    """
+
+    if axis not in [0, -1]:
+        raise ValueError('Invalid axis %d.  Must be 0 or -1.' % axis)
+    output = list(args)
+    for i, arr in enumerate(args):
+        dims = arr.shape
+        if dims[axis] > 1:
+            raise ValueError('Dimension %d of argument %d is not singleton.' %
+                             (axis, i))
+        if axis == 0:
+            output[i] = arr[0]
+        else:
+            output[i] = arr[...,0]
+
+    if len(output) == 1:
+        output = output[0]
+    else:
+        output = tuple(output)
+    return output
+
+
+# ----------------------------------------------------------------------
 def nantrapz(y, x=None, axis=-1):
     """
     Integrate using the composite trapezoidal rule, ignoring NaNs
