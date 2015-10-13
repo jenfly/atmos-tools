@@ -29,11 +29,11 @@ class Fourier:
         Parameters
         ----------
         y : ndarray
-            1-D array of timeseries data.
+            N-D array of timeseries data.
         dt : float, optional
             Time spacing of data.
         axis : int, optional
-            Axis to use for FFT.
+            Time dimension to use for FFT.
         t : ndarray
             Array of times (e.g. datetimes for plotting timeseries).
         time_units : str, optional
@@ -212,8 +212,31 @@ def fourier_from_scratch(y, dt=1.0, ntrunc=None):
 
     return f_k, C_k, ps_k, harmonics, ypred, ytrunc
 
-# ----------------------------------------------------------------------
 
+# ----------------------------------------------------------------------
+def fourier_smooth(data, kmax, axis=0):
+    """Return data smoothed with Fourier series up to kmax.
+
+    Parameters
+    ----------
+    data : ndarray
+        Data to smooth.
+    kmax : int
+        Maximum Fourier harmonic to include.
+    axis : int, optional
+        Dimension to compute Fourier transform and smoothing.
+
+    Returns
+    -------
+    data_out : ndarray
+        Smoothed data, same shape as input data.
+    """
+
+    ft = Fourier(data, axis=axis)
+    data_out = ft.smooth(kmax)
+    return data_out
+
+# ----------------------------------------------------------------------
 # regress_field()
 # time_detrend
 # time_std, time_mean, etc.
