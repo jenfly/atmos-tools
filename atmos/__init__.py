@@ -32,6 +32,7 @@ from xrhelper import (
 
 from data import (
     biggify,
+    collapse,
     nantrapz,
     ncdisp,
     ncload,
