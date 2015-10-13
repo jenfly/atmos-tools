@@ -150,8 +150,8 @@ def find_closest(arr, val):
 
     """
     diff = abs(arr-val)
-    ind = diff.argmin()
-    closest_val = arr[ind]
+    ind = int(diff.argmin())
+    closest_val = float(arr[ind])
     return closest_val, ind
 
 
