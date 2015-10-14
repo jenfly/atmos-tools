@@ -125,14 +125,20 @@ class Fourier:
         harmonic gives the amount of variance explained by those
         harmonics.
         """
-        var = np.var(self.tseries, axis=self.axis)
-        if self.axis > 0:
-            var = np.expand_dims(var, self.axis)
-        Rsq = self.ps_k / var
+        axis = self.axis
+        var = np.var(self.tseries, axis=axis)
+        ps_k = self.ps_k
 
         # The k=0 harmonic (i.e. constant function) does not contribute
         # to the variance in the timeseries.
-        Rsq[0] = 0.0
+        if axis == 1:
+            var = np.expand_dims(var, axis)
+            ps_k[:, 0] = 0.0
+        elif axis ==0:
+            ps_k[0] = 0.0
+        else:
+            raise ValueError('Invalid axis ' + str(axis))
+        Rsq = ps_k / var
 
         return Rsq
 
