@@ -102,13 +102,13 @@ def odict_delete(odict, key):
 
 # ----------------------------------------------------------------------
 def makelist(input):
-    """Return a list object from the input.
+    """Return a list/array object from the input.
 
     If input is a single value (e.g. int, str, etc.) then output
-    is a list of length 1.  If input is already a list, then
+    is a list of length 1.  If input is already a list or array, then
     output is the same as input.
     """
-    if isinstance(input, list):
+    if isinstance(input, list) or isinstance(input, np.ndarray):
         output = input
     else:
         output = [input]
