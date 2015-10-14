@@ -187,6 +187,7 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
     Returns
     -------
     m : Basemap object
+    pc : plt.pcolormesh object
     """
 
     if isinstance(data, xray.DataArray):
@@ -204,10 +205,10 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
 
     if m is None:
         m = init_latlon(lat1, lat2, lon1, lon2)
-    m.pcolormesh(x, y, vals_plot, cmap=cmap, latlon=True)
+    pc = m.pcolormesh(x, y, vals_plot, cmap=cmap, latlon=True)
     m.colorbar()
     plt.draw()
-    return m
+    return m, pc
 
 
 # ----------------------------------------------------------------------
@@ -307,7 +308,7 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
     if m is None:
         m = init_latlon(lat1, lat2, lon1, lon2)
     if clev is None:
-        cs = m.contour(x, y, np.squeeze(data), colors=colors, 
+        cs = m.contour(x, y, np.squeeze(data), colors=colors,
                        linewidths=linewidths, latlon=True)
     else:
         cs = m.contour(x, y, np.squeeze(data), clev, colors=colors,
@@ -386,6 +387,10 @@ def pcolor_latpres(data, lat=None, plev=None, init=True, cmap='RdBu_r',
         Axis limits (latmin, latmax, pmin, pmax).  Only used if init is True.
     lattick_width, ptick_width : int or float, optional
         Spacing for latitude and pressure ticks.  Only used if init is True.
+
+    Returns
+    -------
+    pc : plt.pcolormesh object
     """
 
     # Data to be plotted
@@ -401,7 +406,7 @@ def pcolor_latpres(data, lat=None, plev=None, init=True, cmap='RdBu_r',
 
     # Pseudo-color plot of data
     y, z = np.meshgrid(lat, plev)
-    plt.pcolormesh(y, z, vals_plot, cmap=cmap)
+    pc = plt.pcolormesh(y, z, vals_plot, cmap=cmap)
     plt.colorbar()
     plt.draw()
 
@@ -422,6 +427,7 @@ def pcolor_latpres(data, lat=None, plev=None, init=True, cmap='RdBu_r',
                      topo_lat=topo_lat, topo_clr=topo_clr, p_units=p_units,
                      lattick_width=lattick_width, ptick_width=ptick_width)
 
+    return pc
 
 # ----------------------------------------------------------------------
 def contourf_latpres(data, lat=None, plev=None, clev=None, init=True,
@@ -542,7 +548,7 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
         If True, omit zero contour.
     zerolinewidth : int or float, optional
         Include zero contour with specified line width.
-    
+
     Returns
     -------
     cs : plt.contour object (non-zero contours only)
