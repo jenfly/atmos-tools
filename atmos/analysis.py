@@ -215,7 +215,7 @@ def fourier_from_scratch(y, dt=1.0, ntrunc=None):
 
 # ----------------------------------------------------------------------
 def fourier_smooth(data, kmax, axis=0):
-    """Return data smoothed with Fourier series up to kmax.
+    """Return data smoothed with Fourier series truncated at kmax.
 
     Parameters
     ----------
@@ -229,12 +229,18 @@ def fourier_smooth(data, kmax, axis=0):
     Returns
     -------
     data_out : ndarray
-        Smoothed data, same shape as input data.
+        Smoothed data.
+    Rsq : ndarray
+        Coefficient of determination for the smoothed data,
+        i.e. fraction of total variance accounted for by the
+        smoothed data.
     """
 
     ft = Fourier(data, axis=axis)
     data_out = ft.smooth(kmax)
-    return data_out
+    Rsq = ft.Rsquared()
+    Rsq = np.sum(Rsq[:kmax+1])
+    return data_out, Rsq
 
 # ----------------------------------------------------------------------
 # regress_field()
