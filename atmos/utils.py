@@ -6,6 +6,7 @@ from __future__ import division
 import numpy as np
 import collections
 from datetime import datetime
+import os
 
 # ======================================================================
 # PRINTING
@@ -19,6 +20,24 @@ def print_if(msg, condition, printfunc=None):
             printfunc(msg)
         else:
             print(msg)
+
+
+# ======================================================================
+# FILES & DIRECTORIES
+# ======================================================================
+
+# ----------------------------------------------------------------------
+def homedir(options=['/home/jennifer/', '/home/jwalker/']):
+    """Return home directory for this computer."""
+    
+    home = None
+    for h in options:
+        if os.path.isdir(h):
+            home = h
+    if home is None:
+        raise ValueError('Home directory not found in list of options.')
+    return home
+
 
 
 # ======================================================================
