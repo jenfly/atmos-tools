@@ -239,7 +239,7 @@ def fourier_smooth(data, kmax, axis=0):
     ft = Fourier(data, axis=axis)
     data_out = ft.smooth(kmax)
     Rsq = ft.Rsquared()
-    Rsq = np.sum(Rsq[:kmax+1])
+    Rsq = np.sum(Rsq[:kmax+1], axis=axis)
     return data_out, Rsq
 
 # ----------------------------------------------------------------------
