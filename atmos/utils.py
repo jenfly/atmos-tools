@@ -1,6 +1,6 @@
-'''
+"""
 Some general purpose utility functions used by other modules in this package.
-'''
+"""
 
 from __future__ import division
 import numpy as np
@@ -13,7 +13,7 @@ from datetime import datetime
 
 # ----------------------------------------------------------------------
 def print_if(msg, condition, printfunc=None):
-    ''' Print msg if condition is True'''
+    """ Print msg if condition is True"""
     if condition:
         if printfunc is not None:
             printfunc(msg)
@@ -27,7 +27,7 @@ def print_if(msg, condition, printfunc=None):
 
 # ----------------------------------------------------------------------
 def print_odict(od, indent=2, width=None):
-    '''Pretty print the contents of an ordered dictionary.'''
+    """Pretty print the contents of an ordered dictionary."""
 
     if width is None:
         defwidth = 20
@@ -191,7 +191,7 @@ def isleap(year):
 
 # ----------------------------------------------------------------------
 def month_str(month, upper=True):
-    '''Returns the string e.g. 'JAN' corresponding to month'''
+    """Returns the string e.g. 'JAN' corresponding to month"""
 
     months=['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug',
             'sep', 'oct', 'nov', 'dec']
@@ -204,7 +204,7 @@ def month_str(month, upper=True):
 
 # ----------------------------------------------------------------------
 def days_per_month(leap=False):
-    '''Return array with number of days per month.'''
+    """Return array with number of days per month."""
 
     ndays = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
     if leap:
@@ -224,14 +224,14 @@ def days_this_month(year, month):
 
 # ----------------------------------------------------------------------
 def season_months(season):
-    '''
+    """
     Return list of months (1-12) for the selected season.
 
     Valid input seasons are:
     ssn=['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug',
          'sep', 'oct', 'nov', 'dec', 'djf', 'mam', 'jja', 'son',
          'mayjun', 'julaug', 'marapr', 'jjas', 'ond', 'ann']
-    '''
+    """
 
     ssn=['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug',
          'sep', 'oct', 'nov', 'dec', 'djf', 'mam', 'jja', 'son',
@@ -257,11 +257,11 @@ def season_months(season):
 
 # ----------------------------------------------------------------------
 def season_days(season, leap=False):
-    '''
+    """
     Returns indices (1-365 or 1-366) of days of the year for the input season.
 
     Valid input seasons are as defined in the function season_months().
-    '''
+    """
 
     # Index of first day of each month
     ndays = days_per_month(leap=leap)
@@ -282,3 +282,47 @@ def season_days(season, leap=False):
         idays = range(days[imon-1], days[imon])
 
     return idays
+
+
+# ----------------------------------------------------------------------
+def jday_to_mmdd(jday, year=None):
+    """
+    Returns numeric month and day for day of year (1-365 or 1-366).
+
+    If year is None, a non-leap year is assumed.
+    Usage: mon, day = jday_to_mmdd(jday, year)
+    """
+    if year is None or not isleap(year):
+        leap = False
+    else:
+        leap = True
+
+    ndays = days_per_month(leap)
+    iday = np.cumsum(np.array([1] + ndays))
+    if jday >= iday[-1]:
+        raise ValueError('Invalid input day %d' + str(jday))
+    
+    BIG = 1000 # Arbitrary big number above 366
+    d = np.where(jday >= iday, jday - iday + 1, BIG)
+    ind = d.argmin()
+    mon = ind + 1
+    day = d[ind]
+
+    return mon, day
+
+
+# ----------------------------------------------------------------------
+def pentad_to_jday(pentad, pmin=0, day=3):
+    """
+    Returns day of year for a pentad (indexed from pmin).
+
+    Input day determines which day (1-5) in the pentad to return.
+    Usage: jday = pentad_to_jday(pentad, pmin)
+    """
+
+    if day not in range(1, 6):
+        raise ValueError('Invalid day ' + str(day))
+    
+    jday = 5*(pentad - pmin) + day
+    return jday
+
