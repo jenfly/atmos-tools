@@ -84,7 +84,6 @@ from plots import (
     pcolor_latpres,
     contourf_latpres,
     contour_latpres,
-    contourf_timelat,
 )
 
 from analysis import (
