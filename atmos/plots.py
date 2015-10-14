@@ -10,6 +10,7 @@ from mpl_toolkits.basemap import Basemap
 import xray
 from atmos.utils import print_if
 import atmos.data as dat
+import atmos.utils as utils
 
 # ----------------------------------------------------------------------
 def degree_sign():
@@ -28,6 +29,7 @@ def latlon_labels(vals, latlon='lat', fmt='%.0f', deg_symbol=True):
     else:
         raise ValueError('Invalid input latlon = ' + latlon)
 
+    vals = utils.makelist(vals)
     labels = []
     for num in vals:
         if num >= 0:
@@ -40,6 +42,8 @@ def latlon_labels(vals, latlon='lat', fmt='%.0f', deg_symbol=True):
             labels.append(x + degree_sign() + suffix)
         else:
             labels.append(x + suffix)
+    if len(vals) == 1:
+        labels = labels[0]
     return labels
 
 
