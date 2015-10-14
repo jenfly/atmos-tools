@@ -290,6 +290,7 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
     Returns
     -------
     m : Basemap object
+    cs : plt.contour object
     """
 
     if isinstance(data, xray.DataArray):
@@ -306,13 +307,13 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
     if m is None:
         m = init_latlon(lat1, lat2, lon1, lon2)
     if clev is None:
-        m.contour(x, y, np.squeeze(data), colors=colors, linewidths=linewidths,
-                  latlon=True)
+        cs = m.contour(x, y, np.squeeze(data), colors=colors, 
+                       linewidths=linewidths, latlon=True)
     else:
-        m.contour(x, y, np.squeeze(data), clev, colors=colors,
-                  linewidths=linewidths, latlon=True)
+        cs = m.contour(x, y, np.squeeze(data), clev, colors=colors,
+                       linewidths=linewidths, latlon=True)
     plt.draw()
-    return m
+    return m, cs
 
 
 # ----------------------------------------------------------------------
@@ -541,6 +542,10 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
         If True, omit zero contour.
     zerolinewidth : int or float, optional
         Include zero contour with specified line width.
+    
+    Returns
+    -------
+    cs : plt.contour object (non-zero contours only)
     """
 
     # Data to be contoured
@@ -573,23 +578,24 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
     # Plot contours
     y, z = np.meshgrid(lat, plev)
     if clev is None:
-        plt.contour(y, z, np.squeeze(data), colors=colors)
+        cs = plt.contour(y, z, np.squeeze(data), colors=colors)
     else:
-        plt.contour(y, z, np.squeeze(data), clev, colors=colors)
+        cs = plt.contour(y, z, np.squeeze(data), clev, colors=colors)
 
     # Zero contour
     if not omitzero and zerolinewidth > 0:
         plt.contour(y, z, np.squeeze(data), 0, colors=colors, linewidths=zerolinewidth)
 
     plt.draw()
+    return cs
 
 
 # ----------------------------------------------------------------------
 
 
 
-def contourf_timelat():
-    """Plot filled contours of data in time-latitude plane."""
+# def contourf_timelat():
+#     """Plot filled contours of data in time-latitude plane."""
 
 """
 TO DO:
