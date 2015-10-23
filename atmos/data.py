@@ -1453,3 +1453,51 @@ def padleap(data):
 
 
 # ----------------------------------------------------------------------
+def combine_daily_years(varnames, files, years, yearname='Year'):
+    """Combine daily mean data from multiple files.
+
+    Parameters
+    ----------
+    varnames : list of str
+        List of variables to extract.
+    files : list of str
+        List of filenames to read.  Each file should contain one year's
+        worth of daily data, with day of year as the first dimension
+        of each variable.
+    years : list of ints
+        List of years corresponding to each file.
+    yearname : str, optional
+        Name for year dimension in DataArrays.
+
+    Returns
+    -------
+    data : xray.Dataset or xray.DataArray
+        Dataset with each variable as an array with year as the first
+        dimension, day of year as the second dimension.  If a single
+        variable is selected, then the output is a DataArray rather
+        than a Dataset.
+    """
+
+    # Read daily data from each year and concatenate
+    varlist = utils.makelist(varnames)
+    ds = xray.Dataset()
+    for y, filn in enumerate(files):
+        print('Loading ' + filn)
+        ds1 = xray.Dataset()
+        with xray.open_dataset(filn) as ds_in:
+            for nm in varlist:
+                var = padleap(ds_in[nm].load())
+                var.coords[yearname] = years[y]
+                ds1[nm] = var
+        if y == 0:
+            ds = ds1
+        else:
+            ds = xray.concat([ds, ds1], dim=yearname)
+
+    # Collapse to single DataArray if only one variable, otherwise
+    # return Dataset
+    if len(varlist) == 1:
+        data = ds[varlist[0]]
+    else:
+        data = ds
+    return data

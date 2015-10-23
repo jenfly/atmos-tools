@@ -61,6 +61,7 @@ from data import (
     split_timedim,
     daily_from_subdaily,
     padleap,
+    combine_daily_years,
 )
 
 from variables import (
