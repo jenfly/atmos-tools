@@ -1410,3 +1410,46 @@ def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
         raise ValueError('Invalid method ' + str(method))
 
     return data_out
+
+
+# ----------------------------------------------------------------------
+def padleap(data):
+    """Return daily data padded with NaNs for day 366 if non-leap year.
+
+    Parameters
+    ----------
+    data : ndarray or xray.DataArray
+        Daily data (1-365 or 1-366) with day as the first dimension.
+
+    Returns
+    -------
+    data_out : ndarray or xray.DataArray
+        Daily data for days 1-366 with NaNs padded if necessary.
+    """
+
+    DMAX = 366
+
+    if isinstance(data, xray.DataArray):
+        name, attrs, coords, dims = xr.meta(data)
+        daynm = dims[0]
+        dayvals = np.arange(1, DMAX + 1)
+        days = xray.DataArray(dayvals, coords={daynm : dayvals})
+        coords[daynm] = days
+
+    ndays = data.shape[0]
+    nan = np.expand_dims(np.nan * data[0], 0)
+
+    if ndays == DMAX - 1:
+        data_out = np.concatenate([data, nan], axis=0)
+        if isinstance(data, xray.DataArray):
+            data_out = xray.DataArray(data_out, name=name, attrs=attrs,
+                                      dims=dims, coords=coords)
+    elif ndays == DMAX:
+        data_out = data
+    else:
+        raise ValueError('Invalid number of days %d.  Must be 365 or 366.'
+                         % ndays)
+    return data_out
+
+
+# ----------------------------------------------------------------------
