@@ -29,7 +29,7 @@ def print_if(msg, condition, printfunc=None):
 # ----------------------------------------------------------------------
 def homedir(options=['/home/jennifer/', '/home/jwalker/']):
     """Return home directory for this computer."""
-    
+
     home = None
     for h in options:
         if os.path.isdir(h):
@@ -38,6 +38,32 @@ def homedir(options=['/home/jennifer/', '/home/jwalker/']):
         raise ValueError('Home directory not found in list of options.')
     return home
 
+
+# ----------------------------------------------------------------------
+def savefigs(namestr, ext='eps', fignums=None):
+    """Save list of figures to numbered files with same naming convention.
+
+    Figures are saved to files named namestr`dd`.ext where `dd` is the
+    figure number.
+
+    Parameters
+    ----------
+    namestr : str
+        String for numbered file name.
+    ext : str, optional
+        File extension.
+    fignums : list of ints, optional
+        List of figures to save. If omitted, then all open figures are
+        saved.
+    """
+
+    if fignums is None:
+        fignums = plt.get_fignums()
+    for n in fignums:
+        filn = '%s%02d.%s' % (namestr, n, ext)
+        print('Saving to ' + filn)
+        fig = plt.figure(n)
+        fig.savefig(filn)
 
 
 # ======================================================================
@@ -320,7 +346,7 @@ def jday_to_mmdd(jday, year=None):
     iday = np.cumsum(np.array([1] + ndays))
     if jday >= iday[-1]:
         raise ValueError('Invalid input day %d' + str(jday))
-    
+
     BIG = 1000 # Arbitrary big number above 366
     d = np.where(jday >= iday, jday - iday + 1, BIG)
     ind = d.argmin()
@@ -341,7 +367,6 @@ def pentad_to_jday(pentad, pmin=0, day=3):
 
     if day not in range(1, 6):
         raise ValueError('Invalid day ' + str(day))
-    
+
     jday = 5*(pentad - pmin) + day
     return jday
-
