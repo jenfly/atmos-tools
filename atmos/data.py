@@ -1358,6 +1358,23 @@ def split_timedim(data, n, slowfast=True, timename=None, time0_name='time0',
 
 
 # ----------------------------------------------------------------------
+def splitdays(days):
+    """Return a list of each set of consecutive days within an array."""
+
+    daysets = []
+    consec = np.diff(days) == 1
+
+    while not consec.all():
+        isplit = consec.argmin() + 1
+        daysets.append(days[:isplit])
+        days = days[isplit:]
+        consec = np.diff(days) == 1
+    else:
+        daysets.append(days)
+    return daysets
+
+    
+# ----------------------------------------------------------------------
 def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
                         dayvals=None):
     """Return daily data from sub-daily data.

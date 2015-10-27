@@ -60,6 +60,7 @@ from data import (
     interp_plevels,
     int_pres,
     split_timedim,
+    splitdays,
     daily_from_subdaily,
     padleap,
     combine_daily_years,
