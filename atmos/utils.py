@@ -40,6 +40,78 @@ def homedir(options=['/home/jennifer/', '/home/jwalker/']):
     return home
 
 
+# ======================================================================
+# PLOTS
+# ======================================================================
+
+def text(s, pos, ax=None, dimensionless=True, **kwargs):
+    """Add text to axes.
+
+    Parameters
+    ----------
+    s : str
+        Text to add.
+    pos : {'topleft', 'topmid', 'topright', 'midleft', 'midmid', 'midright',
+           'bottomleft', 'bottommid', 'bottomright'},
+           or 2-tuple of floats/ints
+        String describing position for text annotation, or a tuple (x, y)
+        with the exact position.
+    ax : plt.AxesSubplot object, optional
+        Axes to use.  If omitted, currently active axes are used.
+    dimensionless : bool, optional
+        If True, use dimensionless position with x, y between 0 and 1.
+        If False, specify position based on data values of axes. In
+        this case, pos must be an (x, y) tuple.
+        If pos is a string, then dimensionless is set to True.
+    kwargs : other keyword arguments
+        See plt.text documentation for other keyword arguments.
+
+    Returns
+    -------
+    txt : plt.text.Text object
+    """
+
+    xleft, xmid, xright = 0.1, 0.5, 0.9
+    ytop, ymid, ybottom = 0.85, 0.5, 0.1
+
+    params = {'topleft' : (xleft, ytop, 'left', 'top'),
+              'topmid' : (xmid, ytop, 'center', 'top'),
+              'topright' : (xright, ytop, 'right', 'top'),
+              'midleft' : (xleft, ymid, 'left', 'center'),
+              'midmid' : (xmid, ymid, 'center', 'center'),
+              'midright' : (xright, ymid, 'right', 'center'),
+              'bottomleft' : (xleft, ybottom, 'left', 'bottom'),
+              'bottommid' : (xmid, ybottom, 'center', 'bottom'),
+              'bottomright' : (xright, ybottom, 'right', 'bottom')}
+
+    if isinstance(pos, str):
+        if pos.lower() in params.keys():
+            x, y, horiz, vert = params[pos.lower()]
+            kwargs['horizontalalignment'] = horiz
+            kwargs['verticalalignment'] = vert
+            dimensionless = True
+        else:
+            raise ValueError('Invalid pos ' + pos)
+    elif isinstance(pos, tuple) and len(pos) == 2:
+        x, y = pos
+    else:
+        raise ValueError('Invalid pos %s.  Valid options are %s' %
+               (str(pos), ', '.join(params.keys())))
+
+    if ax is None:
+        ax = plt.gca()
+    if dimensionless:
+        kwargs['transform'] = ax.transAxes
+
+    if not kwargs:
+        txt = ax.text(x, y, s)
+    else:
+        txt = ax.text(x, y, s, **kwargs)
+    plt.draw()
+
+    return txt
+
+
 # ----------------------------------------------------------------------
 def savefigs(namestr, ext='eps', fignums=None):
     """Save list of figures to numbered files with same naming convention.
