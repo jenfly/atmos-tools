@@ -297,7 +297,7 @@ def equiv_potential_temp(T, p, q, p0=1e5):
 
 # ----------------------------------------------------------------------
 def moisture_flux_conv(uq, vq, lat=None, lon=None, plev=None, pdim=-3,
-                       pmin=0, pmax=1e6, return_comp=False):
+                       pmin=0, pmax=1e6, return_comp=False, already_int=False):
     """Return the vertically integrated moisture flux convergence.
 
     Parameters
@@ -306,10 +306,14 @@ def moisture_flux_conv(uq, vq, lat=None, lon=None, plev=None, pdim=-3,
         Zonal moisture flux, with latitude as the second-last dimension,
         longitude as the last dimension.
         i.e. zonal wind (m/s) * specific humidity (kg/kg)
+        If already_int is True, then uq is already vertically integrated.
+        Otherwise, uq is on vertical pressure levels.
     vq : ndarray or xray.DataArray
         Meridional moisture flux, with latitude as the second-last dimension,
         longitude as the last dimension.
         i.e. meridional wind (m/s) * specific humidity (kg/kg)
+        If already_int is True, then vq is already vertically integrated.
+        Otherwise, vq is on vertical pressure levels.
     lat, lon : ndarray, optional
         Latitudes and longitudes in degrees.  If omitted, then uq and
         vq must be xray.DataArrays and the coordinates are extracted
@@ -322,9 +326,13 @@ def moisture_flux_conv(uq, vq, lat=None, lon=None, plev=None, pdim=-3,
     pmin, pmax : float, optional
         Lower and upper bounds (inclusive) of pressure levels (Pa)
         to include in integration.
-    return_comp, bool, optional
+    return_comp : bool, optional
         If True, return additional components, otherwise just total
         moisture flux convergence.
+    already_int : bool, optional
+        If True, then uq and vq inputs have already been vertically
+        integrated.  Otherwise, the vertical integration is
+        calculated here.
 
     Returns
     -------
@@ -340,8 +348,11 @@ def moisture_flux_conv(uq, vq, lat=None, lon=None, plev=None, pdim=-3,
 
     """
 
-    uq_int = dat.int_pres(uq, plev, pdim=pdim, pmin=pmin, pmax=pmax)
-    vq_int = dat.int_pres(vq, plev, pdim=pdim, pmin=pmin, pmax=pmax)
+    if already_int:
+        uq_int, vq_int = uq, vq
+    else:
+        uq_int = dat.int_pres(uq, plev, pdim=pdim, pmin=pmin, pmax=pmax)
+        vq_int = dat.int_pres(vq, plev, pdim=pdim, pmin=pmin, pmax=pmax)
 
     mfc, mfc_x, mfc_y = divergence_spherical_2d(uq_int, vq_int, lat, lon)
 
