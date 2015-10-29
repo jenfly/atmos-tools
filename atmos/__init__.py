@@ -98,4 +98,5 @@ from analysis import (
     Fourier,
     fourier_from_scratch,
     fourier_smooth,
+    scatter_matrix,
 )

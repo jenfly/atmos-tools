@@ -10,6 +10,7 @@ from __future__ import division
 import numpy as np
 import collections
 import xray
+import pandas as pd
 
 #import atmos.utils as utils
 #import atmos.xrhelper as xr
@@ -251,6 +252,47 @@ def fourier_smooth(data, kmax, axis=0):
     Rsq = np.split(Rsq, [kmax + 1], axis=axis)[0]
     Rsq = np.sum(Rsq, axis=axis)
     return data_out, Rsq
+
+
+# ======================================================================
+# LINEAR REGRESSION AND CORRELATIONS
+# ======================================================================
+def scatter_matrix(data, corr_fmt='%.2f', corr_pos=(0.1, 0.85), figsize=(16,10),
+                   suptitle=None):
+    """Matrix of scatter plots with correlation coefficients annotated.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        Data to plot.
+    corr_fmt : str, optional
+        Formatting for annotation with correlation coefficient.
+    corr_pos : tuple, optional
+        x, y position for annotation (dimensionless units from 0-1).
+    figsize : tuple, optional
+        Figure size.
+    suptitle : str, optional
+        Supertitle to go above subplots.
+    """
+
+    # Correlation coefficients between columns
+    data_corr_df = data.corr()
+    data_corr = data_corr_df.as_matrix()
+
+    # Matrix of scatter plots
+    ax = pd.scatter_matrix(data, figsize=figsize)
+
+    # Annotate with correlation coefficients
+    if not corr_fmt.startswith('%'):
+        corr_fmt = '%' + corr_fmt
+    x0, y0 = corr_pos
+    for i in range(ax.shape[0]):
+        for j in range(ax.shape[1]):
+            atm.text(corr_fmt % onset_corr[i, j], (x0, y0), ax=ax[i, j],
+                     fontweight='bold', color='black')
+    plt.draw()
+    if suptitle is not None:
+        plt.suptitle(suptitle)
 
 # ----------------------------------------------------------------------
 # regress_field()
