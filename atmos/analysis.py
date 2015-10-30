@@ -11,6 +11,7 @@ import numpy as np
 import collections
 import xray
 import pandas as pd
+import matplotlib.pyplot as plt
 
 import atmos.utils as utils
 #import atmos.xrhelper as xr
