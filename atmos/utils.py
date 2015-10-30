@@ -430,6 +430,30 @@ def jday_to_mmdd(jday, year=None):
 
 
 # ----------------------------------------------------------------------
+def mmdd_to_jday(month, day, year=None):
+    """
+    Returns Julian day of year (1-365 or 1-366) for day of month.
+
+    If year is None, a non-leap year is assumed.
+    Usage: mon, day = jday_to_mmdd(jday, year)
+    """
+    if year is None or not isleap(year):
+        leap = False
+    else:
+        leap = True
+
+    days = season_days('ann', leap)
+    mmdd = {}
+    for mm in range(1, 13):
+        mmdd[mm] = {}
+    for d in days:
+        mm, dd = jday_to_mmdd(d, year)
+        mmdd[mm][dd] = d
+    jday = mmdd[month][day]
+    
+    return jday
+
+# ----------------------------------------------------------------------
 def pentad_to_jday(pentad, pmin=0, day=3):
     """
     Returns day of year for a pentad (indexed from pmin).
