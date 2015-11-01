@@ -1373,7 +1373,7 @@ def splitdays(days):
         daysets.append(days)
     return daysets
 
-    
+
 # ----------------------------------------------------------------------
 def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
                         dayvals=None):
@@ -1430,46 +1430,6 @@ def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
 
 
 # ----------------------------------------------------------------------
-def padleap(data):
-    """Return daily data padded with NaNs for day 366 if non-leap year.
-
-    Parameters
-    ----------
-    data : ndarray or xray.DataArray
-        Daily data (1-365 or 1-366) with day as the first dimension.
-
-    Returns
-    -------
-    data_out : ndarray or xray.DataArray
-        Daily data for days 1-366 with NaNs padded if necessary.
-    """
-
-    DMAX = 366
-
-    if isinstance(data, xray.DataArray):
-        name, attrs, coords, dims = xr.meta(data)
-        daynm = dims[0]
-        dayvals = np.arange(1, DMAX + 1)
-        days = xray.DataArray(dayvals, coords={daynm : dayvals})
-        coords[daynm] = days
-
-    ndays = data.shape[0]
-    nan = np.expand_dims(np.nan * data[0], 0)
-
-    if ndays == DMAX - 1:
-        data_out = np.concatenate([data, nan], axis=0)
-        if isinstance(data, xray.DataArray):
-            data_out = xray.DataArray(data_out, name=name, attrs=attrs,
-                                      dims=dims, coords=coords)
-    elif ndays == DMAX:
-        data_out = data
-    else:
-        raise ValueError('Invalid number of days %d.  Must be 365 or 366.'
-                         % ndays)
-    return data_out
-
-
-# ----------------------------------------------------------------------
 def combine_daily_years(varnames, files, years, yearname='Year'):
     """Combine daily mean data from multiple files.
 
@@ -1503,12 +1463,17 @@ def combine_daily_years(varnames, files, years, yearname='Year'):
         ds1 = xray.Dataset()
         with xray.open_dataset(filn) as ds_in:
             for nm in varlist:
-                var = padleap(ds_in[nm].load())
+                var = ds_in[nm].load()
                 var.coords[yearname] = years[y]
                 ds1[nm] = var
         if y == 0:
             ds = ds1
+            dayname = ds1[varlist[0]].dims[0]
+            days = ds1[dayname].values
         else:
+            days = np.union1d(days, ds1[dayname].values)
+            ds = ds.reindex(**{dayname : days})
+            ds1 = ds1.reindex(**{dayname : days})
             ds = xray.concat([ds, ds1], dim=yearname)
 
     # Collapse to single DataArray if only one variable, otherwise
