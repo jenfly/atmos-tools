@@ -113,6 +113,16 @@ def text(s, pos, ax=None, dimensionless=True, **kwargs):
 
 
 # ----------------------------------------------------------------------
+def subplot_index(nrow, ncol, k, kmin=1):
+    """Return the i, j index for the k-th subplot."""
+    i = 1 + (k - kmin) // ncol
+    j = 1 + (k - kmin) % ncol
+    if i > nrow:
+        raise ValueError('k = %d exceeds number of rows' % k)
+    return i, j
+
+
+# ----------------------------------------------------------------------
 def savefigs(namestr, ext='eps', fignums=None):
     """Save list of figures to numbered files with same naming convention.
 
@@ -450,7 +460,7 @@ def mmdd_to_jday(month, day, year=None):
         mm, dd = jday_to_mmdd(d, year)
         mmdd[mm][dd] = d
     jday = mmdd[month][day]
-    
+
     return jday
 
 # ----------------------------------------------------------------------

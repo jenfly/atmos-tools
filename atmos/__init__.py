@@ -4,6 +4,7 @@ from utils import (
     print_if,
     homedir,
     text,
+    subplot_index,
     savefigs,
     print_odict,
     odict_insert,
