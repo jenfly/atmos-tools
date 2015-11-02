@@ -165,7 +165,7 @@ def init_latlon(lat1=-90, lat2=90, lon1=0, lon2=360):
 
 # ----------------------------------------------------------------------
 def geobox(lat1, lat2, lon1, lon2, m=None, color='blue', linewidth=2,
-           linestyle='-', axlims=(-90, 90, 0, 360)):
+           linestyle='-', label=None, axlims=(-90, 90, 0, 360)):
     """Plot a lat-lon box on a map.
 
     Optional input m is a Basemap object. If None, a new map is
@@ -179,7 +179,7 @@ def geobox(lat1, lat2, lon1, lon2, m=None, color='blue', linewidth=2,
     x = [lon1, lon1, lon2, lon2, lon1]
     y = [lat1, lat2, lat2, lat1, lat1]
     m.plot(x, y, latlon=True, color=color, linewidth=linewidth,
-           linestyle=linestyle)
+           linestyle=linestyle, label=label)
     return m
 
 
