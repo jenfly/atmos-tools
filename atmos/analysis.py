@@ -290,7 +290,7 @@ def scatter_matrix(data, corr_fmt='%.2f', corr_pos=(0.1, 0.85), figsize=(16,10),
     for i in range(ax.shape[0]):
         for j in range(ax.shape[1]):
             utils.text(corr_fmt % data_corr[i, j], (x0, y0), ax=ax[i, j],
-                     fontweight='bold', color='black')
+                       fontweight='bold', color='black')
     plt.draw()
     if suptitle is not None:
         plt.suptitle(suptitle)
