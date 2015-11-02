@@ -40,6 +40,7 @@ from xrhelper import (
 from data import (
     biggify,
     collapse,
+    remove_coord,
     nantrapz,
     ncdisp,
     ncload,
