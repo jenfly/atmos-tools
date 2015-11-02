@@ -285,7 +285,7 @@ def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
 
 # ----------------------------------------------------------------------
 def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
-                   linewidths=2.0, axlims=(-90, 90, 0, 360)):
+                   linewidths=2.0, linestyles=None, axlims=(-90, 90, 0, 360)):
     """Create a contour line plot of geo data.
 
     Parameters
@@ -305,6 +305,8 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
         Contour line color(s).
     linewidths : int or float, optional
         Line width for contour lines
+    linestyles :  {None, 'solid', 'dashed', 'dashdot', 'dotted'}, optional
+        Line style for contour lines.
     axlims : 4-tuple of ints or floats
         Lat-lon limits for map.
 
@@ -329,10 +331,12 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
         m = init_latlon(lat1, lat2, lon1, lon2)
     if clev is None:
         cs = m.contour(x, y, np.squeeze(data), colors=colors,
-                       linewidths=linewidths, latlon=True)
+                       linewidths=linewidths, linestyles=linestyles,
+                       latlon=True)
     else:
         cs = m.contour(x, y, np.squeeze(data), clev, colors=colors,
-                       linewidths=linewidths, latlon=True)
+                       linewidths=linewidths, linestyles=linestyles,
+                       latlon=True)
     plt.draw()
     return m, cs
 
