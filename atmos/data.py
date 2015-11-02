@@ -148,48 +148,8 @@ def collapse(axis, *args):
     else:
         output = tuple(output)
     return output
+    
 
-
-# ----------------------------------------------------------------------
-def remove_coord(data, coord_name):
-    """
-    Return an xray.DataArray with specified coord dimension removed.        
-    
-    Parameters
-    ----------
-    data : xray.DataArray
-        Data array to remove coordinate from. The dimension to be 
-        removed must be singleton in the data.
-    coord_name : {'lat', 'lon', 'plev', 'time'}, or str
-        Name (specific or generic) of coordinate to remove.
-        
-    Returns
-    -------
-    data_out : xray.DataArray
-        Data with selected dimension removed.
-    """
-    
-    try:
-        dimname = get_coord(data, coord_name, 'name')
-    except ValueError:
-        dimname = coord_name
-        
-    dim = get_coord(data, coord_name=dimname, return_type='dim')
-    
-    if data.shape[dim] > 1:
-        raise ValueError('Selected dimension %d is not singleton', dim)
-      
-    # Remove the dimension and coordinate    
-    name, attrs, coords, dims = xr.meta(data)    
-    dims = list(dims)
-    dims.pop(dim)
-    coords = utils.odict_delete(coords, dimname)
-    data_out = xray.DataArray(np.squeeze(data.values, axis=dim), dims=dims,  
-                              coords=coords, name=name, attrs=attrs)
-
-    return data_out
-    
-    
 # ----------------------------------------------------------------------
 def nantrapz(y, x=None, axis=-1):
     """

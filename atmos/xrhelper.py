@@ -55,6 +55,55 @@ def meta(data):
 
 
 # ----------------------------------------------------------------------
+def squeeze(data, axis=None):
+    """
+    Remove singleton dimension(s) from a DataArray.
+
+    Parameters
+    ----------
+    data : xray.DataArray
+        Input data.
+    axis : int, optional
+        Axis or list of axes to squeeze.  If None, all singleton
+        dimensions are removed.
+
+    Returns
+    -------
+    squeezed : xray.DataArray
+        Data with selected dimensions removed. Metadata from removed
+        dimensions is saved in squeezed.attrs.
+    """
+
+    if isinstance(data, xray.DataArray):
+        name, attrs, coords, dims = meta(data)
+
+        if axis is not None:
+            dims_del = utils.makelist(axis)
+        else:
+            # All singleton dimensions
+            dims_del = np.where(np.array(data.shape) == 1)[0]
+
+        squeezed = np.squeeze(data.values, axis=dims_del)
+
+        # Update metadata
+        dims = list(dims)
+        for dim in dims_del:
+            nm = dims[dim]
+            attrs[nm] = coords[nm].values
+            coords = utils.odict_delete(coords, nm)
+            dims.remove(nm)
+
+        # Squeeze and pack into DataArray
+        squeezed = xray.DataArray(np.squeeze(data.values, axis=dims_del),
+                                  dims=dims, coords=coords, name=name,
+                                  attrs=attrs)
+    else:
+        squeezed = np.squeeze(data, axis)
+
+    return squeezed
+
+
+# ----------------------------------------------------------------------
 def coords_init(data):
     """Return OrderedDict of xray.DataArray-like coords for a numpy array.
 

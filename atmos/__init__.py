@@ -30,6 +30,7 @@ from utils import (
 
 from xrhelper import (
     meta,
+    squeeze,
     coords_init,
     coords_assign,
     ds_print,
@@ -40,7 +41,6 @@ from xrhelper import (
 from data import (
     biggify,
     collapse,
-    remove_coord,
     nantrapz,
     ncdisp,
     ncload,
