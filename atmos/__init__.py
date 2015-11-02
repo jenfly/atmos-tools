@@ -86,6 +86,7 @@ from plots import (
     autoticks,
     clevels,
     init_latlon,
+    geobox,
     pcolor_latlon,
     contourf_latlon,
     contour_latlon,
