@@ -1430,7 +1430,8 @@ def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
 
 
 # ----------------------------------------------------------------------
-def combine_daily_years(varnames, files, years, yearname='Year'):
+def combine_daily_years(varnames, files, years, yearname='Year',
+                        subset1=(None, None, None), subset2=(None, None, None)):
     """Combine daily mean data from multiple files.
 
     Parameters
@@ -1445,6 +1446,15 @@ def combine_daily_years(varnames, files, years, yearname='Year'):
         List of years corresponding to each file.
     yearname : str, optional
         Name for year dimension in DataArrays.
+    subset1, subset2 : (str, float(s), float(s)), optional
+        Tuple to indicate subset(s) to extract, in the form:
+        (dim_name, lower_or_list, upper)
+        e.g. subset1 = ('lon', 0, 120)
+             subset2 = ('lat', -45, 45)
+        e.g. subset1 = ('plev', 200, 200)
+        The dimension name can be the actual dimension name
+        (e.g. 'XDim') or a generic name (e.g. 'lon') and get_coord()
+        is called to find the specific name.
 
     Returns
     -------
@@ -1462,6 +1472,10 @@ def combine_daily_years(varnames, files, years, yearname='Year'):
         print('Loading ' + filn)
         ds1 = xray.Dataset()
         with xray.open_dataset(filn) as ds_in:
+            if subset1[0] is not None:
+                ds_in = subset(ds_in, subset1[0], subset1[1], subset1[2])
+            if subset2[0] is not None:
+                ds_in = subset(ds_in, subset2[0], subset2[1], subset2[2])
             for nm in varlist:
                 var = ds_in[nm].load()
                 var.coords[yearname] = years[y]
