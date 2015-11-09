@@ -9,6 +9,7 @@ Utility functions for atmospheric data wrangling / preparation.
 
 from __future__ import division
 import numpy as np
+import pandas as pd
 import collections
 import scipy.interpolate as interp
 from mpl_toolkits import basemap
@@ -243,11 +244,11 @@ def rolling_mean(data, nroll, axis=-1, center=False, **kwargs):
         rolling = rolling[0]
 
     # Roll axis back to its original position
-    rolling = np.rollaxis(rolling, rolling, -1, axis)
+    rolling = np.rollaxis(rolling, -1, axis)
 
     if isinstance(data, xray.DataArray):
         rolling = xray.DataArray(rolling, name=name, coords=coords,
-                                 dim=dimnames, attrs=attrs)
+                                 dims=dimnames, attrs=attrs)
 
     return rolling
 
