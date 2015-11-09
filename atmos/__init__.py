@@ -42,6 +42,7 @@ from data import (
     biggify,
     collapse,
     nantrapz,
+    rolling_mean,
     ncdisp,
     ncload,
     load_concat,

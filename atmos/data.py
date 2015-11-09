@@ -183,6 +183,76 @@ def nantrapz(y, x=None, axis=-1):
     return trapz
 
 
+# ----------------------------------------------------------------------
+def rolling_mean(data, nroll, axis=-1, center=False, **kwargs):
+    """Return the rolling mean along an axis.
+
+    Parameters
+    ----------
+    data : ndarray or xray.DataArray
+        Input data.
+    nroll : int
+        Size of window for rolling mean.
+    axis : int, optional
+        Axis to compute along.
+    center : bool, optional
+        Align to center of window.
+    **kwargs : other keyword arguments
+        See pandas.rolling_mean.
+
+    Returns
+    -------
+    rolling : ndarray or DataArray
+        Rolling mean data.
+    """
+    
+    # Maximum number of dimensions handled by this code
+    nmax = 5
+    ndim = data.ndim
+
+    if ndim > 5:
+        raise ValueError('Input data has too many dimensions. Max 5-D.')
+
+    if isinstance(data, xray.DataArray):
+        name, attrs, coords, dimnames = xr.meta(data)
+        vals = data.values.copy()
+    else:
+        vals = data
+
+    # Roll axis to end
+    vals = np.rollaxis(vals, axis, ndim)
+
+    # Add singleton dimensions for looping, if necessary
+    for i in range(ndim, nmax):
+        vals = np.expand_dims(vals, axis=0)
+
+    # Initialize output
+    rolling = np.ones(vals.shape, dtype=vals.dtype)
+
+    # Compute rolling mean, iterating over additional dimensions
+    dims = vals.shape[:-1]
+    for i in range(dims[0]):
+        for j in range(dims[1]):
+            for k in range(dims[2]):
+                for m in range(dims[3]):
+                    rolling[i,j,k,m] = pd.rolling_mean(vals[i,j,k,m], nroll,
+                                                       center=center, **kwargs)
+
+    # Collapse any additional dimensions that were added
+    for i in range(ndim, rolling.ndim):
+        rolling = rolling[0]
+
+    # Roll axis back to its original position
+    rolling = np.rollaxis(rolling, rolling, -1, axis)
+
+    if isinstance(data, xray.DataArray):
+        rolling = xray.DataArray(rolling, name=name, coords=coords,
+                                 dim=dimnames, attrs=attrs)
+
+    return rolling
+
+
+
 # ======================================================================
 # UNIT CONVERSIONS
 # ======================================================================
