@@ -111,45 +111,35 @@ def biggify(small, big, tile=False):
 
 
 # ----------------------------------------------------------------------
-def collapse(axis, *args):
-    """Collapse singleton dimensions (first or last) in arrays.
+def collapse(arr, axis=-1):
+    """Collapse singleton dimension (first or last) in an array.
 
     Parameters
     ----------
+    arr : ndarray
+        Array to collapse.
     axis : {0, -1}
         Axis to collapse.
-    *args : ndarrays
-        Arrays to collapse.
 
     Returns
     -------
-    output : tuple of arrays
-        Arrays with singleton dimension at beginning or end removed.
-
-    Example
-    -------
-    arr1, arr2 = collapse(0, arr1, arr2)
+    output : ndarray
+        Array with singleton dimension at beginning or end removed.
     """
 
     if axis not in [0, -1]:
         raise ValueError('Invalid axis %d.  Must be 0 or -1.' % axis)
-    output = list(args)
-    for i, arr in enumerate(args):
-        dims = arr.shape
-        if dims[axis] > 1:
-            raise ValueError('Dimension %d of argument %d is not singleton.' %
-                             (axis, i))
-        if axis == 0:
-            output[i] = arr[0]
-        else:
-            output[i] = arr[...,0]
 
-    if len(output) == 1:
-        output = output[0]
+    dims = arr.shape
+    if dims[axis] > 1:
+        raise ValueError('Dimension %d of input array is not singleton.' % axis)
+    if axis == 0:
+        output = arr[0]
     else:
-        output = tuple(output)
+        output = arr[...,0]
+
     return output
-    
+
 
 # ----------------------------------------------------------------------
 def nantrapz(y, x=None, axis=-1):
@@ -206,7 +196,7 @@ def rolling_mean(data, nroll, axis=-1, center=False, **kwargs):
     rolling : ndarray or DataArray
         Rolling mean data.
     """
-    
+
     # Maximum number of dimensions handled by this code
     nmax = 5
     ndim = data.ndim
