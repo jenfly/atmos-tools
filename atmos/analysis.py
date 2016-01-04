@@ -12,6 +12,7 @@ import collections
 import xray
 import pandas as pd
 import matplotlib.pyplot as plt
+import scipy.stats
 
 import atmos.utils as utils
 #import atmos.xrhelper as xr
@@ -258,8 +259,47 @@ def fourier_smooth(data, kmax, axis=0):
 # ======================================================================
 # LINEAR REGRESSION AND CORRELATIONS
 # ======================================================================
+
+def corr_matrix(df, incl_index=False):
+    """Return correlation coefficients and p-values between data pairs.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        Input data.
+    incl_index : bool, optional
+        If True, include the index in the pairs of correlation calculations.
+
+    Returns
+    -------
+    corr : dict of DataFrames
+        Correlation coefficients (corr['r']) and p-values (corr['p']) between
+        each pair of columns in df.
+    """
+
+    if incl_index:
+        df[df.index.name] = df.index
+
+    cols = df.columns
+    n = len(cols)
+    r = np.nan * np.ones((n, n))
+    p = np.nan * np.ones((n, n))
+
+    for i in range(n):
+        for j in range(i + 1):
+            r[i, j], p[i, j] = scipy.stats.pearsonr(df[cols[i]], df[cols[j]])
+            r[j, i], p[j, i] = r[i, j], p[i, j]
+
+    corr = {}
+    corr['r'] = pd.DataFrame(r, index=cols, columns=cols)
+    corr['p'] = pd.DataFrame(p, index=cols, columns=cols)
+
+    return corr
+
+
+# ----------------------------------------------------------------------
 def scatter_matrix(data, corr_fmt='%.2f', corr_pos=(0.1, 0.85), figsize=(16,10),
-                   suptitle=None):
+                   suptitle=None, incl_p=False, p_pos=(0.1, 0.75)):
     """Matrix of scatter plots with correlation coefficients annotated.
 
     Parameters
@@ -274,26 +314,40 @@ def scatter_matrix(data, corr_fmt='%.2f', corr_pos=(0.1, 0.85), figsize=(16,10),
         Figure size.
     suptitle : str, optional
         Supertitle to go above subplots.
+    incl_p : bool, optional
+        If True, include p-value in annotation.
+    p_pos : tuple, optional
+        x, y position for p-value annotation. Only used if incl_p is True.
     """
 
     # Correlation coefficients between columns
-    data_corr_df = data.corr()
-    data_corr = data_corr_df.as_matrix()
+    corr = corr_matrix(data)
+    data_corr = corr['r'].as_matrix()
+    data_p = corr['p'].as_matrix()
 
     # Matrix of scatter plots
     ax = pd.scatter_matrix(data, figsize=figsize)
 
-    # Annotate with correlation coefficients
+    # Annotate with correlation coefficients and p-values
     if not corr_fmt.startswith('%'):
         corr_fmt = '%' + corr_fmt
-    x0, y0 = corr_pos
     for i in range(ax.shape[0]):
         for j in range(ax.shape[1]):
-            utils.text(corr_fmt % data_corr[i, j], (x0, y0), ax=ax[i, j],
+            utils.text(corr_fmt % data_corr[i, j], corr_pos, ax=ax[i, j],
                        fontweight='bold', color='black')
+            if incl_p:
+                p = data_p[i, j]
+                if p < 0.01:
+                    p_str = 'p=%.1e' % p
+                else:
+                    p_str = 'p=%.2f' % p
+                utils.text(p_str, p_pos, ax=ax[i, j], color='black')
+
     plt.draw()
     if suptitle is not None:
         plt.suptitle(suptitle)
+
+
 
 # ----------------------------------------------------------------------
 # regress_field()
