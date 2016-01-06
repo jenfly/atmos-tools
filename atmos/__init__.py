@@ -77,6 +77,8 @@ from variables import (
     rossby_num,
     potential_temp,
     equiv_potential_temp,
+    dry_static_energy,
+    moist_static_energy,
     moisture_flux_conv,
     streamfunction,
 )

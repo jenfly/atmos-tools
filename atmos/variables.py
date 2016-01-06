@@ -296,6 +296,16 @@ def equiv_potential_temp(T, p, q, p0=1e5):
 
 
 # ----------------------------------------------------------------------
+def dry_static_energy(T, z):
+    return constants.Cp * T + constants.g * z
+
+
+# ----------------------------------------------------------------------
+def moist_static_energy(T, z, q):
+    return dry_static_energy(T, z) + constants.Lv * q
+
+
+# ----------------------------------------------------------------------
 def moisture_flux_conv(uq, vq, lat=None, lon=None, plev=None, pdim=-3,
                        pmin=0, pmax=1e6, return_comp=False, already_int=False):
     """Return the vertically integrated moisture flux convergence.
