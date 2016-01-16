@@ -39,11 +39,14 @@ plt.plot(x, np.cos(x), 'k--')
 
 n = 100
 x = np.linspace(0,10,n)
-y = 2*x - 5 + 2*np.random.random(n)
+y = 2*x - 5 + 10*np.random.random(n)
 plt.figure()
 plt.scatter(x, y)
 x_in = sm.add_constant(x)
 fit = sm.OLS(y, x_in).fit()
+ypred = fit.predict(x_in)
+plt.plot(x, ypred, 'r')
+print fit.summary()
 
 # ----------------------------------------------------------------------
 # Multiple linear regression
