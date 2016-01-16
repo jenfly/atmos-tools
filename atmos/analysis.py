@@ -283,11 +283,19 @@ class Linreg:
         return ypred
 
     def plot(self, scatter_clr='b', scatter_sym='o', scatter_size=5,
-             line_clr='r', line_width=1):
+             line_clr='r', line_width=1, annotation_pos='topleft'):
         plt.plot(self.x, self.y, color=scatter_clr, marker=scatter_sym,
                  markersize=scatter_size, linestyle='none')
         ypred = self.predict(self.x)
         plt.plot(self.x, ypred, color=line_clr, linewidth=line_width)
+
+        if annotation_pos is not None:
+            s = 'r = ' + utils.format_num(self.r) + '\n'
+            s = s + 'p = ' + utils.format_num(self.p) + '\n'
+            m = utils.format_num(self.slope)
+            y0 = utils.format_num(self.intercept, plus_sym=True)
+            s = s + 'y = %s x %s' % (m, y0)
+            utils.text(s, annotation_pos)
 
 
 def corr_matrix(df, incl_index=False):
