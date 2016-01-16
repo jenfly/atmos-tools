@@ -260,6 +260,36 @@ def fourier_smooth(data, kmax, axis=0):
 # LINEAR REGRESSION AND CORRELATIONS
 # ======================================================================
 
+class Linreg:
+    def __init__(self, x, y):
+        """Return least-squares regression line.
+
+        See scipy.stats.linregress for details."""
+        reg = scipy.stats.linregress(x, y)
+        self.slope, self.intercept, self.r, self.p, self.stderr = reg
+        self.x, self.y = x, y
+
+    def __repr__(self):
+        s = 'Slope: ' + str(self.slope)
+        s = s + '\nIntercept: ' + str(self.intercept)
+        s = s + '\nCorrelation coefficient: ' + str(self.r)
+        s = s + '\np-value: ' + str(self.p)
+        s = s + '\nStandard error: ' + str(self.stderr)
+        return s
+
+    def predict(self, x):
+        """Return predicted y values from linear regression."""
+        ypred = np.polyval([self.slope, self.intercept], x)
+        return ypred
+
+    def plot(self, scatter_clr='b', scatter_sym='o', scatter_size=5,
+             line_clr='r', line_width=1):
+        plt.plot(self.x, self.y, color=scatter_clr, marker=scatter_sym,
+                 markersize=scatter_size, linestyle='none')
+        ypred = self.predict(self.x)
+        plt.plot(self.x, ypred, color=line_clr, linewidth=line_width)
+
+
 def corr_matrix(df, incl_index=False):
     """Return correlation coefficients and p-values between data pairs.
 

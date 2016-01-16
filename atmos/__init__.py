@@ -104,6 +104,7 @@ from analysis import (
     Fourier,
     fourier_from_scratch,
     fourier_smooth,
+    Linreg,
     corr_matrix,
     scatter_matrix,
 )
