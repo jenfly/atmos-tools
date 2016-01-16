@@ -2,6 +2,7 @@ from constants import const as constants
 
 from utils import (
     print_if,
+    format_num,
     homedir,
     text,
     subplot_index,
