@@ -10,7 +10,7 @@ from datetime import datetime
 import os
 
 # ======================================================================
-# PRINTING
+# PRINTING & STRING FORMATTING
 # ======================================================================
 
 # ----------------------------------------------------------------------
@@ -22,6 +22,16 @@ def print_if(msg, condition, printfunc=None):
         else:
             print(msg)
 
+def format_num(x, ndecimals=2, plus_sym=False):
+    """Return a nicely formatted number in .f or .e format."""
+    fmt = '%.' + str(ndecimals)
+    if abs(x) < 10**(-ndecimals):
+        fmt = fmt + 'e'
+    else:
+        fmt = fmt + 'f'
+    if plus_sym and x > 0:
+        fmt = '+' + fmt
+    return fmt % x
 
 # ======================================================================
 # FILES & DIRECTORIES
