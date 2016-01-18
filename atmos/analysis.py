@@ -265,6 +265,8 @@ class Linreg:
         """Return least-squares regression line.
 
         See scipy.stats.linregress for details."""
+        ind = np.isfinite(x) & np.isfinite(y)
+        x, y = x[ind], y[ind]
         reg = scipy.stats.linregress(x, y)
         self.slope, self.intercept, self.r, self.p, self.stderr = reg
         self.x, self.y = x, y
@@ -298,6 +300,7 @@ class Linreg:
             utils.text(s, annotation_pos)
 
 
+# ----------------------------------------------------------------------
 def corr_matrix(df, incl_index=False):
     """Return correlation coefficients and p-values between data pairs.
 
