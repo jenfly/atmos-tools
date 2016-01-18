@@ -21,9 +21,8 @@ lon1, lon2 = 0, 100
 lat1, lat2 = -45, 45
 
 ds1 = load_concat(paths, var_ids)
-ds2 = load_concat(paths, var_ids, subset1=('lat', lat1, lat2),
-                  subset2=('lon', lon1, lon2))
-ds3 = load_concat(paths, 'PS', subset1=('lat', lat1, lat2),
-                  subset2=('lon', lon1, lon2))
+subset_dict = {'lat' : (lat1, lat2), 'lon' : (lon1, lon2)}
+ds2 = load_concat(paths, var_ids, subset_dict)
+ds3 = load_concat(paths, 'PS', subset_dict)
 u1 = load_concat(paths, 'U')
 u2 = load_concat(paths[0], 'U')
