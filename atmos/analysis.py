@@ -336,8 +336,9 @@ def corr_matrix(df, incl_index=False):
 
 
 # ----------------------------------------------------------------------
-def scatter_matrix(data, corr_fmt='%.2f', corr_pos=(0.1, 0.85), figsize=(16,10),
-                   suptitle=None, incl_p=False, p_pos=(0.1, 0.75)):
+def scatter_matrix(data, corr_fmt='%.2f', annotation_pos=(0.05, 0.85),
+                   figsize=(16,10), incl_p=False, incl_line=False,
+                   suptitle=None, annotation_wt='bold'):
     """Matrix of scatter plots with correlation coefficients annotated.
 
     Parameters
@@ -346,40 +347,51 @@ def scatter_matrix(data, corr_fmt='%.2f', corr_pos=(0.1, 0.85), figsize=(16,10),
         Data to plot.
     corr_fmt : str, optional
         Formatting for annotation with correlation coefficient.
-    corr_pos : tuple, optional
+    annotation_pos : tuple, optional
         x, y position for annotation (dimensionless units from 0-1).
     figsize : tuple, optional
         Figure size.
-    suptitle : str, optional
-        Supertitle to go above subplots.
     incl_p : bool, optional
         If True, include p-value in annotation.
-    p_pos : tuple, optional
-        x, y position for p-value annotation. Only used if incl_p is True.
+    incl_line : bool, optional
+        If True, include linear regression line.
+    suptitle : str, optional
+        Supertitle to go above subplots.
+    annotation_wt : str, optional
+        Fontweight for annotation.
     """
 
-    # Correlation coefficients between columns
-    corr = corr_matrix(data)
-    data_corr = corr['r'].as_matrix()
-    data_p = corr['p'].as_matrix()
+    if not corr_fmt.startswith('%'):
+        corr_fmt = '%' + corr_fmt
+
+    def annotation(r, p, m, y0, corr_fmt, incl_p, incl_line, pos, wt):
+        s = corr_fmt % r
+        if incl_p or incl_line:
+            s = 'r = ' + s + '\n'
+        if incl_p:
+            s = s + 'p = ' + utils.format_num(p) + '\n'
+        if incl_line:
+            m = utils.format_num(m)
+            y0 = utils.format_num(y0, plus_sym=True)
+            s = s + 'y = %s x %s' % (m, y0)
+        utils.text(s, pos, fontweight=wt, color='black')
 
     # Matrix of scatter plots
     ax = pd.scatter_matrix(data, figsize=figsize)
 
     # Annotate with correlation coefficients and p-values
-    if not corr_fmt.startswith('%'):
-        corr_fmt = '%' + corr_fmt
-    for i in range(ax.shape[0]):
-        for j in range(ax.shape[1]):
-            utils.text(corr_fmt % data_corr[i, j], corr_pos, ax=ax[i, j],
-                       fontweight='bold', color='black')
-            if incl_p:
-                p = data_p[i, j]
-                if p < 0.01:
-                    p_str = 'p=%.1e' % p
-                else:
-                    p_str = 'p=%.2f' % p
-                utils.text(p_str, p_pos, ax=ax[i, j], color='black')
+    nrow, ncol = len(data.columns), len(data.columns)
+    iplot = 1
+    for i, col1 in enumerate(data.columns):
+        for j, col2 in enumerate(data.columns):
+            if i != j:
+                plt.subplot(nrow, ncol, iplot)
+                reg = Linreg(data[col2], data[col1])
+                annotation(reg.r, reg.p, reg.slope, reg.intercept, corr_fmt,
+                           incl_p, incl_line, annotation_pos, annotation_wt)
+                if incl_line:
+                    plt.plot(data[col2], reg.predict(data[col2]), 'k')
+            iplot += 1
 
     plt.draw()
     if suptitle is not None:
