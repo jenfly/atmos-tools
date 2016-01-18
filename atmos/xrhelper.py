@@ -217,9 +217,10 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True):
             valrange = vals[ind1 & ind2]
         return data.sel(**{dim_name : valrange}).copy()
 
+    sub = data
     for dim_name in subset_dict:
         lower_or_list, upper = subset_dict[dim_name]
-        sub = subset_1dim(data, dim_name, lower_or_list, upper, incl_lower,
+        sub = subset_1dim(sub, dim_name, lower_or_list, upper, incl_lower,
                           incl_upper)
 
     return sub
