@@ -986,10 +986,6 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
     return avg
 
 
-
-
-
-
 # ======================================================================
 # PRESSURE LEVEL DATA AND TOPOGRAPHY
 # ======================================================================
