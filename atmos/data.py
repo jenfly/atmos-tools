@@ -390,16 +390,14 @@ def get_coord(data, coord_type=None, return_type='values', coord_name=None):
 
 
 # ----------------------------------------------------------------------
-def subset(data, dim_name, lower_or_list, upper=None,
-           dim_name2=None, lower_or_list2=None, upper2=None,
-           incl_lower=True, incl_upper=True, search=True):
+def subset(data, subset_dict, incl_lower=True, incl_upper=True, search=True):
     """Extract a subset of a DataArray or Dataset along named dimensions.
 
     Returns a DataArray or Dataset sub extracted from input data,
     such that:
         sub[dim_name] >= lower_or_list & sub[dim_name] <= upper,
     OR  sub[dim_name] == lower_or_list (if lower_or_list is a list)
-    And similarly for dim_name2, if included.
+    for each dim_name in subset_dict.
 
     This function calls atmos.xrhelper.subset with the additional
     feature of calling the get_coord function to find common
@@ -409,17 +407,19 @@ def subset(data, dim_name, lower_or_list, upper=None,
     ----------
     data : xray.DataArray or xray.Dataset
         Data source for extraction.
-    dim_name : string
-        Name of dimension to extract from.  If dim_name is not in
-        data.dims, then the get_coord() function is used
-        to search for a similar dimension name (if search is True).
-    lower_or_list : scalar or list of int or float
-        If scalar, then used as the lower bound for the   subset range.
-        If list, then the subset matching the list will be extracted.
-    upper : int or float, optional
-        Upper bound for subset range.
-    dim_name2, lower_or_list2, upper2 : optional
-        Parameters as described above for optional 2nd dimension.
+    subset_dict : dict of 2-tuples
+        Dimensions and subsets to extract.  Each entry in subset_dict
+        is in the form {dim_name : (lower_or_list, upper)}, where:
+        - dim_name : string
+            Name of dimension to extract from.  If dim_name is not in
+            data.dims, then the get_coord() function is used
+            to search for a similar dimension name (if search is True).
+        - lower_or_list : scalar or list of int or float
+            If scalar, then used as the lower bound for the   subset range.
+            If list, then the subset matching the list will be extracted.
+        - upper : int, float, or None
+            Upper bound for subset range. If lower_or_list is a list,
+            then upper is ignored and should be set to None.
     incl_lower, incl_upper : bool, optional
         If True lower / upper bound is inclusive, with >= or <=.
         If False, lower / upper bound is exclusive with > or <.
@@ -436,13 +436,12 @@ def subset(data, dim_name, lower_or_list, upper=None,
 
     if search:
         nms = ['lat', 'lon', 'plev']
-        if dim_name in nms and dim_name not in data.dims:
-            dim_name = get_coord(data, dim_name, 'name')
-        if dim_name2 in nms and dim_name2 not in data.dims:
-            dim_name2 = get_coord(data, dim_name2, 'name')
+        for dim_name in subset_dict:
+            if dim_name in nms and dim_name not in data.dims:
+                dim_name_new = get_coord(data, dim_name, 'name')
+                subset_dict[dim_name_new] = subset_dict.pop(dim_name)
 
-    return xr.subset(data, dim_name, lower_or_list, upper, dim_name2,
-                    lower_or_list2, upper2, incl_lower, incl_upper)
+    return xr.subset(data, subset_dict, incl_lower, incl_upper)
 
 
 # ======================================================================
@@ -484,8 +483,7 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
 
 
 # ----------------------------------------------------------------------
-def load_concat(paths, var_ids=None, concat_dim='TIME',
-                subset1=(None, None, None), subset2=(None, None, None),
+def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
                 verbose=True):
     """Load a variable from multiple files and concatenate into one.
 
@@ -502,15 +500,20 @@ def load_concat(paths, var_ids=None, concat_dim='TIME',
     concat_dim : str
         Name of dimension to concatenate along. If this dimension
         doesn't exist in the input data, a new one is created.
-    subset1, subset2 : (str, float(s), float(s)), optional
-        Tuple to indicate subset(s) to extract, in the form:
-        (dim_name, lower_or_list, upper)
-        e.g. subset1 = ('lon', 0, 120)
-             subset2 = ('lat', -45, 45)
-        e.g. subset1 = ('plev', 200, 200)
-        The dimension name can be the actual dimension name
-        (e.g. 'XDim') or a generic name (e.g. 'lon') and get_coord()
-        is called to find the specific name.
+    subset_dict : dict of 2-tuples, optional
+        Dimensions and subsets to extract.  Each entry in subset_dict
+        is in the form {dim_name : (lower_or_list, upper)}, where:
+        - dim_name : string
+            Name of dimension to extract from.
+            The dimension name can be the actual dimension name
+            (e.g. 'XDim') or a generic name (e.g. 'lon') and get_coord()
+            is called to find the specific name.
+        - lower_or_list : scalar or list of int or float
+            If scalar, then used as the lower bound for the   subset range.
+            If list, then the subset matching the list will be extracted.
+        - upper : int, float, or None
+            Upper bound for subset range. If lower_or_list is a list,
+            then upper is ignored and should be set to None.
     verbose : bool, optional
         If True, print updates while processing files.
 
@@ -528,7 +531,7 @@ def load_concat(paths, var_ids=None, concat_dim='TIME',
     if var_ids is not None:
         var_ids = utils.makelist(var_ids)
 
-    def get_data(path, var_ids, subset1, subset2):
+    def get_data(path, var_ids, subset_dict):
         with xray.open_dataset(path) as ds:
             if var_ids is None:
                 # All variables
@@ -538,9 +541,8 @@ def load_concat(paths, var_ids=None, concat_dim='TIME',
                 data = xray.Dataset()
                 for var in var_ids:
                     data[var] = ds[var]
-            if subset1[0] is not None:
-                data = subset(data, subset1[0], subset1[1], subset1[2],
-                              subset2[0], subset2[1], subset2[2])
+            if subset_dict is not None:
+                data = subset(data, subset_dict)
             data.load()
         return data
 
@@ -551,7 +553,7 @@ def load_concat(paths, var_ids=None, concat_dim='TIME',
         attempt = 0
         while attempt < NMAX:
             try:
-                piece = get_data(p, var_ids, subset1, subset2)
+                piece = get_data(p, var_ids, subset_dict)
                 print_if('Appending data', verbose)
                 pieces.append(piece)
                 attempt = NMAX
@@ -944,7 +946,8 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
         if not lon1 in lon:
             raise ValueError('lon1=lon2=%f not in longitude grid' % lon1)
 
-    data_out = subset(data_out, latname, lat1, lat2, lonname, lon1, lon2)
+    subset_dict = {latname : (lat1, lat2), lonname : (lon1, lon2)}
+    data_out = subset(data_out, subset_dict)
     attrs['subset_lons'] = get_coord(data_out, 'lon')
     attrs['subset_lats'] = get_coord(data_out, 'lat')
 
@@ -1328,7 +1331,7 @@ def int_pres(data, plev=None, pdim=-3, pmin=0, pmax=1e6):
         data = xray.DataArray(data, coords=coords)
 
     # Extract subset and integrate
-    data = subset(data, pname, pmin, pmax)
+    data = subset(data, {pname : (pmin, pmax)})
     vals_int = nantrapz(data.values, data[pname].values, axis=pdim)
     vals_int /= constants.g.values
 
@@ -1492,7 +1495,7 @@ def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
 
 # ----------------------------------------------------------------------
 def combine_daily_years(varnames, files, years, yearname='Year',
-                        subset1=(None, None, None), subset2=(None, None, None)):
+                        subset_dict=None):
     """Combine daily mean data from multiple files.
 
     Parameters
@@ -1507,15 +1510,20 @@ def combine_daily_years(varnames, files, years, yearname='Year',
         List of years corresponding to each file.
     yearname : str, optional
         Name for year dimension in DataArrays.
-    subset1, subset2 : (str, float(s), float(s)), optional
-        Tuple to indicate subset(s) to extract, in the form:
-        (dim_name, lower_or_list, upper)
-        e.g. subset1 = ('lon', 0, 120)
-             subset2 = ('lat', -45, 45)
-        e.g. subset1 = ('plev', 200, 200)
-        The dimension name can be the actual dimension name
-        (e.g. 'XDim') or a generic name (e.g. 'lon') and get_coord()
-        is called to find the specific name.
+    subset_dict : dict of 2-tuples, optional
+        Dimensions and subsets to extract.  Each entry in subset_dict
+        is in the form {dim_name : (lower_or_list, upper)}, where:
+        - dim_name : string
+            Name of dimension to extract from.
+            The dimension name can be the actual dimension name
+            (e.g. 'XDim') or a generic name (e.g. 'lon') and get_coord()
+            is called to find the specific name.
+        - lower_or_list : scalar or list of int or float
+            If scalar, then used as the lower bound for the   subset range.
+            If list, then the subset matching the list will be extracted.
+        - upper : int, float, or None
+            Upper bound for subset range. If lower_or_list is a list,
+            then upper is ignored and should be set to None.
 
     Returns
     -------
@@ -1533,10 +1541,8 @@ def combine_daily_years(varnames, files, years, yearname='Year',
         print('Loading ' + filn)
         ds1 = xray.Dataset()
         with xray.open_dataset(filn) as ds_in:
-            if subset1[0] is not None:
-                ds_in = subset(ds_in, subset1[0], subset1[1], subset1[2])
-            if subset2[0] is not None:
-                ds_in = subset(ds_in, subset2[0], subset2[1], subset2[2])
+            if subset_dict is not None:
+                ds_in = subset(ds_in, subset_dict)
             for nm in varlist:
                 var = ds_in[nm].load()
                 var.coords[yearname] = years[y]

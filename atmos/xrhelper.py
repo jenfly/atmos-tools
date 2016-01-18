@@ -164,30 +164,30 @@ def coords_assign(coords, dim, new_name, new_val):
 
 
 # ----------------------------------------------------------------------
-def subset(data, dim_name, lower_or_list, upper=None,
-           dim_name2=None, lower_or_list2=None, upper2=None,
-           incl_lower=True, incl_upper=True):
+def subset(data, subset_dict, incl_lower=True, incl_upper=True):
     """Extract a subset of a DataArray or Dataset along named dimensions.
 
     Returns a DataArray or Dataset sub extracted from input data,
     such that:
         sub[dim_name] >= lower_or_list & sub[dim_name] <= upper,
     OR  sub[dim_name] == lower_or_list (if lower_or_list is a list)
-    And similarly for dim_name2, if included.
+    for each dim_name in subset_dict.
 
     Parameters
     ----------
     data : xray.DataArray or xray.Dataset
         Data source for extraction.
-    dim_name : string
-        Name of dimension to extract from.
-    lower_or_list : scalar or list of int or float
-        If scalar, then used as the lower bound for the   subset range.
-        If list, then the subset matching the list will be extracted.
-    upper : int or float, optional
-        Upper bound for subset range.
-    dim_name2, lower_or_list2, upper2 : optional
-        Parameters as described above for optional 2nd dimension.
+    subset_dict : dict of 2-tuples
+        Dimensions and subsets to extract.  Each entry in subset_dict
+        is in the form {dim_name : (lower_or_list, upper)}, where:
+        - dim_name : string
+            Name of dimension to extract from.
+        - lower_or_list : scalar or list of int or float
+            If scalar, then used as the lower bound for the   subset range.
+            If list, then the subset matching the list will be extracted.
+        - upper : int, float, or None
+            Upper bound for subset range. If lower_or_list is a list,
+            then upper is ignored and should be set to None.
     incl_lower, incl_upper : bool, optional
         If True lower / upper bound is inclusive, with >= or <=.
         If False, lower / upper bound is exclusive with > or <.
@@ -217,12 +217,10 @@ def subset(data, dim_name, lower_or_list, upper=None,
             valrange = vals[ind1 & ind2]
         return data.sel(**{dim_name : valrange}).copy()
 
-    sub = subset_1dim(data, dim_name, lower_or_list, upper, incl_lower,
-                       incl_upper)
-
-    if dim_name2 is not None:
-        sub = subset_1dim(sub, dim_name2, lower_or_list2, upper2, incl_lower,
-                           incl_upper)
+    for dim_name in subset_dict:
+        lower_or_list, upper = subset_dict[dim_name]
+        sub = subset_1dim(data, dim_name, lower_or_list, upper, incl_lower,
+                          incl_upper)
 
     return sub
 
