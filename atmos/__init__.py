@@ -90,6 +90,8 @@ from plots import (
     mapticks,
     autoticks,
     clevels,
+    cinterval,
+    colorbar_symm,
     init_latlon,
     geobox,
     pcolor_latlon,

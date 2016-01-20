@@ -12,6 +12,7 @@ from atmos.utils import print_if
 import atmos.data as dat
 import atmos.utils as utils
 
+
 # ----------------------------------------------------------------------
 def degree_sign():
     """Return a degree sign for LaTeX interpreter."""
@@ -148,6 +149,56 @@ def clevels(data, cint, posneg='both', symmetric=False, omitzero=False):
         clev = np.delete(clev, ind)
 
     return clev
+
+
+# ----------------------------------------------------------------------
+def cinterval(data, n_pref=20, symmetric=False, cint_pref=[1, 2, 3, 4, 5, 10]):
+    """Return a sensible contour interval for plotting data.
+
+    Parameters
+    ----------
+    data : np.ndarray or xray.DataArray
+        Data to be contoured.
+    n_pref : int, optional
+        Preferred number of contours.  The contour interval is chosen
+        so that the number of contours is close to n_pref.
+    symmetric : bool, optional
+        If True, then choose a contour interval appropriate to a
+        color scale symmetric about zero.
+    cint_pref : list, optional
+        Preferred contour intervals.  The interval is c * scale,
+        where scale is the appropriate order of magnitude and c is
+        the value in cint_pref that gives a number of contour intervals
+        closest to n_pref.
+
+    Returns
+    -------
+    cint : float
+    """
+
+    if isinstance(data, xray.DataArray):
+        data = data.values
+    if symmetric:
+        spread = 2 * np.nanmax(np.abs(data))
+    else:
+        spread = np.nanmax(data) - np.nanmin(data)
+    cint = spread / n_pref
+    scale = 10 ** np.floor(np.log10(cint))
+    cint = cint / scale
+    diff = np.abs(cint - cint_pref)
+    cint = cint_pref[diff.argmin()] * scale
+    return cint
+
+
+# ----------------------------------------------------------------------
+def colorbar_symm(**kwargs):
+    """Create a colorbar with limits symmetric about zero.
+
+    Optional keyword arguments are inputs to plt.colorbar().
+    """
+    cb = plt.colorbar(**kwargs)
+    cmax = abs(cb.boundaries).max()
+    plt.clim(-cmax, cmax)
 
 
 # ----------------------------------------------------------------------
