@@ -429,7 +429,7 @@ def scatter_matrix_pairs(dfx, dfy, figsize=(12, 9), suptitle='',
         y = dfy[ykey]
         for xkey in dfx.columns:
             x = dfx[xkey]
-            reg = atm.Linreg(x, y)                  
+            reg = Linreg(x, y)                  
             plt.subplot(nrow, ncol, iplot)
             reg.plot(**fmts)
             row, col = atm.subplot_index(nrow, ncol, iplot)  
