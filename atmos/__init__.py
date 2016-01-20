@@ -110,4 +110,5 @@ from analysis import (
     Linreg,
     corr_matrix,
     scatter_matrix,
+    scatter_matrix_pairs,
 )

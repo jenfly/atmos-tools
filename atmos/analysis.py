@@ -406,6 +406,41 @@ def scatter_matrix(data, corr_fmt='%.2f', annotation_pos=(0.05, 0.85),
         plt.suptitle(suptitle)
 
 
+# ----------------------------------------------------------------------
+def scatter_matrix_pairs(dfx, dfy, figsize=(12, 9), suptitle='',                    
+                         fmts = {'scatter_clr' : 'k',  'scatter_sym' : '+',
+                                 'scatter_size' : 3, 'line_clr' : 'k',
+                                 'line_width' : 1, 
+                                 'annotation_pos' : (0.05, 0.75),
+                                 'pmax_bold' : 0.05},
+                         subplot_fmts = {'left' : 0.08, 'right' : 0.95,
+                                         'bottom' : 0.05, 'top' : 0.95,
+                                         'wspace' : 0, 'hspace' : 0}):
+    """Matrix of scatter plots for a pair of dataframes.
+    """
+    nrow = len(dfy.columns)
+    ncol = len(dfx.columns)
+    fig, axes = plt.subplots(nrow, ncol, sharex='col', sharey='row', 
+                             figsize=figsize)    
+    plt.subplots_adjust(**subplot_fmts)
+    plt.suptitle(suptitle)
+    iplot = 1
+    for ykey in dfy.columns:
+        y = dfy[ykey]
+        for xkey in dfx.columns:
+            x = dfx[xkey]
+            reg = atm.Linreg(x, y)                  
+            plt.subplot(nrow, ncol, iplot)
+            reg.plot(**fmts)
+            row, col = atm.subplot_index(nrow, ncol, iplot)  
+            if row == nrow:
+                plt.xlabel(xkey)
+            if col == 1:
+                plt.ylabel(ykey)
+            else:
+                plt.gca().set_yticklabels([])
+            iplot += 1   
+
 
 # ----------------------------------------------------------------------
 # regress_field()
