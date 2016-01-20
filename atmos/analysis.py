@@ -15,7 +15,6 @@ import matplotlib.pyplot as plt
 import scipy.stats
 
 import atmos.utils as utils
-import atmos.plots as aplots
 #import atmos.xrhelper as xr
 
 # ======================================================================
@@ -433,7 +432,7 @@ def scatter_matrix_pairs(dfx, dfy, figsize=(12, 9), suptitle='',
             reg = Linreg(x, y)                  
             plt.subplot(nrow, ncol, iplot)
             reg.plot(**fmts)
-            row, col = aplots.subplot_index(nrow, ncol, iplot)  
+            row, col = utils.subplot_index(nrow, ncol, iplot)  
             if row == nrow:
                 plt.xlabel(xkey)
             if col == 1:
