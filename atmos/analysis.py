@@ -346,7 +346,7 @@ def corr_matrix(df, incl_index=False):
 # ----------------------------------------------------------------------
 def scatter_matrix(data, corr_fmt='%.2f', annotation_pos=(0.05, 0.85),
                    figsize=(16,10), incl_p=False, incl_line=False,
-                   suptitle=None, annotation_wt='bold'):
+                   suptitle=None, annotation_wt='bold', pmax_bold=None):
     """Matrix of scatter plots with correlation coefficients annotated.
 
     Parameters
@@ -367,12 +367,17 @@ def scatter_matrix(data, corr_fmt='%.2f', annotation_pos=(0.05, 0.85),
         Supertitle to go above subplots.
     annotation_wt : str, optional
         Fontweight for annotation.
+    pmax_bold : float, optional
+        Make annotation bold for any correlations with p < pmax_bold,
+        normal weight otherwise.  If None, then use annotation_wt
+        for all.
     """
 
     if not corr_fmt.startswith('%'):
         corr_fmt = '%' + corr_fmt
 
-    def annotation(r, p, m, y0, corr_fmt, incl_p, incl_line, pos, wt):
+    def annotation(r, p, m, y0, corr_fmt, incl_p, incl_line, pos, wt,
+                   pmax_bold):
         s = corr_fmt % r
         if incl_p or incl_line:
             s = 'r = ' + s + '\n'
@@ -382,6 +387,12 @@ def scatter_matrix(data, corr_fmt='%.2f', annotation_pos=(0.05, 0.85),
             m = utils.format_num(m)
             y0 = utils.format_num(y0, plus_sym=True)
             s = s + 'y = %s x %s' % (m, y0)
+        if pmax_bold is not None:
+            # Override font weight based on p-value
+            if p < pmax_bold:
+                wt = 'bold'
+            else:
+                wt = 'normal'
         utils.text(s, pos, fontweight=wt, color='black')
 
     # Matrix of scatter plots
@@ -396,7 +407,8 @@ def scatter_matrix(data, corr_fmt='%.2f', annotation_pos=(0.05, 0.85),
                 plt.subplot(nrow, ncol, iplot)
                 reg = Linreg(data[col2], data[col1])
                 annotation(reg.r, reg.p, reg.slope, reg.intercept, corr_fmt,
-                           incl_p, incl_line, annotation_pos, annotation_wt)
+                           incl_p, incl_line, annotation_pos, annotation_wt,
+                           pmax_bold)
                 if incl_line:
                     plt.plot(data[col2], reg.predict(data[col2]), 'k')
             iplot += 1
