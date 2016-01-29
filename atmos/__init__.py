@@ -7,6 +7,7 @@ from utils import (
     text,
     subplot_index,
     savefigs,
+    symm_colors,
     print_odict,
     odict_insert,
     odict_delete,

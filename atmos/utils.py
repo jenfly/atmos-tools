@@ -158,6 +158,15 @@ def savefigs(namestr, ext='eps', fignums=None):
         fig = plt.figure(n)
         fig.savefig(filn)
 
+# ----------------------------------------------------------------------
+def symm_colors(plotdata):
+    """Return True if data has both positive & negative values."""
+    if plotdata.min() * plotdata.max() > 0:
+        symmetric = False
+    else:
+        symmetric = True
+    return symmetric
+
 
 # ======================================================================
 # ORDERED DICTIONARIES
