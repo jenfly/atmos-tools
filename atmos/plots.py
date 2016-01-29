@@ -259,6 +259,7 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
     -------
     m : Basemap object
     pc : plt.pcolormesh object
+    cb : plt.colorbar object
     """
 
     if isinstance(data, xray.DataArray):
@@ -277,9 +278,9 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
     if m is None:
         m = init_latlon(lat1, lat2, lon1, lon2)
     pc = m.pcolormesh(x, y, vals_plot, cmap=cmap, latlon=True)
-    m.colorbar()
+    cb = m.colorbar()
     plt.draw()
-    return m, pc
+    return m, pc, cb
 
 
 # ----------------------------------------------------------------------
