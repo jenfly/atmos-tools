@@ -65,7 +65,7 @@ def pdfmerge(filenames, outfile, delete_indiv=False):
     if delete_indiv:
         for filename in filenames:
             os.remove(filename)
-    
+
 
 # ======================================================================
 # PLOTS
@@ -150,7 +150,7 @@ def subplot_index(nrow, ncol, k, kmin=1):
 
 
 # ----------------------------------------------------------------------
-def savefigs(namestr, ext='eps', fignums=None):
+def savefigs(namestr, ext='eps', fignums=None, merge=False):
     """Save list of figures to numbered files with same naming convention.
 
     Figures are saved to files named namestr`dd`.ext where `dd` is the
@@ -165,15 +165,29 @@ def savefigs(namestr, ext='eps', fignums=None):
     fignums : list of ints, optional
         List of figures to save. If omitted, then all open figures are
         saved.
+    merge : bool, optional
+        If True, merge PDFs into a single file and delete the individual
+        figure PDFs.  Only applicable if ext is 'pdf'.
     """
 
     if fignums is None:
         fignums = plt.get_fignums()
+    filenames = []
     for n in fignums:
         filn = '%s%02d.%s' % (namestr, n, ext)
+        filenames.append(filn)
         print('Saving to ' + filn)
         fig = plt.figure(n)
         fig.savefig(filn)
+
+    if merge:
+        if ext.lower() != 'pdf':
+            raise ValueError('Option merge only available for pdf')
+        else:
+            outfile = namestr + '.pdf'
+            print('Merging to ' + outfile)
+            pdfmerge(filenames, outfile, delete_indiv=True)
+
 
 # ----------------------------------------------------------------------
 def symm_colors(plotdata):
