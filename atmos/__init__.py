@@ -4,6 +4,7 @@ from utils import (
     print_if,
     format_num,
     homedir,
+    pdfmerge,
     text,
     subplot_index,
     savefigs,
