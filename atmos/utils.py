@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import collections
 from datetime import datetime
 import os
+from PyPDF2 import PdfFileMerger, PdfFileReader
 
 # ======================================================================
 # PRINTING & STRING FORMATTING
@@ -49,6 +50,22 @@ def homedir(options=['/home/jennifer/', '/home/jwalker/']):
         raise ValueError('Home directory not found in list of options.')
     return home
 
+
+# ----------------------------------------------------------------------
+def pdfmerge(filenames, outfile, delete_indiv=False):
+    """Merge PDF files into a single file."""
+
+    # Merge the files
+    merger = PdfFileMerger()
+    for filename in filenames:
+        merger.append(PdfFileReader(file(filename, 'rb')))
+    merger.write(outfile)
+
+    # Delete the individual files
+    if delete_indiv:
+        for filename in filenames:
+            os.remove(filename)
+    
 
 # ======================================================================
 # PLOTS
