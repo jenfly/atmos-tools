@@ -34,6 +34,7 @@ from utils import (
 from xrhelper import (
     meta,
     squeeze,
+    expand_dims,
     coords_init,
     coords_assign,
     ds_print,
