@@ -107,7 +107,7 @@ def squeeze(data, axis=None):
 def expand_dims(data, coordnm, coordval, axis=0):
     """Add singleton dimension to xray.DataArray.
     """
-    name, attrs, coords, dims = atm.meta(data)
+    name, attrs, coords, dims = meta(data)
     new_coord = xray.DataArray([coordval], name=coordnm,
                                coords={coordnm : [coordval]})
     if axis == -1:
@@ -119,7 +119,7 @@ def expand_dims(data, coordnm, coordval, axis=0):
     data = xray.DataArray(vals, name=name, attrs=attrs, dims=dims,
                           coords=coords)
     return data
-    
+
 
 # ----------------------------------------------------------------------
 def coords_init(data):
