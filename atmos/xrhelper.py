@@ -114,7 +114,7 @@ def expand_dims(data, coordnm, coordval, axis=0):
         axis = len(dims)
     dims = list(dims)
     dims.insert(axis, coordnm)
-    coords = atm.odict_insert(coords, coordnm, new_coord, axis)
+    coords = utils.odict_insert(coords, coordnm, new_coord, axis)
     vals = np.expand_dims(data, axis)
     data = xray.DataArray(vals, name=name, attrs=attrs, dims=dims,
                           coords=coords)
