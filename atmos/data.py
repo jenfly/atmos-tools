@@ -300,6 +300,13 @@ def precip_units(units):
 def precip_convert(precip, units_in, units_out):
     """Convert precipitation from units_in to units_out."""
 
+    if isinstance(precip, xray.DataArray):
+        name, attrs, coords, dims = xr.meta(precip)
+        attrs['units'] = units_out
+        i_DataArray = True
+    else:
+        i_DataArray = False
+
     kgm2s = 'kg m^-2 s^-1'
     mmday = 'mm day^-1'
 
@@ -315,6 +322,11 @@ def precip_convert(precip, units_in, units_out):
     else:
         msg = "Don't know how to convert between %s and %s"
         raise ValueError(msg % (units_in, units_out))
+
+    if i_DataArray:
+        precip_out = xray.DataArray(precip_out, name=name, dims=dims,
+                                    coords=coords, attrs=attrs)
+
     return precip_out
 
 
