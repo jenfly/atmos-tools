@@ -98,6 +98,8 @@ def divergence_spherical_2d(Fx, Fy, lat=None, lon=None):
     for j in range(nlon):
         dy = np.gradient(lat_rad)
         coslat = np.cos(lat_rad)
+        # Set to NaN at poles to keep from blowing up
+        coslat[abs(lat) > 89] = np.nan
         for k1 in range(dims[0]):
             for k2 in range(dims[1]):
                 for k3 in range(dims[2]):
