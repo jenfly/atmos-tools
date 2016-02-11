@@ -47,6 +47,7 @@ from data import (
     collapse,
     nantrapz,
     rolling_mean,
+    gradient,
     ncdisp,
     ncload,
     load_concat,

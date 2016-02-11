@@ -243,6 +243,67 @@ def rolling_mean(data, nroll, axis=-1, center=False, **kwargs):
     return rolling
 
 
+# ----------------------------------------------------------------------
+def gradient(data, vec, axis=-1):
+    """Compute gradient along an axis.
+
+    Parameters
+    ----------
+    data : np.ndarray or xray.DataArray
+        Input data.
+    vec : 1-dimensional np.ndarray
+        Array of coordinates corresponding to axis of differentiation.
+    axis : int, optional
+        Axis to differentiate along.
+
+    Returns
+    -------
+    grad : np.ndarray or xray.DataArray
+    """
+    # Maximum number of dimensions handled by this code
+    nmax = 5
+    ndim = data.ndim
+
+    if ndim > 5:
+        raise ValueError('Input data has too many dimensions. Max 5-D.')
+
+    if isinstance(data, xray.DataArray):
+        name, attrs, coords, dimnames = xr.meta(data)
+        vals = data.values.copy()
+    else:
+        vals = data
+
+    # Roll axis to end
+    vals = np.rollaxis(vals, axis, ndim)
+
+    # Add singleton dimensions for looping, if necessary
+    for i in range(ndim, nmax):
+        vals = np.expand_dims(vals, axis=0)
+
+    # Initialize output
+    grad = np.ones(vals.shape, dtype=vals.dtype)
+
+    # Compute gradient, iterating over additional dimensions
+    dvec = np.gradient(vec)
+    dims = vals.shape[:-1]
+    for i in range(dims[0]):
+        for j in range(dims[1]):
+            for k in range(dims[2]):
+                for m in range(dims[3]):
+                    grad[i,j,k,m] = np.gradient(vals[i,j,k,m], dvec)
+
+    # Collapse any additional dimensions that were added
+    for i in range(ndim, grad.ndim):
+        grad = grad[0]
+
+    # Roll axis back to its original position
+    grad = np.rollaxis(grad, -1, axis)
+
+    if isinstance(data, xray.DataArray):
+        grad = xray.DataArray(grad, coords=coords, dims=dimnames)
+
+    return grad
+
 
 # ======================================================================
 # UNIT CONVERSIONS
