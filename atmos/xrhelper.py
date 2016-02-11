@@ -182,7 +182,8 @@ def coords_assign(coords, dim, new_name, new_val):
 
 
 # ----------------------------------------------------------------------
-def subset(data, subset_dict, incl_lower=True, incl_upper=True):
+def subset(data, subset_dict, incl_lower=True, incl_upper=True,
+           copy=True):
     """Extract a subset of a DataArray or Dataset along named dimensions.
 
     Returns a DataArray or Dataset sub extracted from input data,
@@ -211,6 +212,8 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True):
         If False, lower / upper bound is exclusive with > or <.
         If lower_or_list is a list, then the whole list is included
         and these parameters are ignored.
+    copy : bool, optional
+        If True, return a copy of the data, otherwise return a pointer.
 
     Returns
     -------
@@ -218,7 +221,7 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True):
     """
 
     def subset_1dim(data, dim_name, lower_or_list, upper=None,
-                     incl_lower=True, incl_upper=True):
+                     incl_lower=True, incl_upper=True, copy=True):
         """Extract a subset of a DataArray along a named dimension."""
         vals = data[dim_name]
         if upper is None:
@@ -233,13 +236,16 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True):
             else:
                 ind2 = vals < upper
             valrange = vals[ind1 & ind2]
-        return data.sel(**{dim_name : valrange}).copy()
+        data_out = data.sel(**{dim_name : valrange})
+        if copy:
+            data_out = data_out.copy()
+        return data_out
 
     sub = data
     for dim_name in subset_dict:
         lower_or_list, upper = subset_dict[dim_name]
         sub = subset_1dim(sub, dim_name, lower_or_list, upper, incl_lower,
-                          incl_upper)
+                          incl_upper, copy)
 
     return sub
 

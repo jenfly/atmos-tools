@@ -402,7 +402,8 @@ def get_coord(data, coord_type=None, return_type='values', coord_name=None):
 
 
 # ----------------------------------------------------------------------
-def subset(data, subset_dict, incl_lower=True, incl_upper=True, search=True):
+def subset(data, subset_dict, incl_lower=True, incl_upper=True, search=True,
+           copy=True):
     """Extract a subset of a DataArray or Dataset along named dimensions.
 
     Returns a DataArray or Dataset sub extracted from input data,
@@ -440,6 +441,8 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True, search=True):
     search : bool, optional
         If True, call the get_coord function if dim_name is not found
         in the dimension names of data.
+    copy : bool, optional
+        If True, return a copy of the data, otherwise a pointer.
 
     Returns
     -------
@@ -453,7 +456,7 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True, search=True):
                 dim_name_new = get_coord(data, dim_name, 'name')
                 subset_dict[dim_name_new] = subset_dict.pop(dim_name)
 
-    return xr.subset(data, subset_dict, incl_lower, incl_upper)
+    return xr.subset(data, subset_dict, incl_lower, incl_upper, copy)
 
 
 # ======================================================================
