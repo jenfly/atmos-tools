@@ -520,6 +520,45 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True, search=True,
     return xr.subset(data, subset_dict, incl_lower, incl_upper, copy)
 
 
+# ----------------------------------------------------------------------
+def dim_mean(data, dimname):
+    """Return the mean of a DataArray along dimension, preserving attributes.
+
+    Parameters
+    ----------
+    data : xray.DataArray or xray.Dataset
+        Data to average.
+    dimname : str
+        Dimension to average along.  Can be a generic name (e.g. 'lon')
+        or exact ID (e.g. 'XDim').
+
+    Returns
+    -------
+    databar : xray.DataArray or xray.Dataset
+    """
+
+    def one_variable(var, dimname, dimvals):
+        _, attrs, _, _ = xr.meta(var)
+        var_out = var.mean(dim=dimname)
+        var_out.attrs = attrs
+        var_out.attrs['avg_over_' + dimname] = dimvals
+        return var_out
+
+    dimname = get_coord(data, dimname, 'name')
+    dimvals = get_coord(data, dimname)
+    if isinstance(data, xray.DataArray):
+        databar = one_variable(data, dimname, dimvals)
+    elif isinstance(data, xray.Dataset):
+        databar = xray.Dataset()
+        databar.attrs = data.attrs
+        for nm in data.data_vars:
+            databar[nm] = one_variable(data[nm], dimname, dimvals)
+    else:
+        raise ValueError('Input data must be xray.DataArray or xray.Dataset')
+
+    return databar
+
+
 # ======================================================================
 # NETCDF FILE I/O
 # ======================================================================
@@ -560,7 +599,7 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
 
 # ----------------------------------------------------------------------
 def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
-                func=None, verbose=True):
+                func=None, func_kwargs=None, squeeze=True, verbose=True):
     """Load a variable from multiple files and concatenate into one.
 
     Especially useful for extracting variables split among multiple
@@ -592,7 +631,11 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
             then upper is ignored and should be set to None.
     func : function, optional
         Function to apply to each variable in each file before concatenating.
-        e.g. compute zonal mean. Takes one DataArray as input parameter.
+        e.g. compute zonal mean. Takes one DataArray as first input parameter.
+    func_kwargs : dict, optional
+        Dict of keyword arguments to pass to func.
+    squeeze : bool, optional
+        If True, squeeze out extra dimensions and add info to attributes.
     verbose : bool, optional
         If True, print updates while processing files.
 
@@ -622,7 +665,13 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
                 data = subset(data, subset_dict)
             if func is not None:
                 for nm in data.data_vars:
-                    data[nm] = func(data[nm])
+                    if func_kwargs is None:
+                        data[nm] = func(data[nm])
+                    else:
+                        data[nm] = func(data[nm], **func_kwargs)
+            if squeeze:
+                for nm in data.data_vars:
+                    data[nm] = xr.squeeze(data[nm])
             data.load()
         return data
 

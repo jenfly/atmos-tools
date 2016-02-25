@@ -58,6 +58,7 @@ from data import (
     precip_convert,
     get_coord,
     subset,
+    dim_mean,
     latlon_equal,
     lon_convention,
     set_lon,
