@@ -560,7 +560,7 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
 
 # ----------------------------------------------------------------------
 def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
-                verbose=True):
+                func=None, verbose=True):
     """Load a variable from multiple files and concatenate into one.
 
     Especially useful for extracting variables split among multiple
@@ -590,6 +590,9 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
         - upper : int, float, or None
             Upper bound for subset range. If lower_or_list is a list,
             then upper is ignored and should be set to None.
+    func : function, optional
+        Function to apply to each variable in each file before concatenating.
+        e.g. compute zonal mean. Takes one DataArray as input parameter.
     verbose : bool, optional
         If True, print updates while processing files.
 
@@ -607,18 +610,19 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
     if var_ids is not None:
         var_ids = utils.makelist(var_ids)
 
-    def get_data(path, var_ids, subset_dict):
+    def get_data(path, var_ids, subset_dict, func):
         with xray.open_dataset(path) as ds:
             if var_ids is None:
                 # All variables
                 data = ds
             else:
                 # Extract specific variables
-                data = xray.Dataset()
-                for var in var_ids:
-                    data[var] = ds[var]
+                data = ds[var_ids]
             if subset_dict is not None:
                 data = subset(data, subset_dict)
+            if func is not None:
+                for nm in data.data_vars:
+                    data[nm] = func(data[nm])
             data.load()
         return data
 
@@ -629,7 +633,7 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
         attempt = 0
         while attempt < NMAX:
             try:
-                piece = get_data(p, var_ids, subset_dict)
+                piece = get_data(p, var_ids, subset_dict, func)
                 print_if('Appending data', verbose)
                 pieces.append(piece)
                 attempt = NMAX
