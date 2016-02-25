@@ -1626,7 +1626,8 @@ def combine_daily_years(varnames, files, years, yearname='Year',
     Parameters
     ----------
     varnames : list of str
-        List of variables to extract.
+        List of variables to extract.  If None, then all variables
+        in the first file are used as varnames.
     files : list of str
         List of filenames to read.  Each file should contain one year's
         worth of daily data, with day of year as the first dimension
@@ -1660,7 +1661,11 @@ def combine_daily_years(varnames, files, years, yearname='Year',
     """
 
     # Read daily data from each year and concatenate
-    varlist = utils.makelist(varnames)
+    if varnames is None:
+        with xray.open_dataset(files[0]) as ds0:
+            varlist = ds0.data_vars.keys()
+    else:
+        varlist = utils.makelist(varnames)
     ds = xray.Dataset()
     for y, filn in enumerate(files):
         print('Loading ' + filn)
