@@ -201,8 +201,8 @@ def climits(data, symmetric=True):
     if isinstance(data, xray.Dataset):
         data = data.to_array()
 
-    cmin = data.min().values
-    cmax = data.max().values
+    cmin = np.nanmin(data)
+    cmax = np.nanmax(data)
     if symmetric:
         cmax = max([abs(cmin), abs(cmax)])
         cmin = - cmax
@@ -210,7 +210,7 @@ def climits(data, symmetric=True):
 
     return clims
 
-    
+
 # ----------------------------------------------------------------------
 def colorbar_symm(**kwargs):
     """Create a colorbar with limits symmetric about zero.
@@ -223,14 +223,18 @@ def colorbar_symm(**kwargs):
 
 
 # ----------------------------------------------------------------------
-def init_latlon(lat1=-90, lat2=90, lon1=0, lon2=360):
+def init_latlon(lat1=-90, lat2=90, lon1=0, lon2=360, fancy=True):
     """Initialize lon-lat plot and return as a Basemap object."""
 
     m = Basemap(llcrnrlon=lon1, llcrnrlat=lat1, urcrnrlon=lon2, urcrnrlat=lat2)
     m.drawcoastlines()
     xticks = autoticks('lon', lon1, lon2)
     yticks = autoticks('lat', lat1, lat2)
-    mapticks(xticks, yticks)
+    if fancy:
+        mapticks(xticks, yticks)
+    else:
+        plt.xticks(xticks)
+        plt.yticks(yticks)
     plt.draw()
     return m
 
@@ -257,7 +261,7 @@ def geobox(lat1, lat2, lon1, lon2, m=None, color='blue', linewidth=2,
 
 # ----------------------------------------------------------------------
 def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
-                  axlims=(-90, 90, 0, 360)):
+                  axlims=None, fancy=True):
     """Create a pseudo-color plot of geo data.
 
     Parameters
@@ -273,8 +277,11 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
         init_latlon().
     cmap : string or colormap object, optional
         Colormap to use.
-    axlims : 4-tuple of ints or floats
-        Lat-lon limits for map.
+    axlims : 4-tuple of ints or floats, optional
+        Lat-lon limits for map (lat1, lat2, lon1, lon2).  If None, then
+        data range is used.
+    fancy : bool, optional
+        If True, init_latlon will label axes with fancy lat-lon labels.
 
     Returns
     -------
@@ -290,14 +297,19 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
     else:
         vals = np.squeeze(data)
 
+    # Lat-lon ranges
+    if axlims is None:
+        lat1, lat2 = np.floor(lat.min()), np.ceil(lat.max())
+        lon1, lon2 = np.floor(lon.min()), np.ceil(lat.max())
+    else:
+        lat1, lat2, lon1, lon2 = axlims
+
     # Use a masked array so that pcolormesh displays NaNs properly
     vals_plot = np.ma.array(vals, mask=np.isnan(vals))
-
     x, y = np.meshgrid(lon, lat)
-    lat1, lat2, lon1, lon2 = axlims
 
     if m is None:
-        m = init_latlon(lat1, lat2, lon1, lon2)
+        m = init_latlon(lat1, lat2, lon1, lon2, fancy)
     pc = m.pcolormesh(x, y, vals_plot, cmap=cmap, latlon=True)
     cb = m.colorbar()
     plt.draw()
@@ -306,7 +318,7 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
 
 # ----------------------------------------------------------------------
 def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
-                    symmetric=True, axlims=(-90, 90, 0, 360)):
+                    symmetric=True, axlims=None, fancy=True):
     """Create a filled contour plot of geo data.
 
     Parameters
@@ -326,8 +338,11 @@ def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
         Colormap to use.
     symmetric : bool, optional
         Set contour levels to be symmetric about zero.
-    axlims : 4-tuple of ints or floats
-        Lat-lon limits for map.
+    axlims : 4-tuple of ints or floats, optional
+        Lat-lon limits for map (lat1, lat2, lon1, lon2).  If None, then
+        data range is used.
+    fancy : bool, optional
+        If True, init_latlon will label axes with fancy lat-lon labels.
 
     Returns
     -------
@@ -342,11 +357,17 @@ def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
         # Define contour levels from selected interval spacing
         clev = clevels(data, clev, symmetric=symmetric)
 
-    lat1, lat2, lon1, lon2 = axlims
+    # Lat-lon ranges
+    if axlims is None:
+        lat1, lat2 = np.floor(lat.min()), np.ceil(lat.max())
+        lon1, lon2 = np.floor(lon.min()), np.ceil(lat.max())
+    else:
+        lat1, lat2, lon1, lon2 = axlims
+
     x, y = np.meshgrid(lon, lat)
 
     if m is None:
-        m = init_latlon(lat1, lat2, lon1, lon2)
+        m = init_latlon(lat1, lat2, lon1, lon2, fancy)
     if clev is None:
         m.contourf(x, y, np.squeeze(data), cmap=cmap, latlon=True)
     else:
@@ -358,7 +379,7 @@ def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
 
 # ----------------------------------------------------------------------
 def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
-                   linewidths=2.0, linestyles=None, axlims=(-90, 90, 0, 360)):
+                   linewidths=2.0, linestyles=None, axlims=None, fancy=True):
     """Create a contour line plot of geo data.
 
     Parameters
@@ -380,8 +401,11 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
         Line width for contour lines
     linestyles :  {None, 'solid', 'dashed', 'dashdot', 'dotted'}, optional
         Line style for contour lines.
-    axlims : 4-tuple of ints or floats
-        Lat-lon limits for map.
+    axlims : 4-tuple of ints or floats, optional
+        Lat-lon limits for map (lat1, lat2, lon1, lon2).  If None, then
+        data range is used.
+    fancy : bool, optional
+        If True, init_latlon will label axes with fancy lat-lon labels.
 
     Returns
     -------
@@ -397,11 +421,16 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
         # Define contour levels from selected interval spacing
         clev = clevels(data, clev)
 
-    lat1, lat2, lon1, lon2 = axlims
+    # Lat-lon ranges
+    if axlims is None:
+        lat1, lat2 = np.floor(lat.min()), np.ceil(lat.max())
+        lon1, lon2 = np.floor(lon.min()), np.ceil(lat.max())
+    else:
+        lat1, lat2, lon1, lon2 = axlimss
     x, y = np.meshgrid(lon, lat)
 
     if m is None:
-        m = init_latlon(lat1, lat2, lon1, lon2)
+        m = init_latlon(lat1, lat2, lon1, lon2, fancy)
     if clev is None:
         cs = m.contour(x, y, np.squeeze(data), colors=colors,
                        linewidths=linewidths, linestyles=linestyles,
