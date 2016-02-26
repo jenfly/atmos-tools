@@ -150,6 +150,46 @@ def subplot_index(nrow, ncol, k, kmin=1):
 
 
 # ----------------------------------------------------------------------
+def fmt_subplot(nrow, ncol, i, ax=None, xlabel=None, xticks=None,
+                xticklabels=None, ylabel=None, yticks=None, yticklabels=None):
+    """Format subplots with consistent ticks and label only outer subplots.
+    """
+
+    row = i // ncol + 1
+    col = (i - 1) % ncol + 1
+
+    if ax is None:
+        plt.subplot(nrow, ncol, i)
+        ax = plt.gca()
+
+    # Consistent ticks
+    if xticks is not None:
+        ax.set_xticks(xticks)
+    if yticks is not None:
+        ax.set_yticks(yticks)
+
+    # Labels
+    if row == nrow:
+        if xlabel is not None:
+            ax.set_xlabel(xlabel)
+        if xticklabels is not None:
+            ax.set_xticklabels(xticklabels)
+    else:
+        ax.set_xlabel('')
+        ax.set_xticklabels([])
+    if col == 1:
+        if ylabel is not None:
+            ax.set_ylabel(ylabel)
+        if yticklabels is not None:
+            ax.set_yticklabels(yticklabels)
+    else:
+        ax.set_ylabel('')
+        ax.set_yticklabels([])
+
+    return None
+    
+
+# ----------------------------------------------------------------------
 def savefigs(namestr, ext='eps', fignums=None, merge=False):
     """Save list of figures to numbered files with same naming convention.
 
