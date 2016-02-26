@@ -187,10 +187,10 @@ def fmt_subplot(nrow, ncol, i, ax=None, xlabel=None, xticks=None,
         ax.set_yticklabels([])
 
     return None
-    
+
 
 # ----------------------------------------------------------------------
-def savefigs(namestr, ext='eps', fignums=None, merge=False):
+def savefigs(namestr, ext='eps', fignums=None, merge=False, **kwargs):
     """Save list of figures to numbered files with same naming convention.
 
     Figures are saved to files named namestr`dd`.ext where `dd` is the
@@ -208,6 +208,7 @@ def savefigs(namestr, ext='eps', fignums=None, merge=False):
     merge : bool, optional
         If True, merge PDFs into a single file and delete the individual
         figure PDFs.  Only applicable if ext is 'pdf'.
+    **kwargs : keyword arguments for plt.savefig()
     """
 
     if fignums is None:
@@ -218,7 +219,7 @@ def savefigs(namestr, ext='eps', fignums=None, merge=False):
         filenames.append(filn)
         print('Saving to ' + filn)
         fig = plt.figure(n)
-        fig.savefig(filn)
+        fig.savefig(filn, **kwargs)
 
     if merge:
         if ext.lower() != 'pdf':

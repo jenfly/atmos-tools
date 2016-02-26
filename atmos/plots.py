@@ -300,7 +300,7 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
     # Lat-lon ranges
     if axlims is None:
         lat1, lat2 = np.floor(lat.min()), np.ceil(lat.max())
-        lon1, lon2 = np.floor(lon.min()), np.ceil(lat.max())
+        lon1, lon2 = np.floor(lon.min()), np.ceil(lon.max())
     else:
         lat1, lat2, lon1, lon2 = axlims
 
@@ -360,7 +360,7 @@ def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
     # Lat-lon ranges
     if axlims is None:
         lat1, lat2 = np.floor(lat.min()), np.ceil(lat.max())
-        lon1, lon2 = np.floor(lon.min()), np.ceil(lat.max())
+        lon1, lon2 = np.floor(lon.min()), np.ceil(lon.max())
     else:
         lat1, lat2, lon1, lon2 = axlims
 
@@ -424,7 +424,7 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
     # Lat-lon ranges
     if axlims is None:
         lat1, lat2 = np.floor(lat.min()), np.ceil(lat.max())
-        lon1, lon2 = np.floor(lon.min()), np.ceil(lat.max())
+        lon1, lon2 = np.floor(lon.min()), np.ceil(lon.max())
     else:
         lat1, lat2, lon1, lon2 = axlimss
     x, y = np.meshgrid(lon, lat)
