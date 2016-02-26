@@ -312,6 +312,93 @@ class Linreg:
             utils.text(s, annotation_pos, fontweight=wt)
 
 
+
+# ----------------------------------------------------------------------
+def regress_field(data, index, axis=-1):
+    """Return the linear regression along an axis.
+
+    Parameters
+    ----------
+    data : ndarray or xray.DataArray
+        Input data.
+    index : ndarray or xray.DataArray
+        Index values to regress against. Length must match length of
+        data along specified axis.
+    axis : int, optional
+        Axis to compute along.
+
+    Returns
+    -------
+    reg_data : xray.Dataset
+        Dataset containing correlation coefficients, slopes, and p-values.
+    """
+
+    # Maximum number of dimensions handled by this code
+    nmax = 5
+    ndim = data.ndim
+
+    if ndim > 5:
+        raise ValueError('Input data has too many dimensions. Max 5-D.')
+
+    if isinstance(data, xray.DataArray):
+        name, attrs, coords, dimnames = xr.meta(data)
+        vals = data.values
+    else:
+        vals = data
+
+    # Roll axis to end
+    vals = np.rollaxis(vals, axis, ndim)
+
+    # Add singleton dimensions for looping, if necessary
+    for i in range(ndim, nmax):
+        vals = np.expand_dims(vals, axis=0)
+
+    # Initialize output
+    reg = {}
+    reg['r'] = np.ones(vals.shape, dtype=vals.dtype)
+    reg['m'] = np.ones(vals.shape, dtype=vals.dtype)
+    reg['p'] = np.ones(vals.shape, dtype=vals.dtype)
+
+    # Compute regression, iterating over other dimensions
+    dims = vals.shape[:-1]
+    for i in range(dims[0]):
+        for j in range(dims[1]):
+            for k in range(dims[2]):
+                for m in range(dims[3]):
+                    reg_sub = Linreg(vals[i,j,k,m], index)
+                    reg['r'] [i,j,k,m] = reg_sub.r
+                    reg['m'] [i,j,k,m] = reg_sub.slope
+                    reg['p'] [i,j,k,m] = reg_sub.p                   
+
+
+    for nm in reg:    
+        # Collapse any additional dimensions that were added
+        for i in range(ndim, r.ndim):
+            reg[nm] = reg[nm][0]
+
+        # Roll axis back to its original position
+        reg[nm] = np.rollaxis(reg[nm], -1, axis)
+
+    reg_data = xray.Dataset()
+    if isinstance(data, xray.DataArray):
+        reg_data['r'] = xray.DataArray(reg['r'] , name='r', coords=coords,
+                                       dims=dimnames)
+    else:
+        reg_data['r'] = xray.DataArray(reg['r'] , name='r')
+        coords, dimnames = reg_data['r'].coords, reg_data['r'].dims
+
+    for nm in ['m', 'p']:
+        reg_data[nm] = xray.DataArray(reg[nm] , name=nm, coords=coords,
+                                      dims=dimnames)
+    long_names = {'r' : 'correlation coefficient', 'm' : 'slope',
+                  'p' : 'p-value'}
+    for nm in reg_data.data_vars:   
+        reg_data[nm].attrs['long_name'] = long_names[nm]
+
+    return reg_data
+
+
+
 # ----------------------------------------------------------------------
 def corr_matrix(df, incl_index=False):
     """Return correlation coefficients and p-values between data pairs.
