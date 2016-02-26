@@ -97,6 +97,7 @@ from plots import (
     autoticks,
     clevels,
     cinterval,
+    climits,
     colorbar_symm,
     init_latlon,
     geobox,

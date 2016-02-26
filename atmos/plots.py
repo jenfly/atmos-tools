@@ -194,6 +194,24 @@ def cinterval(data, n_pref=20, symmetric=False, cint_pref=[1, 2, 3, 4, 5, 10]):
 
 
 # ----------------------------------------------------------------------
+def climits(data, symmetric=True):
+    """Return colorbar limits to use for all data variables in a set.
+    """
+
+    if isinstance(data, xray.Dataset):
+        data = data.to_array()
+
+    cmin = data.min().values
+    cmax = data.max().values
+    if symmetric:
+        cmax = max([abs(cmin), abs(cmax)])
+        cmin = - cmax
+    clims = (cmin, cmax)
+
+    return clims
+
+    
+# ----------------------------------------------------------------------
 def colorbar_symm(**kwargs):
     """Create a colorbar with limits symmetric about zero.
 
