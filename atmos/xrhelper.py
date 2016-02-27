@@ -87,8 +87,8 @@ def squeeze(data, axis=None):
 
         # Update metadata
         dims = list(dims)
-        for dim in dims_del:
-            nm = dims[dim]
+        dimnames_del = [dims[d] for d in dims_del]
+        for nm in dimnames_del:
             attrs[nm] = coords[nm].values
             coords = utils.odict_delete(coords, nm)
             dims.remove(nm)
