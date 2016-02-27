@@ -544,8 +544,9 @@ def dim_mean(data, dimname):
         var_out.attrs['avg_over_' + dimname] = dimvals
         return var_out
 
-    dimname = get_coord(data, dimname, 'name')
-    dimvals = get_coord(data, dimname)
+    if dimname not in data.dims:
+        dimname = get_coord(data, dimname, 'name')
+    dimvals = get_coord(data, coord_name=dimname)
     if isinstance(data, xray.DataArray):
         databar = one_variable(data, dimname, dimvals)
     elif isinstance(data, xray.Dataset):
