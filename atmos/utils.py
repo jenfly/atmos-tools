@@ -220,7 +220,6 @@ def fig_setup(nrow, ncol, isub, axes=None, suptitle='', fig_kw={},
         
     Returns
     -------
-    fig : plt.figure() object for the figure
     axes : array of plt.axes() objects for the figure
     ax : plt.axes() object for current subplot
     isub : int (number of current subplot)
@@ -242,7 +241,7 @@ def fig_setup(nrow, ncol, isub, axes=None, suptitle='', fig_kw={},
     else:
         ax = axes[row - 1, col - 1]
     
-    return fig, axes, ax, isub, row, col 
+    return axes, ax, isub, row, col 
     
 
 # ----------------------------------------------------------------------
