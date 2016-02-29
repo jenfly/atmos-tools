@@ -396,29 +396,28 @@ def precip_convert(precip, units_in, units_out):
 # ======================================================================
 
 # ----------------------------------------------------------------------
-def get_coord(data, coord_type=None, return_type='values', coord_name=None):
+def get_coord(data, coord_name, return_type='values'):
     """Return values, name or dimension of coordinate in DataArray.
 
     Parameters
     ----------
     data : xray.DataArray
         Data array to search for latitude coords.
-    coord_type : {'lat', 'lon', 'plev', 'time'}, optional
-        Type of coordinate to extract.  If omitted, then coord_name
-        must be provided.
+    coord_name : str
+        Coordinate to extract.  Can be the exact ID of the variable or
+        a generic ID ('lat', 'lon', 'plev', 'time'). If a generic ID
+        is provided then lists of common names for that ID will be
+        searched for a match.
     return_type : {'values', 'name', 'dim'}, optional
         'values' : Return an array of coordinate values.
         'name' : Return the name of the coordinate.
         'dim' : Return the dimension of the coordinate.
-    coord_name : string, optional
-        Name of coordinate in data.  If omitted, search through
-        a list of common names for a match.
 
     Returns
     -------
     output : ndarray, string or int
 
-    The coordinate names searched through are:
+    The generic coordinate names searched through are:
     'lat' : ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
     'lon' : ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
     'plev' : ['plev', 'plevel', 'plevels', 'lev', 'level',
@@ -434,11 +433,12 @@ def get_coord(data, coord_type=None, return_type='values', coord_name=None):
     names_all['time'] = ['time', 'TIME', 'Time']
 
     # Look in list of common coordinate names
-    if coord_name is None:
-        if coord_type.lower() not in names_all.keys():
-            raise ValueError('Invalid coord_type ' + coord_type + '. '
-                'Valid coord_types are ' + ', '.join(names_all.keys()))
-        names = names_all[coord_type.lower()]
+    if coord_name not in data.coords:
+        if coord_name.lower() not in names_all.keys():
+            options = ', '.join(names_all.keys() + data.dims.keys())
+            raise ValueError('Invalid coord_name %s. Valid options are  %s' 
+                             % (coord_name, options))
+        names = names_all[coord_name.lower()]
         found = [i for i, s in enumerate(names) if s in data.coords]
 
         if len(found) == 0:
