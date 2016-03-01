@@ -432,7 +432,7 @@ def get_coord(data, coord_name, return_type='values'):
                 'plev' : ['plevel', 'plevels', 'lev', 'level', 'levels',
                           'Height']}
 
-        nms = set([nm, nm.lower(), nm.upper(), nm.capitalize()])
+        nms = list(set([nm, nm.lower(), nm.upper(), nm.capitalize()]))
         if opts.get(nm) is not None:
             nms = list(nms) + opts[nm]
         return nms
