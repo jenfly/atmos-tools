@@ -418,31 +418,29 @@ def get_coord(data, coord_name, return_type='values'):
     output : ndarray, string or int
 
     The generic coordinate names searched through are:
-    'lat' : ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
-    'lon' : ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
-    'plev' : ['plev', 'plevel', 'plevels', 'lev', 'level',
+    'lat' : ['lats', 'latitude', 'YDim','Y', 'y']
+    'lon' : ['long', 'lons', 'longitude', 'XDim', 'X', 'x']
+    'plev' : ['plevel', 'plevels', 'lev', 'level',
               'levels', 'Height']
-    'time' : ['time', 'TIME', 'Time']
-    'day' : ['day', 'DAY', 'Day']
-    'year' : ['year', 'YEAR', 'Year']
+    as well as capitalization options for coord_name (.upper(),
+    .lower(), .capitalize())
     """
 
-    names_all = {}
-    names_all['lat'] = ['lat', 'lats', 'latitude', 'YDim','Y', 'y']
-    names_all['lon'] = ['lon', 'long', 'lons', 'longitude', 'XDim', 'X', 'x']
-    names_all['plev'] = ['plev', 'plevel', 'plevels', 'lev', 'level',
-                         'levels', 'Height']
-    names_all['time'] = ['time', 'TIME', 'Time']
-    names_all['day'] = ['day', 'DAY', 'Day']
-    names_all['year'] = ['year', 'YEAR', 'Year']
+    def name_options(nm):
+        opts = {'lat' : ['lats', 'latitude', 'YDim','Y', 'y'],
+                'lon' : ['long', 'lons', 'longitude', 'XDim', 'X', 'x'],
+                'plev' : ['plevel', 'plevels', 'lev', 'level', 'levels',
+                          'Height']}
+
+        nms = set([nm, nm.lower(), nm.upper(), nm.capitalize()])
+        if opts.get(nm) is not None:
+            nms = list(nms) + opts[nm]
+        return nms
+
+    names = name_options(coord_name)
 
     # Look in list of common coordinate names
     if coord_name not in data.coords:
-        if coord_name.lower() not in names_all.keys():
-            options = ', '.join(names_all.keys() + data.dims.keys())
-            raise ValueError('Invalid coord_name %s. Valid options are  %s'
-                             % (coord_name, options))
-        names = names_all[coord_name.lower()]
         found = [i for i, s in enumerate(names) if s in data.coords]
 
         if len(found) == 0:
