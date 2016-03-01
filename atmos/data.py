@@ -405,9 +405,9 @@ def get_coord(data, coord_name, return_type='values'):
         Data array to search for latitude coords.
     coord_name : str
         Coordinate to extract.  Can be the exact ID of the variable or
-        a generic ID ('lat', 'lon', 'plev', 'time'). If a generic ID
-        is provided then lists of common names for that ID will be
-        searched for a match.
+        a generic ID ('lat', 'lon', 'plev', 'time', 'day', 'year').
+        If a generic ID is provided then lists of common names for that ID
+        will be searched for a match.
     return_type : {'values', 'name', 'dim'}, optional
         'values' : Return an array of coordinate values.
         'name' : Return the name of the coordinate.
@@ -423,6 +423,8 @@ def get_coord(data, coord_name, return_type='values'):
     'plev' : ['plev', 'plevel', 'plevels', 'lev', 'level',
               'levels', 'Height']
     'time' : ['time', 'TIME', 'Time']
+    'day' : ['day', 'DAY', 'Day']
+    'year' : ['year', 'YEAR', 'Year']
     """
 
     names_all = {}
@@ -431,12 +433,14 @@ def get_coord(data, coord_name, return_type='values'):
     names_all['plev'] = ['plev', 'plevel', 'plevels', 'lev', 'level',
                          'levels', 'Height']
     names_all['time'] = ['time', 'TIME', 'Time']
+    names_all['day'] = ['day', 'DAY', 'Day']
+    names_all['year'] = ['year', 'YEAR', 'Year']
 
     # Look in list of common coordinate names
     if coord_name not in data.coords:
         if coord_name.lower() not in names_all.keys():
             options = ', '.join(names_all.keys() + data.dims.keys())
-            raise ValueError('Invalid coord_name %s. Valid options are  %s' 
+            raise ValueError('Invalid coord_name %s. Valid options are  %s'
                              % (coord_name, options))
         names = names_all[coord_name.lower()]
         found = [i for i, s in enumerate(names) if s in data.coords]
