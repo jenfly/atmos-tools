@@ -10,7 +10,7 @@ from utils import (
     fmt_subplot,
     fig_setup,
     savefigs,
-    symm_colors,    
+    symm_colors,
     print_odict,
     odict_insert,
     odict_delete,
@@ -94,6 +94,7 @@ from variables import (
 from plots import (
     degree_sign,
     latlon_labels,
+    latlon_str,
     mapticks,
     autoticks,
     clevels,

@@ -52,6 +52,17 @@ def latlon_labels(vals, latlon='lat', fmt='%.0f', deg_symbol=True,
 
 
 # ----------------------------------------------------------------------
+def latlon_str(dim1, dim2, dimname, deg_symbol=False):
+    """Return a label for range of latitudes or longitudes.
+
+    e.g. 60E-100E, 90S-90N
+    """
+    dims = [dim1, dim2]
+    dimstr = latlon_labels(dims, name, deg_symbol=deg_symbol, join_str='-')
+    return dimstr
+        
+
+# ----------------------------------------------------------------------
 def mapticks(lon_ticks, lat_ticks):
     """Add nicely formatted ticks to lat-lon map."""
     plt.xticks(lon_ticks, latlon_labels(lon_ticks,'lon'))
