@@ -1585,8 +1585,8 @@ def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
-        Data array with time as the first dimension.
+    data : ndarray, xray.DataArray, or xray.Dataset
+        Data array (or set of data arrays) with time as the first dimension.
     n : int
         Number of values per day (e.g. n=8 for 3-hourly data).
     method : {'mean'} or int, optional
@@ -1610,28 +1610,40 @@ def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
         Daily values of data (mean or subsample).
     """
 
-    # Split the time dimension
-    data_out = split_timedim(data, n, slowfast=False, timename=timename,
-                             time1_name=dayname, time1_vals=dayvals)
+    def process_one(data, n, method, timename, dayname, dayvals):
+        """Process one data array."""
 
-    if isinstance(method, int):
-        if method in range(n):
-            data_out = data_out[method]
+        # Split the time dimension
+        data_out = split_timedim(data, n, slowfast=False, timename=timename,
+                                 time1_name=dayname, time1_vals=dayvals)
+
+        if isinstance(method, int):
+            if method in range(n):
+                data_out = data_out[method]
+            else:
+                msg = 'Subsample index %d exceeds valid range 0-%d.'
+                raise ValueError(msg % (method, n))
+        elif isinstance(method, str) and method.lower() == 'mean':
+            if isinstance(data, xray.DataArray):
+                _, attrs, _, _ = xr.meta(data)
+                data_out = data_out.mean(axis=0)
+                data_out.attrs = attrs
+            else:
+                data_out = np.nanmean(data_out, axis=0)
         else:
-            msg = 'Subsample index %d exceeds valid range 0-%d.'
-            raise ValueError(msg % (method, n))
-    elif isinstance(method, str) and method.lower() == 'mean':
-        if isinstance(data, xray.DataArray):
-            _, attrs, _, _ = xr.meta(data)
-            data_out = data_out.mean(axis=0)
-            data_out.attrs = attrs
-        else:
-            data_out = np.nanmean(data_out, axis=0)
+            raise ValueError('Invalid method ' + str(method))
+
+        return data_out
+
+    if isinstance(data, xray.Dataset):
+        data_out = xray.Dataset()
+        for nm in data.data_vars:
+            data_out[nm] = process_one(data[nm], n, method, timename, dayname,
+                                       dayvals)
     else:
-        raise ValueError('Invalid method ' + str(method))
+        data_out = process_one(data, n, method, timename, dayname, dayvals)
 
     return data_out
-
 
 # ----------------------------------------------------------------------
 def combine_daily_years(varnames, files, years, yearname='Year',
