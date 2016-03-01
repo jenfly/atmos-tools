@@ -58,9 +58,9 @@ def latlon_str(dim1, dim2, dimname, deg_symbol=False):
     e.g. 60E-100E, 90S-90N
     """
     dims = [dim1, dim2]
-    dimstr = latlon_labels(dims, name, deg_symbol=deg_symbol, join_str='-')
+    dimstr = latlon_labels(dims, dimname, deg_symbol=deg_symbol, join_str='-')
     return dimstr
-        
+
 
 # ----------------------------------------------------------------------
 def mapticks(lon_ticks, lat_ticks):

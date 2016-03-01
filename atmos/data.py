@@ -534,8 +534,8 @@ def dim_mean(data, dimname, lower=None, upper=None):
         Dimension to average along.  Can be a generic name (e.g. 'lon')
         or exact ID (e.g. 'XDim').
     lower, upper : float, optional
-        Lower and upper bounds of subset to extract along the dimension
-        before averaging.
+        Lower and upper bounds (inclusive) of subset to extract along
+        the dimension before averaging.
 
     Returns
     -------
@@ -554,7 +554,7 @@ def dim_mean(data, dimname, lower=None, upper=None):
 
     if lower is not None:
         data = subset(data, {dimname : (lower, upper)}, copy=False)
-        
+
     dimvals = get_coord(data, coord_name=dimname)
     if isinstance(data, xray.DataArray):
         databar = one_variable(data, dimname, dimvals)
@@ -609,7 +609,7 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
 
 # ----------------------------------------------------------------------
 def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
-                func=None, func_kwargs=None, squeeze=True, verbose=True):
+                func=None, func_kw=None, squeeze=True, verbose=True):
     """Load a variable from multiple files and concatenate into one.
 
     Especially useful for extracting variables split among multiple
@@ -642,7 +642,7 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
     func : function, optional
         Function to apply to each variable in each file before concatenating.
         e.g. compute zonal mean. Takes one DataArray as first input parameter.
-    func_kwargs : dict, optional
+    func_kw : dict, optional
         Dict of keyword arguments to pass to func.
     squeeze : bool, optional
         If True, squeeze out extra dimensions and add info to attributes.
@@ -663,7 +663,7 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
     if var_ids is not None:
         var_ids = utils.makelist(var_ids)
 
-    def get_data(path, var_ids, subset_dict, func):
+    def get_data(path, var_ids, subset_dict, func, func_kw):
         with xray.open_dataset(path) as ds:
             if var_ids is None:
                 # All variables
@@ -674,11 +674,16 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
             if subset_dict is not None:
                 data = subset(data, subset_dict)
             if func is not None:
+                data_out = xray.Dataset()
+                if func_kw is None:
+                    func_kw = {}
                 for nm in data.data_vars:
-                    if func_kwargs is None:
-                        data[nm] = func(data[nm])
-                    else:
-                        data[nm] = func(data[nm], **func_kwargs)
+                    vars_out = func(data[nm], **func_kw)
+                    if not isinstance(vars_out, xray.Dataset):
+                        vars_out = vars_out.to_dataset()
+                    for nm2 in vars_out.data_vars:
+                        data_out[nm2] = vars_out[nm2]
+                data = data_out
             if squeeze:
                 for nm in data.data_vars:
                     data[nm] = xr.squeeze(data[nm])
@@ -692,7 +697,7 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
         attempt = 0
         while attempt < NMAX:
             try:
-                piece = get_data(p, var_ids, subset_dict, func)
+                piece = get_data(p, var_ids, subset_dict, func, func_kw)
                 print_if('Appending data', verbose)
                 pieces.append(piece)
                 attempt = NMAX
