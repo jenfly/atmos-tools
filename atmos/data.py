@@ -523,7 +523,7 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True, search=True,
 
 
 # ----------------------------------------------------------------------
-def dim_mean(data, dimname):
+def dim_mean(data, dimname, lower=None, upper=None):
     """Return the mean of a DataArray along dimension, preserving attributes.
 
     Parameters
@@ -533,6 +533,9 @@ def dim_mean(data, dimname):
     dimname : str
         Dimension to average along.  Can be a generic name (e.g. 'lon')
         or exact ID (e.g. 'XDim').
+    lower, upper : float, optional
+        Lower and upper bounds of subset to extract along the dimension
+        before averaging.
 
     Returns
     -------
@@ -548,6 +551,10 @@ def dim_mean(data, dimname):
 
     if dimname not in data.dims:
         dimname = get_coord(data, dimname, 'name')
+
+    if lower is not None:
+        data = subset(data, {dimname : (lower, upper)}, copy=False)
+        
     dimvals = get_coord(data, coord_name=dimname)
     if isinstance(data, xray.DataArray):
         databar = one_variable(data, dimname, dimvals)
