@@ -714,9 +714,9 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
     data = xray.concat(pieces, dim=concat_dim)
     print_if(None, verbose, printfunc=disptime)
 
-    if var_ids is not None and len(var_ids) == 1:
+    if len(data.data_vars) == 1:
         # Convert from Dataset to DataArray for output
-        data = data[var_ids[0]]
+        data = data[data.data_vars.keys()[0]]
 
     return data
 
