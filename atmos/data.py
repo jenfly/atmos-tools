@@ -466,7 +466,7 @@ def get_coord(data, coord_name, return_type='values'):
 
 # ----------------------------------------------------------------------
 def subset(data, subset_dict, incl_lower=True, incl_upper=True, search=True,
-           copy=True):
+           copy=True, squeeze=False):
     """Extract a subset of a DataArray or Dataset along named dimensions.
 
     Returns a DataArray or Dataset sub extracted from input data,
@@ -506,6 +506,8 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True, search=True,
         in the dimension names of data.
     copy : bool, optional
         If True, return a copy of the data, otherwise a pointer.
+    squeeze : bool, optional
+        If True, squeeze any singleton dimensions out.
 
     Returns
     -------
@@ -519,7 +521,7 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True, search=True,
                 dim_name_new = get_coord(data, dim_name, 'name')
                 subset_dict[dim_name_new] = subset_dict.pop(dim_name)
 
-    return xr.subset(data, subset_dict, incl_lower, incl_upper, copy)
+    return xr.subset(data, subset_dict, incl_lower, incl_upper, copy, squeeze)
 
 
 # ----------------------------------------------------------------------
@@ -714,6 +716,9 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
     data = xray.concat(pieces, dim=concat_dim)
     print_if(None, verbose, printfunc=disptime)
 
+    if squeeze:
+        data = xr.squeeze(data)
+        
     if len(data.data_vars) == 1:
         # Convert from Dataset to DataArray for output
         data = data[data.data_vars.keys()[0]]

@@ -61,7 +61,7 @@ def squeeze(data, axis=None):
 
     Parameters
     ----------
-    data : xray.DataArray
+    data : xray.DataArray or xray.Dataset
         Input data.
     axis : int, optional
         Axis or list of axes to squeeze.  If None, all singleton
@@ -74,34 +74,43 @@ def squeeze(data, axis=None):
         dimensions is saved in squeezed.attrs.
     """
 
-    if isinstance(data, xray.DataArray):
-        name, attrs, coords, dims = meta(data)
+    def process_one(data, axis):
+        if isinstance(data, xray.DataArray):
+            name, attrs, coords, dims = meta(data)
 
-        if axis is not None:
-            dims_del = utils.makelist(axis)
+            if axis is not None:
+                dims_del = utils.makelist(axis)
+            else:
+                # All singleton dimensions
+                dims_del = np.where(np.array(data.shape) == 1)[0]
+
+            squeezed = np.squeeze(data.values, axis=dims_del)
+
+            # Update metadata
+            dims = list(dims)
+            dimnames_del = [dims[d] for d in dims_del]
+            for nm in dimnames_del:
+                attrs[nm] = coords[nm].values
+                coords = utils.odict_delete(coords, nm)
+                dims.remove(nm)
+
+            # Squeeze and pack into DataArray
+            squeezed = xray.DataArray(np.squeeze(data.values, axis=dims_del),
+                                      dims=dims, coords=coords, name=name,
+                                      attrs=attrs)
         else:
-            # All singleton dimensions
-            dims_del = np.where(np.array(data.shape) == 1)[0]
+            squeezed = np.squeeze(data, axis)
 
-        squeezed = np.squeeze(data.values, axis=dims_del)
+        return squeezed
 
-        # Update metadata
-        dims = list(dims)
-        dimnames_del = [dims[d] for d in dims_del]
-        for nm in dimnames_del:
-            attrs[nm] = coords[nm].values
-            coords = utils.odict_delete(coords, nm)
-            dims.remove(nm)
-
-        # Squeeze and pack into DataArray
-        squeezed = xray.DataArray(np.squeeze(data.values, axis=dims_del),
-                                  dims=dims, coords=coords, name=name,
-                                  attrs=attrs)
+    if isinstance(data, xray.Dataset):
+        squeezed = xray.Dataset()
+        for nm in data.data_vars:
+            squeezed[nm] = process_one(data[nm], axis)
     else:
-        squeezed = np.squeeze(data, axis)
-
+        squeezed = process_one(data, axis)
     return squeezed
-
+        
 
 # ----------------------------------------------------------------------
 def expand_dims(data, coordnm, coordval, axis=0):
@@ -183,7 +192,7 @@ def coords_assign(coords, dim, new_name, new_val):
 
 # ----------------------------------------------------------------------
 def subset(data, subset_dict, incl_lower=True, incl_upper=True,
-           copy=True):
+           copy=True, apply_squeeze=False):
     """Extract a subset of a DataArray or Dataset along named dimensions.
 
     Returns a DataArray or Dataset sub extracted from input data,
@@ -214,6 +223,8 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True,
         and these parameters are ignored.
     copy : bool, optional
         If True, return a copy of the data, otherwise return a pointer.
+    apply_squeeze : bool, optional
+        If True, squeeze out any singleton dimensions.
 
     Returns
     -------
@@ -247,6 +258,9 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True,
         sub = subset_1dim(sub, dim_name, lower_or_list, upper, incl_lower,
                           incl_upper, copy)
 
+    if apply_squeeze:
+        sub = squeeze(sub)
+         
     return sub
 
 
