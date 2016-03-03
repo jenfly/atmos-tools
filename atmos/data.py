@@ -627,7 +627,7 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
 
 # ----------------------------------------------------------------------
 def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
-                func=None, func_kw=None, squeeze=True, verbose=True):
+                func=None, func_args=None, func_kw=None, squeeze=True, verbose=True):
     """Load a variable from multiple files and concatenate into one.
 
     Especially useful for extracting variables split among multiple
@@ -660,8 +660,13 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
     func : function, optional
         Function to apply to each variable in each file before concatenating.
         e.g. compute zonal mean. Takes one DataArray as first input parameter.
-    func_kw : dict, optional
-        Dict of keyword arguments to pass to func.
+    func_args : list, optional
+        List of numbered arguments to pass to func.
+    func_kw : dict or list of dict, optional
+        Dict of keyword arguments to pass to func. To use different values for
+        different files, make func_kw a list of the same length as the list of
+        file paths, with func_kw[i] containing a dict of keyword args for
+        path[i]. Otherwise, make func_kw a single dict to use for all paths.
     squeeze : bool, optional
         If True, squeeze out extra dimensions and add info to attributes.
     verbose : bool, optional
@@ -681,7 +686,7 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
     if var_ids is not None:
         var_ids = utils.makelist(var_ids)
 
-    def get_data(path, var_ids, subset_dict, func, func_kw):
+    def get_data(path, var_ids, subset_dict, func, func_args, func_kw):
         with xray.open_dataset(path) as ds:
             if var_ids is None:
                 # All variables
@@ -690,32 +695,35 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
                 # Extract specific variables
                 data = ds[var_ids]
             if subset_dict is not None:
-                data = subset(data, subset_dict)
+                data = subset(data, subset_dict, copy=False)
             if func is not None:
                 data_out = xray.Dataset()
+                if func_args is None:
+                    func_args = []
                 if func_kw is None:
                     func_kw = {}
                 for nm in data.data_vars:
-                    vars_out = func(data[nm], **func_kw)
+                    vars_out = func(data[nm], *func_args, **func_kw)
                     if not isinstance(vars_out, xray.Dataset):
                         vars_out = vars_out.to_dataset()
                     for nm2 in vars_out.data_vars:
                         data_out[nm2] = vars_out[nm2]
                 data = data_out
-            if squeeze:
-                for nm in data.data_vars:
-                    data[nm] = xr.squeeze(data[nm])
             data.load()
         return data
 
     pieces = []
-    for p in utils.makelist(paths):
+    func_kw = utils.makelist(func_kw)
+    paths = utils.makelist(paths)
+    if len(func_kw) == 1:
+        func_kw *= len(paths)
+    for p, kw in zip(paths, func_kw):
         print_if(None, verbose, printfunc=disptime)
         print_if('Loading ' + p, verbose)
         attempt = 0
         while attempt < NMAX:
             try:
-                piece = get_data(p, var_ids, subset_dict, func, func_kw)
+                piece = get_data(p, var_ids, subset_dict, func, func_args, kw)
                 print_if('Appending data', verbose)
                 pieces.append(piece)
                 attempt = NMAX
