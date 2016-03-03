@@ -525,7 +525,7 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True, search=True,
 
 
 # ----------------------------------------------------------------------
-def dim_mean(data, dimname, lower=None, upper=None):
+def dim_mean(data, dimname, lower=None, upper=None, minfrac=0.5):
     """Return the mean of a DataArray along dimension, preserving attributes.
 
     Parameters
@@ -538,17 +538,33 @@ def dim_mean(data, dimname, lower=None, upper=None):
     lower, upper : float, optional
         Lower and upper bounds (inclusive) of subset to extract along
         the dimension before averaging.
+    minfrac : float, optional
+        Mininum fraction of non-missings required for non-NaN output.
 
     Returns
     -------
     databar : xray.DataArray or xray.Dataset
     """
 
-    def one_variable(var, dimname, dimvals):
-        _, attrs, _, _ = xr.meta(var)
-        var_out = var.mean(dim=dimname)
-        var_out.attrs = attrs
-        var_out.attrs['avg_over_' + dimname] = dimvals
+    def one_variable(var, dimname, dimvals, minfrac):
+        axis = get_coord(var, dimname, 'dim')
+        attrs = var.attrs
+        attrs['avg_over_' + dimname] = dimvals
+        attrs['minfrac'] = minfrac
+
+        # Create mask for any point where more than minfrac fraction is missing
+        missings = np.isnan(var)
+        missings = missings.sum(dim=dimname)
+        min_num = var.shape[axis] * minfrac
+        mask = missings > min_num
+
+        # Compute mean and apply mask
+        var = var.mean(dim=dimname)
+        name, _, coords, dims = xr.meta(var)
+        vals = np.ma.masked_array(var.values, mask).filled(np.nan)
+        var_out = xray.DataArray(vals, name=name, attrs=attrs, dims=dims,
+                                 coords=coords)
+
         return var_out
 
     if dimname not in data.dims:
@@ -559,12 +575,12 @@ def dim_mean(data, dimname, lower=None, upper=None):
 
     dimvals = get_coord(data, coord_name=dimname)
     if isinstance(data, xray.DataArray):
-        databar = one_variable(data, dimname, dimvals)
+        databar = one_variable(data, dimname, dimvals, minfrac)
     elif isinstance(data, xray.Dataset):
         databar = xray.Dataset()
         databar.attrs = data.attrs
         for nm in data.data_vars:
-            databar[nm] = one_variable(data[nm], dimname, dimvals)
+            databar[nm] = one_variable(data[nm], dimname, dimvals, minfrac)
     else:
         raise ValueError('Input data must be xray.DataArray or xray.Dataset')
 
@@ -718,7 +734,7 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
 
     if squeeze:
         data = xr.squeeze(data)
-        
+
     if len(data.data_vars) == 1:
         # Convert from Dataset to DataArray for output
         data = data[data.data_vars.keys()[0]]
