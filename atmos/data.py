@@ -836,7 +836,7 @@ def set_lon(data, lonmax=360, lon=None, lonname=None):
     """
 
     if isinstance(data, xray.DataArray):
-        lon = get_coord(data, 'lon', coord_name=lonname)
+        lon = get_coord(data, 'lon')        
         if lonname is None:
             lonname = get_coord(data, 'lon', 'name')
         name, attrs, coords, _ = xr.meta(data)
