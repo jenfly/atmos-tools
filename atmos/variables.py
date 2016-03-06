@@ -384,7 +384,8 @@ def moisture_flux_conv(uq, vq, lat=None, lon=None, plev=None, pdim=-3,
 
 
 # ----------------------------------------------------------------------
-def streamfunction(v, lat=None, pres=None, pdim=-3, scale=1e-9, topdown=True):
+def streamfunction(v, lat=None, pres=None, pdim=-3, scale=1e-9,
+                   sector_scale=None):
     """Return the Eulerian mass streamfunction.
 
     Parameters
@@ -404,11 +405,10 @@ def streamfunction(v, lat=None, pres=None, pdim=-3, scale=1e-9, topdown=True):
     scale : float, optional
         Scale factor for output, e.g. 1e-9 to output streamfunction in
         10^9 kg/s.
-    topdown : bool, optional
-        If True, integrate from the top of atmosphere down, assuming
-        that vertical levels are indexed from the surface up (i.e.
-        level 0 is the surface). Otherwise integrate from bottom up.
-
+    sector_scale : float, optional
+        Scaling factor for the streamfunction over a sector lon1-lon2
+        (i.e. should be set to (lon2 - lon1)/360.0 or None if full longitude
+        range is going to be included).
     Returns
     -------
     psi : ndarray or xray.DataArray
@@ -435,6 +435,7 @@ def streamfunction(v, lat=None, pres=None, pdim=-3, scale=1e-9, topdown=True):
                 'v is an ndarray.')
 
     # Standardize the shape of v
+    pdim_in = pdim
     if pdim == -2:
         v = np.expand_dims(v, axis=-1)
         pdim = -3
@@ -456,24 +457,19 @@ def streamfunction(v, lat=None, pres=None, pdim=-3, scale=1e-9, topdown=True):
     for j in range(nlat):
         vcos[...,j,:] = v[...,j,:] * coslat[j]
 
-    # Compute streamfunction
+    # Compute streamfunction, integrating from top of atmosphere down
     sfctn = np.zeros(dims, dtype=float)
-    if topdown:
-        # Integrate from top of atmosphere down
-        for k in range(nlevel-1, -1, -1):
-            dp = pmid[...,k+1,:,:] - pmid[...,k,:,:]
-            sfctn[...,k,:,:] = sfctn[...,k+1,:,:] + vcos[...,k,:,:] * dp
-    else:
-        # Integrate from the surface up
-        for k in range(1, nlevel):
-            dp = pmid[...,k-1,:,:] - pmid[...,k,:,:]
-            sfctn[...,k,:,:] = sfctn[...,k-1,:,:] + vcos[...,k,:,:] * dp
+    for k in range(nlevel-1, -1, -1):
+        dp = pmid[...,k+1,:,:] - pmid[...,k,:,:]
+        sfctn[...,k,:,:] = sfctn[...,k+1,:,:] + vcos[...,k,:,:] * dp
 
     # Scale the output and remove the added dimension(s)
     sfctn *= scale * 2 * np.pi * R / g
     psi = sfctn[...,:-1,:,:]
-    if psi.ndim > v.ndim:
+    if pdim_in == -2:
         psi = psi[...,0]
+    if sector_scale is not None:
+        psi = psi * sector_scale
 
     if i_DataArray:
         psi = xray.DataArray(psi, name='Eulerian mass streamfunction',
