@@ -556,7 +556,7 @@ def pcolor_latpres(data, lat=None, plev=None, init=True, cmap='RdBu_r',
         elif isinstance(topo, xray.DataArray):
             topo_ps, topo_lat = topo.values, topo['lat']
         else:
-            topo_ps, topo_lat = None
+            topo_ps, topo_lat = None, None
 
         # Initialize axes and plot topography
         latmin, latmax, pmin, pmax = axlims
