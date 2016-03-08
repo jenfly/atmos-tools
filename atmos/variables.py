@@ -384,7 +384,7 @@ def moisture_flux_conv(uq, vq, lat=None, lon=None, plev=None, pdim=-3,
 
 
 # ----------------------------------------------------------------------
-def streamfunction(v, lat=None, pres=None, pdim=-3, scale=1e-9,
+def streamfunction(v, lat=None, pres=None, pdim=None, scale=1e-9,
                    sector_scale=None):
     """Return the Eulerian mass streamfunction.
 
@@ -401,7 +401,8 @@ def streamfunction(v, lat=None, pres=None, pdim=-3, scale=1e-9,
         is extracted from xray.DataArray input v.
     pdim : {-3, -2}, optional
         Dimension of v corresponding to vertical levels.  Can be either
-        the second-last or third-last dimension.
+        the second-last or third-last dimension.  If omitted, pdim is
+        extracted from xray.DataArray v.
     scale : float, optional
         Scale factor for output, e.g. 1e-9 to output streamfunction in
         10^9 kg/s.
@@ -427,11 +428,13 @@ def streamfunction(v, lat=None, pres=None, pdim=-3, scale=1e-9,
             pres = dat.get_coord(v, 'plev')
             pname = dat.get_coord(v, 'plev', 'name')
             pres = dat.pres_convert(pres, v[pname].units, 'Pa')
+        if pdim is None:
+            pdim = dat.get_coord(v, 'plev', 'dim') - v.ndim
         v = v.values.copy()
     else:
         i_DataArray = False
-        if lat is None or pres is None:
-            raise ValueError('Inputs lat and pres must be provided when '
+        if lat is None or pres is None or pdim is None:
+            raise ValueError('Inputs lat, pres and pdim must be provided when '
                 'v is an ndarray.')
 
     # Standardize the shape of v

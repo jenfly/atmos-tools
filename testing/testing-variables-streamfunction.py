@@ -47,7 +47,7 @@ for ssn in ['ANN', 'DJF', 'JJA', 'MAR']:
         vssn_bar = atm.dim_mean(vssn, 'lon')
         psi1 = atm.streamfunction(vssn, sector_scale=sector_scale)
         psi1 = atm.dim_mean(psi1, 'lon')
-        psi2 = atm.streamfunction(vssn_bar, pdim=-2, sector_scale=sector_scale)
+        psi2 = atm.streamfunction(vssn_bar, sector_scale=sector_scale)
         plt.figure(figsize=figsize)
         plt.suptitle(suptitle)
         plt.subplot(2, 1, 1)
@@ -83,7 +83,7 @@ clev = 10
 #days = atm.season_days(ssn)
 days = range(170, 176)
 vbar = v.sel(day=days).mean(dim='day')
-psi = atm.streamfunction(vbar, pdim=-2, sector_scale=sector_scale)
+psi = atm.streamfunction(vbar, sector_scale=sector_scale)
 plt.figure()
 atm.contour_latpres(psi, clev=clev, omitzero=False)
 
