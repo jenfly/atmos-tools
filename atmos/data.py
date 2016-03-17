@@ -346,7 +346,7 @@ def precip_units(units):
     Return a standardized name for precip units.
     """
     kgm2s = ['kg/m2/s', '(kg/m^2)/s', 'kg/m^2/s', 'kg m^-2 s^-1',
-             'kg/(m^2 s)']
+             'kg/(m^2 s)', 'kg m-2 s-1']
     mmday = ['mm/day', 'mm day^-1']
 
     if units.lower() in kgm2s:
