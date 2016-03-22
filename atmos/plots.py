@@ -648,7 +648,8 @@ def contourf_latpres(data, lat=None, plev=None, clev=None, init=True,
 def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
                     colors='black', topo=None, topo_clr='black', p_units='hPa',
                     axlims=(-90, 90, 0, 1000), lattick_width=None,
-                    ptick_width=None, omitzero=False, zerolinewidth=2):
+                    ptick_width=None, omitzero=False, zerolinewidth=2,
+                    contour_kw={}):
     """
     Plot contour lines in latitude-pressure plane
 
@@ -685,6 +686,8 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
         If True, omit zero contour.
     zerolinewidth : int or float, optional
         Include zero contour with specified line width.
+    contour_kw : dict, optional
+        Dict of additional keyword arguments to plt.contour().
 
     Returns
     -------
@@ -721,13 +724,14 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
     # Plot contours
     y, z = np.meshgrid(lat, plev)
     if clev is None:
-        cs = plt.contour(y, z, np.squeeze(data), colors=colors)
+        cs = plt.contour(y, z, np.squeeze(data), colors=colors, **contour_kw)
     else:
-        cs = plt.contour(y, z, np.squeeze(data), clev, colors=colors)
+        cs = plt.contour(y, z, np.squeeze(data), clev, colors=colors, **contour_kw)
 
     # Zero contour
     if not omitzero and zerolinewidth > 0:
-        plt.contour(y, z, np.squeeze(data), 0, colors=colors, linewidths=zerolinewidth)
+        plt.contour(y, z, np.squeeze(data), 0, colors=colors, 
+                    linewidths=zerolinewidth, **contour_kw)
 
     plt.draw()
     return cs
