@@ -190,6 +190,120 @@ def fmt_subplot(nrow, ncol, i, ax=None, xlabel=None, xticks=None,
 
 
 # ----------------------------------------------------------------------
+class FigGroup:
+    def __init__(self, nrow, ncol, advance_by='col', fig_kw={}, gridspec_kw={},
+                 suptitle=None, suptitle_kw={}):
+        """Return a FigGroup object to create subplots over multiple figures.
+
+        Parameters
+        ----------
+        nrow, ncol : int
+            Number of rows and columns in each figure.
+        advance_by : {'col', 'row'}, optional
+            Advance to next plot by incrementing over columns and then rows
+            ('col'), or by incrementing over rows and then columns ('row').
+        fig_kw : dict, optional
+            Dict of general figure inputs to the plt.subplots() function call
+            (e.g. figsize).
+        gridspec_kw : dict, optional
+            Dict of inputs to the plt.subplots() function call to
+            specify the subplot grid (e.g. left, right, top, bottom, wspace,
+            hspace, width_ratios, height ratios).
+        suptitle : str, optional
+            Supertitle for figures.
+        suptitle_kw : dict, optional
+            Dict of inputs to the plt.suptitle() function call.
+
+        Returns
+        -------
+        self : FigGroup object
+            The FigGroup object has all the the inputs to __init__ as
+            data attributes, as well as the following data attributes:
+              fig_list : list of plt.figure objects
+                Figures in the group.
+              axes_list : list of arrays of plt.axes objects
+                Array of axes for each subplot in each figure.
+              ifig, row, col : int
+                Index of current figure and subplot row and column.
+              fig, axes : plt.figure and plt.axes array
+                Handles for current figure.
+              ax : plt.axes object
+                Axes of current subplot.
+
+            And it has the following methods:
+              newfig() : Create a new figure.
+              next() : Advance to the next subplot.
+              scf() : Set the current figure to the specified figure index.
+              subplot() : Set the subplot to the specified row and column.
+        """
+        self.nrow, self.ncol, self.advance_by = nrow, ncol, advance_by
+        self.fig_kw, self.gridspec_kw = fig_kw, gridspec_kw
+        self.suptitle, self.suptitle_kw = suptitle, suptitle_kw
+        #self.sharex, self.sharey = fig_kw.get('sharex'), fig_kw.get('sharey')
+        self.fig_list, self.axes_list = [], []
+        self.ifig, self.row, self.col = -1, -1, -1
+        self.fig, self.axes, self.ax = None, None, None
+
+    def __repr__(self):
+        s = 'Figure %d, row %d, col %d' % (self.ifig, self.row, self.col)
+        return s
+
+    def newfig(self):
+        """Create a new figure with the specified subplots.
+        """
+        self.ifig += 1
+        self.row, self.col, self.ax = -1, -1, None
+        fig, axes = plt.subplots(self.nrow, self.ncol,
+                                 gridspec_kw=self.gridspec_kw, **self.fig_kw)
+        if self.suptitle is not None:
+            fig.suptitle(self.suptitle, **self.suptitle_kw)
+
+        # Make sure axes array has consistent shape if nrow == 1 or ncol == 1
+        axes = axes.reshape((self.nrow, self.ncol))
+
+        self.fig, self.axes = fig, axes
+        self.fig_list.append(fig)
+        self.axes_list.append(axes)
+        return None
+
+    def subplot(self, row, col):
+        """ Set the subplot axes to the specified row and column."""
+        self.row, self.col = row, col
+        self.ax = self.axes[row, col]
+        plt.sca(self.ax)
+        return None
+
+    def scf(self, i, row=0, col=0):
+        """Set the current figure to the specified figure index."""
+        self.fig = self.fig_list[i]
+        self.axes = self.axes_list[i]
+        self.subplot(row, col)
+        return None
+
+    def next(self):
+        """Advance to the next subplot."""
+        row, col, nrow, ncol = self.row, self.col, self.nrow, self.ncol
+        if self.advance_by == 'col':
+            row = max(row, 0)
+            col += 1
+            if col == ncol:
+                col = 0
+                row += 1
+        else:
+            col = max(col, 0)
+            row += 1
+            if row == nrow:
+                row = 0
+                col += 1
+        if row == nrow or col == ncol:
+            row, col = 0, 0
+        if row == 0 and col == 0:
+            self.newfig()
+        self.subplot(row, col)
+        return None
+
+
+# ----------------------------------------------------------------------
 def fig_setup(nrow, ncol, isub, axes=None, suptitle='', fig_kw={},
               gridspec_kw={}, suptitle_kw={'fontsize' : 12}):
     """Set up figures and axes for multiple subplots.
@@ -210,7 +324,7 @@ def fig_setup(nrow, ncol, isub, axes=None, suptitle='', fig_kw={},
         Supertitle for figures.
     fig_kw : dict, optional
         Dict of general figure inputs to the plt.subplots() function call
-        (e.g. figsize).
+        (e.g. figsize, sharex, sharey).
     gridspec_kw : dict, optional
         Dict of inputs to the plt.subplots() function call to
         specify the subplot grid (e.g. left, right, top, bottom, wspace,
