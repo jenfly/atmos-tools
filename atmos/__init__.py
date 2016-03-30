@@ -8,6 +8,7 @@ from utils import (
     text,
     subplot_index,
     fmt_subplot,
+    fmt_axlabels,
     FigGroup,
     savefigs,
     symm_colors,

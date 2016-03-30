@@ -190,6 +190,41 @@ def fmt_subplot(nrow, ncol, i, ax=None, xlabel=None, xticks=None,
 
 
 # ----------------------------------------------------------------------
+def fmt_axlabels(axtype, label, ax=None, **opts):
+    """Format axis label and tick labels with selected options.
+
+    Parameters
+    ----------
+    axtype : {'x', 'y'}
+        Which axis to format.
+    label : str
+        Axis label.
+    ax : plt.axes() object
+        Axes object to format.  If None, then ax = plt.gca().
+    **opts : keyword arguments
+        e.g. color, alpha
+    """
+
+    if ax is None:
+        ax = plt.gca()
+    if axtype.lower() == 'x':
+        ax.set_xlabel(label, **opts)
+        ticks = ax.get_xticklabels()
+    else:
+        ax.set_ylabel(label, **opts)
+        ticks = ax.get_yticklabels()
+
+    if 'color' in opts:
+        for t1 in ticks:
+            t1.set_color(opts['color'])
+    if 'alpha' in opts:
+        for t1 in ticks:
+            t1.set_alpha(opts['alpha'])
+    plt.draw()
+    
+    return None
+
+# ----------------------------------------------------------------------
 class FigGroup:
     def __init__(self, nrow, ncol, advance_by='col', fig_kw={}, gridspec_kw={},
                  suptitle=None, suptitle_kw={}):
