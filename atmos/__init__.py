@@ -9,7 +9,6 @@ from utils import (
     subplot_index,
     fmt_subplot,
     FigGroup,
-    fig_setup,
     savefigs,
     symm_colors,
     print_odict,

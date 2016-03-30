@@ -304,61 +304,6 @@ class FigGroup:
 
 
 # ----------------------------------------------------------------------
-def fig_setup(nrow, ncol, isub, axes=None, suptitle='', fig_kw={},
-              gridspec_kw={}, suptitle_kw={'fontsize' : 12}):
-    """Set up figures and axes for multiple subplots.
-
-    This function can be used to iterate through many subplots in
-    a figure and automatically create a new figure when the end
-    of the current figure is reached.
-
-    Parameters
-    ----------
-    nrow, ncol : int
-        Number of subplot rows and columns.
-    isub : int
-        Subplot number (between 1 and nrow * ncol).
-    axes : plt.axes object, optional
-        Axes of existing figure to use.
-    suptitle : str, optional
-        Supertitle for figures.
-    fig_kw : dict, optional
-        Dict of general figure inputs to the plt.subplots() function call
-        (e.g. figsize, sharex, sharey).
-    gridspec_kw : dict, optional
-        Dict of inputs to the plt.subplots() function call to
-        specify the subplot grid (e.g. left, right, top, bottom, wspace,
-        hspace, width_ratios, height ratios).
-    suptitle_kw : dict, optional
-        Dict of inputs to the plt.suptitle() function call.
-
-    Returns
-    -------
-    axes : array of plt.axes() objects for the figure
-    ax : plt.axes() object for current subplot
-    isub : int (number of current subplot)
-    row : int (row of current subplot)
-    col : int (column of current subplot)
-    """
-
-    if isub > nrow * ncol:
-        isub = 1
-    if isub == 1:
-        fig, axes = plt.subplots(nrow, ncol, gridspec_kw=gridspec_kw,
-                                 **fig_kw)
-        fig.suptitle(suptitle, **suptitle_kw)
-    row, col = subplot_index(nrow, ncol, isub)
-    if nrow == 1:
-        ax = axes[col - 1]
-    elif ncol == 1:
-        ax = axes[row - 1]
-    else:
-        ax = axes[row - 1, col - 1]
-
-    return axes, ax, isub, row, col
-
-
-# ----------------------------------------------------------------------
 def savefigs(namestr, ext='eps', fignums=None, merge=False, **kwargs):
     """Save list of figures to numbered files with same naming convention.
 
