@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import scipy.stats
 
 import atmos.utils as utils
-#import atmos.xrhelper as xr
+import atmos.xrhelper as xr
 
 # ======================================================================
 # SPECTRAL ANALYSIS
@@ -271,7 +271,7 @@ class Linreg:
             x = np.array(x)
         if not isinstance(y, np.ndarray):
             y = np.array(y)
-            
+
         ind = np.isfinite(x) & np.isfinite(y)
         x, y = x[ind], y[ind]
         reg = scipy.stats.linregress(x, y)
@@ -342,6 +342,9 @@ def regress_field(data, index, axis=-1):
 
     if isinstance(data, xray.DataArray):
         name, attrs, coords, dimnames = xr.meta(data)
+        coords = utils.odict_delete(coords, dimnames[axis])
+        dimnames = list(dimnames)
+        dimnames.pop(axis)
         vals = data.values
     else:
         vals = data
@@ -354,30 +357,28 @@ def regress_field(data, index, axis=-1):
         vals = np.expand_dims(vals, axis=0)
 
     # Initialize output
+    dims = vals.shape[:-1]
     reg = {}
-    reg['r'] = np.ones(vals.shape, dtype=vals.dtype)
-    reg['m'] = np.ones(vals.shape, dtype=vals.dtype)
-    reg['p'] = np.ones(vals.shape, dtype=vals.dtype)
+    reg['r'] = np.ones(dims, dtype=float)
+    reg['m'] = np.ones(dims, dtype=float)
+    reg['p'] = np.ones(dims, dtype=float)
 
     # Compute regression, iterating over other dimensions
-    dims = vals.shape[:-1]
     for i in range(dims[0]):
         for j in range(dims[1]):
             for k in range(dims[2]):
                 for m in range(dims[3]):
-                    reg_sub = Linreg(vals[i,j,k,m], index)
+                    reg_sub = Linreg(index, vals[i,j,k,m])
                     reg['r'] [i,j,k,m] = reg_sub.r
                     reg['m'] [i,j,k,m] = reg_sub.slope
-                    reg['p'] [i,j,k,m] = reg_sub.p                   
+                    reg['p'] [i,j,k,m] = reg_sub.p
 
-
-    for nm in reg:    
-        # Collapse any additional dimensions that were added
-        for i in range(ndim, r.ndim):
+    # Collapse any additional dimensions that were added
+    n = reg['r'].ndim
+    for nm in reg:
+        for i in range(ndim - 1, n):
             reg[nm] = reg[nm][0]
 
-        # Roll axis back to its original position
-        reg[nm] = np.rollaxis(reg[nm], -1, axis)
 
     reg_data = xray.Dataset()
     if isinstance(data, xray.DataArray):
@@ -392,11 +393,10 @@ def regress_field(data, index, axis=-1):
                                       dims=dimnames)
     long_names = {'r' : 'correlation coefficient', 'm' : 'slope',
                   'p' : 'p-value'}
-    for nm in reg_data.data_vars:   
+    for nm in reg_data.data_vars:
         reg_data[nm].attrs['long_name'] = long_names[nm]
 
     return reg_data
-
 
 
 # ----------------------------------------------------------------------
