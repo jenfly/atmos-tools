@@ -730,7 +730,7 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
 
     # Zero contour
     if not omitzero and zerolinewidth > 0:
-        plt.contour(y, z, np.squeeze(data), 0, colors=colors, 
+        plt.contour(y, z, np.squeeze(data), 0, colors=colors,
                     linewidths=zerolinewidth, **contour_kw)
 
     plt.draw()
@@ -738,16 +738,52 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
 
 
 # ----------------------------------------------------------------------
+def stipple_pts(pts_mask, xname, yname, xsample=1, ysample=1, ax=None,
+                marker='+', color='k', alpha=0.25, markersize=6,
+                markeredgewidth=1.5, **kwargs):
+    """Plot points to stipple a figure.
+
+    Parameters
+    ----------
+    pts_mask: xray.DataArray
+        Masking array of points to exclude from stippling.
+    xname, yname : str
+        Name of x and y dimensions in pts_mask.
+    xsample, ysample : int
+        Sub-sampling of x- and y- dimensions.
+    ax : plt.axes object
+        Axes to plot on.  If None, then use current axes.
+
+    Remaining parameters are keyword arguments to plt.plot() to specify
+    format for plotting the stipple points.
+    """
+
+    # Get grid points
+    x = atm.get_coord(pts_mask, xname)
+    y = atm.get_coord(pts_mask, yname)
+    xgrid, ygrid = np.meshgrid(x, y)
+
+    # Mask out points to be excluded
+    if not xgrid.shape == pts_mask.shape:
+        pts_mask = pts_mask.T
+    xpts = np.ma.masked_array(xgrid, mask=pts_mask)
+    ypts = np.ma.masked_array(ygrid, mask=pts_mask)
+
+    # Sub-sample
+    xpts = xpts[::ysample, ::xsample]
+    ypts = ypts[::ysample, ::xsample]
+
+    # Plot stippling
+    if ax is not None:
+        plt.sca(ax)
+    plt.plot(xpts, ypts, marker=marker, color=color, alpha=alpha,
+             markersize=markersize, markeredgewidth=markeredgewidth, **kwargs)
+
+    return None
 
 
-
-# def contourf_timelat():
-#     """Plot filled contours of data in time-latitude plane."""
-
-"""
-TO DO:
-
-mapaxes(m, axlims, xticks, yticks) - adjust limits, ticks and tick labels of
-        existing map (might have to create new basemap object to do this)
-
-"""
+# ----------------------------------------------------------------------
+# TO DO:
+#
+# mapaxes(m, axlims, xticks, yticks) - adjust limits, ticks and tick labels of
+#         existing map (might have to create new basemap object to do this)

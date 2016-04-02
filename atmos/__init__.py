@@ -111,6 +111,7 @@ from plots import (
     pcolor_latpres,
     contourf_latpres,
     contour_latpres,
+    stipple_pts,
 )
 
 from analysis import (
