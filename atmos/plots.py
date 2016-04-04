@@ -759,8 +759,8 @@ def stipple_pts(pts_mask, xname, yname, xsample=1, ysample=1, ax=None,
     """
 
     # Get grid points
-    x = atm.get_coord(pts_mask, xname)
-    y = atm.get_coord(pts_mask, yname)
+    x = dat.get_coord(pts_mask, xname)
+    y = dat.get_coord(pts_mask, yname)
     xgrid, ygrid = np.meshgrid(x, y)
 
     # Mask out points to be excluded
