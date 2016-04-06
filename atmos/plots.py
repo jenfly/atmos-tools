@@ -119,7 +119,8 @@ def autoticks(axtype, axmin, axmax, width=None, nmax=8):
 
 
 # ----------------------------------------------------------------------
-def clevels(data, cint, posneg='both', symmetric=False, omitzero=False):
+def clevels(data, cint, posneg='both', symmetric=False, omitzero=False,
+            percentile=99.9):
     """
     Return array of contour levels spaced by a given interval.
 
@@ -135,6 +136,8 @@ def clevels(data, cint, posneg='both', symmetric=False, omitzero=False):
         Return contour levels symmetric about zero
     omitzero : bool, optional
         Omit zero from the contour levels
+    percentile : float, optional
+        Percentile to use in calculating contour range.
 
     Returns
     -------
@@ -143,12 +146,15 @@ def clevels(data, cint, posneg='both', symmetric=False, omitzero=False):
     """
 
     # Define max and min contour levels
+    vmax = np.nanpercentile(data, percentile)
+    vmin = np.nanpercentile(data, 100 - percentile)
     if symmetric:
-        cabs = math.ceil(np.nanmax(abs(data)) / cint) * cint
+        vmax = max(abs(vmin), abs(vmax))
+        cabs = math.ceil(vmax / cint) * cint
         cmin, cmax = -cabs, cabs
     else:
-        cmin = math.floor(np.nanmin(data) / cint) * cint
-        cmax = math.ceil(np.nanmax(data) / cint) * cint
+        cmin = math.floor(vmin / cint) * cint
+        cmax = math.ceil(vmax / cint) * cint
     if posneg == 'pos':
         cmin = 0
     elif posneg == 'neg':
@@ -166,7 +172,8 @@ def clevels(data, cint, posneg='both', symmetric=False, omitzero=False):
 
 
 # ----------------------------------------------------------------------
-def cinterval(data, n_pref=20, symmetric=False, cint_pref=[1, 2, 3, 4, 5, 10]):
+def cinterval(data, n_pref=20, symmetric=False, cint_pref=[1, 2, 3, 4, 5, 10],
+              percentile=99.9):
     """Return a sensible contour interval for plotting data.
 
     Parameters
@@ -184,6 +191,10 @@ def cinterval(data, n_pref=20, symmetric=False, cint_pref=[1, 2, 3, 4, 5, 10]):
         where scale is the appropriate order of magnitude and c is
         the value in cint_pref that gives a number of contour intervals
         closest to n_pref.
+    percentile : float, optional
+        Percentile (0-100) to use to calculate maximum value for data
+        spread, and minimum value for data spread is 100-percentile
+        percentile.
 
     Returns
     -------
@@ -193,9 +204,11 @@ def cinterval(data, n_pref=20, symmetric=False, cint_pref=[1, 2, 3, 4, 5, 10]):
     if isinstance(data, xray.DataArray):
         data = data.values
     if symmetric:
-        spread = 2 * np.nanmax(np.abs(data))
+        spread = 2 * np.nanpercentile(np.abs(data), percentile)
     else:
-        spread = np.nanmax(data) - np.nanmin(data)
+        vmin = np.nanpercentile(data, 100 - percentile)
+        vmax = np.nanpercentile(data, percentile)
+        spread =  vmax - vmin
     cint = spread / n_pref
     scale = 10 ** np.floor(np.log10(cint))
     cint = cint / scale
@@ -205,15 +218,15 @@ def cinterval(data, n_pref=20, symmetric=False, cint_pref=[1, 2, 3, 4, 5, 10]):
 
 
 # ----------------------------------------------------------------------
-def climits(data, symmetric=True):
+def climits(data, symmetric=True, percentile=99.9):
     """Return colorbar limits to use for all data variables in a set.
     """
 
     if isinstance(data, xray.Dataset):
         data = data.to_array()
 
-    cmin = np.nanmin(data)
-    cmax = np.nanmax(data)
+    cmin = np.nanpercentile(data, 100 - percentile)
+    cmax = np.nanpercentile(data, percentile)
     if symmetric:
         cmax = max([abs(cmin), abs(cmax)])
         cmin = - cmax
