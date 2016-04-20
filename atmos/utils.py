@@ -71,6 +71,14 @@ def pdfmerge(filenames, outfile, delete_indiv=False):
 # PLOTS
 # ======================================================================
 
+def legend_2ax(ax1, ax2, **kwargs):
+    """Create a combined legend for two y-axes."""
+    h1, l1 = ax1.get_legend_handles_labels()
+    h2, l2 = ax2.get_legend_handles_labels()
+    ax1.legend(h1 + h2, l1 + l2, **kwargs)
+    return None
+
+
 def text(s, pos, ax=None, dimensionless=True, **kwargs):
     """Add text to axes.
 
@@ -221,7 +229,7 @@ def fmt_axlabels(axtype, label, ax=None, **opts):
         for t1 in ticks:
             t1.set_alpha(opts['alpha'])
     plt.draw()
-    
+
     return None
 
 # ----------------------------------------------------------------------

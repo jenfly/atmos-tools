@@ -5,6 +5,7 @@ from utils import (
     format_num,
     homedir,
     pdfmerge,
+    legend_2ax,
     text,
     subplot_index,
     fmt_subplot,
