@@ -342,7 +342,7 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
 
 # ----------------------------------------------------------------------
 def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
-                    symmetric=True, axlims=None, fancy=True):
+                    symmetric=True, axlims=None, fancy=True, **kwargs):
     """Create a filled contour plot of geo data.
 
     Parameters
@@ -367,6 +367,8 @@ def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
         data range is used.
     fancy : bool, optional
         If True, init_latlon will label axes with fancy lat-lon labels.
+    **kwargs : keyword arguments, optional
+        Additional keyword arguments to plt.contourf().
 
     Returns
     -------
@@ -393,9 +395,9 @@ def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
     if m is None:
         m = init_latlon(lat1, lat2, lon1, lon2, fancy)
     if clev is None:
-        m.contourf(x, y, np.squeeze(data), cmap=cmap, latlon=True)
+        m.contourf(x, y, np.squeeze(data), cmap=cmap, latlon=True, **kwargs)
     else:
-        m.contourf(x, y, np.squeeze(data), clev, cmap=cmap, latlon=True)
+        m.contourf(x, y, np.squeeze(data), clev, cmap=cmap, latlon=True, **kwargs)
     m.colorbar()
     plt.draw()
     return m
