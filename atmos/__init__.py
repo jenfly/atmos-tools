@@ -9,6 +9,8 @@ from utils import (
     text,
     subplot_index,
     fmt_subplot,
+    ax_lims_ticks
+    clear_axlabels,
     fmt_axlabels,
     FigGroup,
     savefigs,

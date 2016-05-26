@@ -198,6 +198,38 @@ def fmt_subplot(nrow, ncol, i, ax=None, xlabel=None, xticks=None,
 
 
 # ----------------------------------------------------------------------
+def ax_lims_ticks(xlims=None, xticks=None, ylims=None, yticks=None, ax=None):
+    """Assign limits and ticks to x and y axes."""
+    if ax is not None:
+        plt.sca(ax)
+    if xticks is not None:
+        plt.xticks(xticks)
+    if xlims is not None:
+        plt.xlim(xlims)
+    if yticks is not None:
+        plt.yticks(yticks)
+    if ylims is not None:
+        plt.ylim(ylims)
+    return None
+
+
+# ----------------------------------------------------------------------
+def clear_axlabels(axtype, ax=None):
+    """Clear axis labels and tick labels.
+
+    Input axtype should be 'x' or 'y'.
+    """
+    if ax is None:
+        ax = plt.gca()
+    if axtype.lower() == 'x':
+        ax.set_xlabel('')
+        ax.set_xticklabels([])
+    else:
+        ax.set_ylabel('')
+        ax.set_yticklabels([])
+    return None
+
+# ----------------------------------------------------------------------
 def fmt_axlabels(axtype, label, ax=None, **opts):
     """Format axis label and tick labels with selected options.
 
