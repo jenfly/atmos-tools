@@ -9,7 +9,7 @@ from utils import (
     text,
     subplot_index,
     fmt_subplot,
-    ax_lims_ticks
+    ax_lims_ticks,
     clear_axlabels,
     fmt_axlabels,
     FigGroup,
@@ -38,6 +38,7 @@ from utils import (
 )
 
 from xrhelper import (
+    to_dataset,
     meta,
     squeeze,
     expand_dims,

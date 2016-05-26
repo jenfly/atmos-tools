@@ -16,6 +16,14 @@ import atmos.utils as utils
 # ======================================================================
 
 # ----------------------------------------------------------------------
+def to_dataset(data):
+    """Return a xray.Dataset from Dataset or DataArray input."""
+    if isinstance(data, xray.DataArray):
+        data = data.to_dataset()
+    return data
+
+
+# ----------------------------------------------------------------------
 def meta(data):
     """Return the metadata from an xray.DataArray.
 
@@ -110,7 +118,7 @@ def squeeze(data, axis=None):
     else:
         squeezed = process_one(data, axis)
     return squeezed
-        
+
 
 # ----------------------------------------------------------------------
 def expand_dims(data, coordnm, coordval, axis=0):
@@ -260,7 +268,7 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True,
 
     if apply_squeeze:
         sub = squeeze(sub)
-         
+
     return sub
 
 
