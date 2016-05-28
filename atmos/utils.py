@@ -79,14 +79,13 @@ def legend_2ax(ax1, ax2, **kwargs):
     return None
 
 
+# ----------------------------------------------------------------------
 def colorbar_multiplot(**kwargs):
     """Create a single colorbar for all subplots in a figure."""
-    axes = plt.gcf().get_axes()
-    cb = plt.colorbar(ax=axes.ravel().tolist(), **kwargs)
+    cb = plt.colorbar(ax=plt.gcf().get_axes(), **kwargs)
     return cb
 
-
-
+# ----------------------------------------------------------------------
 def text(s, pos, ax=None, dimensionless=True, **kwargs):
     """Add text to axes.
 
