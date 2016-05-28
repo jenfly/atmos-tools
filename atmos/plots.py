@@ -458,7 +458,7 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
         lat1, lat2 = np.floor(lat.min()), np.ceil(lat.max())
         lon1, lon2 = np.floor(lon.min()), np.ceil(lon.max())
     else:
-        lat1, lat2, lon1, lon2 = axlimss
+        lat1, lat2, lon1, lon2 = axlims
     x, y = np.meshgrid(lon, lat)
 
     if m is None:
