@@ -549,6 +549,25 @@ def scatter_matrix_pairs(dfx, dfy, figsize=(12, 9), suptitle='',
 
 
 # ----------------------------------------------------------------------
+def detrend(df):
+    """Return a pd.DataFrame or pd.Series with the data detrended."""
+    if isinstance(df, pd.Series):
+        series = True
+        df = df.to_frame()
+    else:
+        series = False
+    df_detrend = pd.DataFrame()
+    x = df.index.values
+    for col in df.columns:
+        y = df[col].values
+        reg = Linreg(x, y)
+        df_detrend[col] = df[col] - reg.predict(x)
+    if series:
+        df_detrend = df_detrend[df_detrend.columns[0]]
+    return df_detrend
+
+
+# ----------------------------------------------------------------------
 # regress_field()
 # time_detrend
 # time_std, time_mean, etc.
