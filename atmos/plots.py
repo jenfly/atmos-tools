@@ -247,7 +247,7 @@ def colorbar_symm(**kwargs):
 
 
 # ----------------------------------------------------------------------
-def init_latlon(lat1=-90, lat2=90, lon1=0, lon2=360, fancy=True, 
+def init_latlon(lat1=-90, lat2=90, lon1=0, lon2=360, fancy=True,
                 resolution='c', **kwargs):
     """Initialize lon-lat plot and return as a Basemap object."""
 
@@ -344,7 +344,8 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
 
 # ----------------------------------------------------------------------
 def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
-                    symmetric=True, axlims=None, fancy=True, **kwargs):
+                    symmetric=True, axlims=None, fancy=True, colorbar=True,
+                    **kwargs):
     """Create a filled contour plot of geo data.
 
     Parameters
@@ -369,6 +370,8 @@ def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
         data range is used.
     fancy : bool, optional
         If True, init_latlon will label axes with fancy lat-lon labels.
+    colorbar : bool, optional
+        If True, include a colorbar.
     **kwargs : keyword arguments, optional
         Additional keyword arguments to plt.contourf().
 
@@ -400,7 +403,8 @@ def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
         m.contourf(x, y, np.squeeze(data), cmap=cmap, latlon=True, **kwargs)
     else:
         m.contourf(x, y, np.squeeze(data), clev, cmap=cmap, latlon=True, **kwargs)
-    m.colorbar()
+    if colorbar:
+        m.colorbar()
     plt.draw()
     return m
 
