@@ -6,6 +6,7 @@ from utils import (
     homedir,
     pdfmerge,
     legend_2ax,
+    colorbar_multiplot,
     text,
     subplot_index,
     fmt_subplot,
