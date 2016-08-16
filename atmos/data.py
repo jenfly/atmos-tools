@@ -774,6 +774,44 @@ def save_nc(filename, *args):
     return None
 
 
+# ----------------------------------------------------------------------
+def mean_over_files(files, nms=None):
+    """Return data averaged over all input files.
+    
+    Parameters
+    ----------
+    files : list of str
+        Names of files to average over, e.g. yearly files.
+    nms : list of str, optional
+        Subset of data variables to include.  If None, then all data
+        variables are included.
+        
+    Returns
+    -------
+    ds_out : xray.Dataset
+        Dataset of variables averaged over all the input files.    
+    """
+    
+    def load_file(filenm, nms):
+        print('Reading ' + filenm)
+        with xray.open_dataset(filenm) as ds:
+            if nms is not None:
+                ds_out = ds[nms].load()
+            else:
+                ds_out = ds.load()
+        return ds_out
+    
+    # Sum the variables from each file and divide by number of files    
+    for i, filenm in enumerate(files):
+        if i == 0:
+            ds_out = load_file(filenm, nms)
+        else:
+            ds_out = ds_out + load_file(filenm, nms)
+    ds_out = ds_out / float(len(files))
+    
+    return ds_out
+    
+    
 
 # ======================================================================
 # LAT-LON GEOPHYSICAL DATA

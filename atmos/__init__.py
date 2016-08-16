@@ -60,6 +60,7 @@ from data import (
     ncload,
     load_concat,
     save_nc,
+    mean_over_files,
     pres_units,
     pres_convert,
     precip_units,
