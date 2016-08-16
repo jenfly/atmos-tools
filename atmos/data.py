@@ -792,25 +792,23 @@ def mean_over_files(files, nms=None):
         Dataset of variables averaged over all the input files.    
     """
     
-    def load_file(filenm, nms):
+    # Initialize with first file
+    print('Reading ' + files[0])
+    with xray.open_dataset(files[0]) as ds:
+        if nms is None:
+            nms = ds.data_vars.keys()
+        ds_out = ds[nms].load()  
+    
+    # Sum the variables from each subsequent file
+    for i, filenm in enumerate(files[1:]):
         print('Reading ' + filenm)
         with xray.open_dataset(filenm) as ds:
-            if nms is not None:
-                ds_out = ds[nms].load()
-            else:
-                ds_out = ds.load()
-        return ds_out
-    
-    # Sum the variables from each file and divide by number of files    
-    for i, filenm in enumerate(files):
-        if i == 0:
-            ds_out = load_file(filenm, nms)
-        else:
-            ds_out = ds_out + load_file(filenm, nms)
+            ds_out = ds_out + ds[nms]
+
+    # Divide by number of files for mean
     ds_out = ds_out / float(len(files))
     
-    return ds_out
-    
+    return ds_out  
     
 
 # ======================================================================
