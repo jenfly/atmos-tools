@@ -804,6 +804,7 @@ def mean_over_files(files, nms=None):
         print('Reading ' + filenm)
         with xray.open_dataset(filenm) as ds:
             ds_out = ds_out + ds[nms]
+            ds_out.load()
 
     # Divide by number of files for mean
     ds_out = ds_out / float(len(files))
