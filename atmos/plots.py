@@ -248,12 +248,16 @@ def colorbar_symm(**kwargs):
 
 # ----------------------------------------------------------------------
 def init_latlon(lat1=-90, lat2=90, lon1=0, lon2=360, fancy=True,
-                resolution='c', **kwargs):
+                resolution='c', coastlines=True, fillcontinents=False,
+                **kwargs):
     """Initialize lon-lat plot and return as a Basemap object."""
 
     m = Basemap(llcrnrlon=lon1, llcrnrlat=lat1, urcrnrlon=lon2, urcrnrlat=lat2,
                 resolution=resolution, **kwargs)
-    m.drawcoastlines()
+    if coastlines:
+        m.drawcoastlines()
+    if fillcontinents:
+        m.fillcontinents()
     xticks = autoticks('lon', lon1, lon2)
     yticks = autoticks('lat', lat1, lat2)
     if fancy:
