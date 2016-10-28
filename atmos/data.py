@@ -547,7 +547,12 @@ def dim_mean(data, dimname, lower=None, upper=None, minfrac=0.5):
     """
 
     def one_variable(var, dimname, dimvals, minfrac):
-        axis = get_coord(var, dimname, 'dim')
+        try:
+            axis = get_coord(var, dimname, 'dim')
+        except ValueError:
+            # Dimension isn't in the data variable
+            return var
+            
         attrs = var.attrs
         attrs['avg_over_' + dimname] = dimvals
         attrs['minfrac'] = minfrac
