@@ -573,7 +573,11 @@ def dim_mean(data, dimname, lower=None, upper=None, minfrac=0.5):
         return var_out
 
     if dimname not in data.dims:
-        dimname = get_coord(data, dimname, 'name')
+        try:
+            dimname = get_coord(data, dimname, 'name')
+        except ValueError:
+            # Dimension isn't in the data variable
+            return data
 
     if lower is not None:
         data = subset(data, {dimname : (lower, upper)}, copy=False)
