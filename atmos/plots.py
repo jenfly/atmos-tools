@@ -291,7 +291,7 @@ def geobox(lat1, lat2, lon1, lon2, m=None, color='blue', linewidth=2,
 
 # ----------------------------------------------------------------------
 def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
-                  axlims=None, fancy=True):
+                  axlims=None, fancy=True, **kwargs):
     """Create a pseudo-color plot of geo data.
 
     Parameters
@@ -312,6 +312,8 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
         data range is used.
     fancy : bool, optional
         If True, init_latlon will label axes with fancy lat-lon labels.
+    **kwargs : keyword arguments, optional
+        Additional keyword arguments to plt.pcolormesh().
 
     Returns
     -------
@@ -340,7 +342,7 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
 
     if m is None:
         m = init_latlon(lat1, lat2, lon1, lon2, fancy)
-    pc = m.pcolormesh(x, y, vals_plot, cmap=cmap, latlon=True)
+    pc = m.pcolormesh(x, y, vals_plot, cmap=cmap, latlon=True, **kwargs)
     cb = m.colorbar()
     plt.draw()
     return m, pc, cb
