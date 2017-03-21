@@ -9,7 +9,7 @@ Functions for atmospheric data analysis.
 from __future__ import division
 import numpy as np
 import collections
-import xray
+import xarray as xray
 import pandas as pd
 import matplotlib.pyplot as plt
 import scipy.stats

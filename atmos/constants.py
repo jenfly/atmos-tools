@@ -1,6 +1,6 @@
 from __future__ import division
 import numpy as np
-import xray
+import xarray as xray
 
 hart = 'Global Physical Climatology, by Dennis Hartmann, 1994'
 

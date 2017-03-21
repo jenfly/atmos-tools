@@ -2,7 +2,7 @@
 
 from __future__ import division
 import numpy as np
-import xray
+import xarray as xray
 import atmos.utils as utils
 import atmos.data as dat
 import atmos.xrhelper as xr

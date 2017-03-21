@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from mpl_toolkits.basemap import Basemap
-import xray
+import xarray as xray
 from datetime import datetime
 import statsmodels.api as sm
 import scipy.signal as signal

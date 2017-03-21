@@ -13,8 +13,8 @@ import pandas as pd
 import collections
 import scipy.interpolate as interp
 from mpl_toolkits import basemap
-import xray
-from xray import Dataset
+import xarray as xray
+from xarray import Dataset
 import time
 
 from atmos.utils import print_if, disptime

@@ -5,8 +5,8 @@ Utility functions for xray DataArrays and Dataset.
 from __future__ import division
 import numpy as np
 import collections
-import xray
-from xray import Dataset
+import xarray as xray
+from xarray import Dataset
 
 from atmos.utils import print_if, disptime
 import atmos.utils as utils

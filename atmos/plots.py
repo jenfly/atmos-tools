@@ -7,7 +7,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
-import xray
+import xarray as xray
 from atmos.utils import print_if
 import atmos.data as dat
 import atmos.utils as utils
