@@ -175,7 +175,7 @@ def nantrapz(y, x=None, axis=-1):
 
 
 # ----------------------------------------------------------------------
-def rolling_mean(data, nroll, axis=-1, center=False, **kwargs):
+def rolling_mean(data, nroll, axis=-1, center=True, **kwargs):
     """Return the rolling mean along an axis.
 
     Parameters
