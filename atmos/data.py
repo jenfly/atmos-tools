@@ -196,7 +196,7 @@ def rolling_mean(data, nroll, axis=-1, center=True, **kwargs):
     rolling : ndarray or DataArray
         Rolling mean data.
     """
-    debug = True
+
     # Maximum number of dimensions handled by this code
     nmax = 5
     ndim = data.ndim
@@ -211,9 +211,6 @@ def rolling_mean(data, nroll, axis=-1, center=True, **kwargs):
         vals = data
 
     # Roll axis to end
-    if debug:
-        print(axis)
-        print(ndim)
     vals = np.rollaxis(vals, axis, ndim)
 
     # Add singleton dimensions for looping, if necessary
