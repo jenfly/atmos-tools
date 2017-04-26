@@ -196,7 +196,7 @@ def rolling_mean(data, nroll, axis=-1, center=True, **kwargs):
     rolling : ndarray or DataArray
         Rolling mean data.
     """
-
+    debug = True
     # Maximum number of dimensions handled by this code
     nmax = 5
     ndim = data.ndim
@@ -211,6 +211,9 @@ def rolling_mean(data, nroll, axis=-1, center=True, **kwargs):
         vals = data
 
     # Roll axis to end
+    if debug:
+        print(axis)
+        print(ndim)
     vals = np.rollaxis(vals, axis, ndim)
 
     # Add singleton dimensions for looping, if necessary
@@ -552,7 +555,7 @@ def dim_mean(data, dimname, lower=None, upper=None, minfrac=0.5):
         except ValueError:
             # Dimension isn't in the data variable
             return var
-            
+
         attrs = var.attrs
         attrs['avg_over_' + dimname] = dimvals
         attrs['minfrac'] = minfrac
@@ -786,7 +789,7 @@ def save_nc(filename, *args):
 # ----------------------------------------------------------------------
 def mean_over_files(files, nms=None):
     """Return data averaged over all input files.
-    
+
     Parameters
     ----------
     files : list of str
@@ -794,20 +797,20 @@ def mean_over_files(files, nms=None):
     nms : list of str, optional
         Subset of data variables to include.  If None, then all data
         variables are included.
-        
+
     Returns
     -------
     ds_out : xray.Dataset
-        Dataset of variables averaged over all the input files.    
+        Dataset of variables averaged over all the input files.
     """
-    
+
     # Initialize with first file
     print('Reading ' + files[0])
     with xray.open_dataset(files[0]) as ds:
         if nms is None:
             nms = ds.data_vars.keys()
-        ds_out = ds[nms].load()  
-    
+        ds_out = ds[nms].load()
+
     # Sum the variables from each subsequent file
     for i, filenm in enumerate(files[1:]):
         print('Reading ' + filenm)
@@ -817,9 +820,9 @@ def mean_over_files(files, nms=None):
 
     # Divide by number of files for mean
     ds_out = ds_out / float(len(files))
-    
-    return ds_out  
-    
+
+    return ds_out
+
 
 # ======================================================================
 # LAT-LON GEOPHYSICAL DATA
@@ -882,7 +885,7 @@ def set_lon(data, lonmax=360, lon=None, lonname=None):
     """
 
     if isinstance(data, xray.DataArray):
-        lon = get_coord(data, 'lon')        
+        lon = get_coord(data, 'lon')
         if lonname is None:
             lonname = get_coord(data, 'lon', 'name')
         name, attrs, coords, _ = xr.meta(data)
