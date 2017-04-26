@@ -584,6 +584,7 @@ def disptime(fmt=None):
     now = (fmt % (now.month, now.day, now.year, now.hour, now.minute,
            now.second))
     print(now)
+    return now
 
 
 # ----------------------------------------------------------------------
