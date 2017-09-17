@@ -885,7 +885,7 @@ def set_lon(data, lonmax=360, lon=None, lonname=None):
         lon = get_coord(data, 'lon')
         if lonname is None:
             lonname = get_coord(data, 'lon', 'name')
-        name, attrs, coords, _ = xr.meta(data)
+        name, attrs, coords, dims_list = xr.meta(data)
         vals = data.values
     else:
         vals = data
@@ -902,8 +902,8 @@ def set_lon(data, lonmax=360, lon=None, lonname=None):
 
     if isinstance(data, xray.DataArray):
         coords[lonname].values = lon_out
-        data_out = xray.DataArray(vals_out, name=name, coords=coords,
-                                  attrs=attrs)
+        data_out = xray.DataArray(vals_out, name=name, dims=dims_list,
+                                  coords=coords, attrs=attrs)
         return data_out
     else:
         return vals_out, lon_out
@@ -959,11 +959,11 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
         latname = get_coord(data, 'lat', 'name')
         lon_in = get_coord(data, 'lon')
         lonname = get_coord(data, 'lon', 'name')
-        name, attrs, coords, _ = xr.meta(data)
+        name, attrs, coords, dims_list = xr.meta(data)
         coords[latname] = xray.DataArray(lat_out, coords={latname : lat_out},
-                                         attrs=data[latname].attrs)
+                                         dims=[latname], attrs=data[latname].attrs)
         coords[lonname] = xray.DataArray(lon_out, coords={lonname : lon_out},
-                                         attrs=data[lonname].attrs)
+                                         dims=[lonname], attrs=data[lonname].attrs)
         vals = data.values.copy()
     else:
         vals = data
@@ -1010,7 +1010,7 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
 
     if isinstance(data, xray.DataArray):
         data_out = xray.DataArray(vals_out, name=name, coords=coords,
-                                  attrs=attrs)
+                                  dims=dims_list, attrs=attrs)
     else:
         data_out = vals_out
 
@@ -1053,7 +1053,7 @@ def mask_oceans(data, lat=None, lon=None, inlands=True, resolution='l',
     if isinstance(data, xray.DataArray):
         lat = get_coord(data, 'lat')
         lon = get_coord(data, 'lon')
-        name, attrs, coords, _ = xr.meta(data)
+        name, attrs, coords, dims_list = xr.meta(data)
         vals = data.values.copy()
     else:
         vals = data
@@ -1094,7 +1094,7 @@ def mask_oceans(data, lat=None, lon=None, inlands=True, resolution='l',
 
     if isinstance(data, xray.DataArray):
         data_out = xray.DataArray(vals_out, name=name, coords=coords,
-                                  attrs=attrs)
+                                  dims=dims_list, attrs=attrs)
     else:
         data_out = vals_out
 
