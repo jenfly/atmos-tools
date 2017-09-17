@@ -39,7 +39,8 @@ def format_num(x, ndecimals=2, plus_sym=False):
 # ======================================================================
 
 # ----------------------------------------------------------------------
-def homedir(options=['/home/jennifer/', '/home/jwalker/']):
+def homedir(options=['/home/jennifer/', '/home/jwalker/',
+            'C:/Users/jenfl/']):
     """Return home directory for this computer."""
 
     home = None
