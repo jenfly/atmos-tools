@@ -10,7 +10,6 @@ setup(name='atmos',
       packages=['atmos'],
       install_requires=[
           'basemap',
-          'datetime',
           'matplotlib',
           'numpy',
           'pandas',
