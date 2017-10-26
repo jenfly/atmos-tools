@@ -5,7 +5,7 @@ import numpy as np
 import xarray as xray
 import atmos.utils as utils
 import atmos.data as dat
-import atmos.xrhelper as xr
+import atmos.xrhelper as xrh
 from atmos.constants import const as constants
 from atmos.data import get_coord
 
@@ -60,7 +60,7 @@ def divergence_spherical_2d(Fx, Fy, lat=None, lon=None):
 
     if isinstance(Fx, xray.DataArray):
         i_DataArray = True
-        name, attrs, coords, _ = xr.meta(Fx)
+        name, attrs, coords, _ = xrh.meta(Fx)
         if lat is None:
             lat = get_coord(Fx, 'lat')
         if lon is None:
@@ -421,7 +421,7 @@ def streamfunction(v, lat=None, pres=None, pdim=None, scale=1e-9,
 
     if isinstance(v, xray.DataArray):
         i_DataArray = True
-        name, attrs, coords, _ = xr.meta(v)
+        name, attrs, coords, _ = xrh.meta(v)
         if lat is None:
             lat = dat.get_coord(v, 'lat')
         if pres is None:

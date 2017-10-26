@@ -19,7 +19,7 @@ import time
 
 from atmos.utils import print_if, disptime
 import atmos.utils as utils
-import atmos.xrhelper as xr
+import atmos.xrhelper as xrh
 from atmos.constants import const as constants
 
 # ======================================================================
@@ -205,7 +205,7 @@ def rolling_mean(data, nroll, axis=-1, center=True, **kwargs):
         raise ValueError('Input data has too many dimensions. Max 5-D.')
 
     if isinstance(data, xray.DataArray):
-        name, attrs, coords, dimnames = xr.meta(data)
+        name, attrs, coords, dimnames = xrh.meta(data)
         vals = data.values.copy()
     else:
         vals = data
@@ -268,7 +268,7 @@ def gradient(data, vec, axis=-1):
         raise ValueError('Input data has too many dimensions. Max 5-D.')
 
     if isinstance(data, xray.DataArray):
-        name, attrs, coords, dimnames = xr.meta(data)
+        name, attrs, coords, dimnames = xrh.meta(data)
         vals = data.values.copy()
     else:
         vals = data
@@ -362,7 +362,7 @@ def precip_convert(precip, units_in, units_out):
     """Convert precipitation from units_in to units_out."""
 
     if isinstance(precip, xray.DataArray):
-        name, attrs, coords, dims = xr.meta(precip)
+        name, attrs, coords, dims = xrh.meta(precip)
         attrs['units'] = units_out
         i_DataArray = True
     else:
@@ -521,7 +521,7 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True, search=True,
                 dim_name_new = get_coord(data, dim_name, 'name')
                 subset_dict[dim_name_new] = subset_dict.pop(dim_name)
 
-    return xr.subset(data, subset_dict, incl_lower, incl_upper, copy, squeeze)
+    return xrh.subset(data, subset_dict, incl_lower, incl_upper, copy, squeeze)
 
 
 # ----------------------------------------------------------------------
@@ -565,7 +565,7 @@ def dim_mean(data, dimname, lower=None, upper=None, minfrac=0.5):
 
         # Compute mean and apply mask
         var = var.mean(dim=dimname)
-        name, _, coords, dims = xr.meta(var)
+        name, _, coords, dims = xrh.meta(var)
         vals = np.ma.masked_array(var.values, mask).filled(np.nan)
         var_out = xray.DataArray(vals, name=name, attrs=attrs, dims=dims,
                                  coords=coords)
@@ -605,7 +605,7 @@ def ncdisp(filename, verbose=True, decode_cf=False, indent=2, width=None):
     """Display the attributes of data in a netcdf file."""
     with xray.open_dataset(filename, decode_cf=decode_cf) as ds:
         if verbose:
-            xr.ds_print(ds, indent, width)
+            xrh.ds_print(ds, indent, width)
         else:
             print(ds)
 
@@ -622,10 +622,10 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
     """
     with xray.open_dataset(filename, decode_cf=decode_cf) as ds:
         print_if('****** Reading file: ' + filename + '********', verbose)
-        print_if(ds, verbose, printfunc=xr.ds_print)
+        print_if(ds, verbose, printfunc=xrh.ds_print)
         if unpack:
             print_if('****** Unpacking data *********', verbose)
-            ds = xr.ds_unpack(ds, verbose=verbose, missing_name=missing_name,
+            ds = xrh.ds_unpack(ds, verbose=verbose, missing_name=missing_name,
                 offset_name=offset_name, scale_name=scale_name)
 
         # Use the load() function so that the dataset is available after
@@ -750,7 +750,7 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
     print_if(None, verbose, printfunc=disptime)
 
     if squeeze:
-        data = xr.squeeze(data)
+        data = xrh.squeeze(data)
 
     if len(data.data_vars) == 1:
         # Convert from Dataset to DataArray for output
@@ -778,7 +778,7 @@ def save_nc(filename, *args):
         List of xray.DataArrays with compatible coordinates.
     """
 
-    ds = xr.vars_to_dataset(*args)
+    ds = xrh.vars_to_dataset(*args)
     ds.to_netcdf(filename)
     return None
 
@@ -885,7 +885,7 @@ def set_lon(data, lonmax=360, lon=None, lonname=None):
         lon = get_coord(data, 'lon')
         if lonname is None:
             lonname = get_coord(data, 'lon', 'name')
-        name, attrs, coords, dims_list = xr.meta(data)
+        name, attrs, coords, dims_list = xrh.meta(data)
         vals = data.values
     else:
         vals = data
@@ -959,7 +959,7 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
         latname = get_coord(data, 'lat', 'name')
         lon_in = get_coord(data, 'lon')
         lonname = get_coord(data, 'lon', 'name')
-        name, attrs, coords, dims_list = xr.meta(data)
+        name, attrs, coords, dims_list = xrh.meta(data)
         coords[latname] = xray.DataArray(lat_out, coords={latname : lat_out},
                                          dims=[latname], attrs=data[latname].attrs)
         coords[lonname] = xray.DataArray(lon_out, coords={lonname : lon_out},
@@ -1053,7 +1053,7 @@ def mask_oceans(data, lat=None, lon=None, inlands=True, resolution='l',
     if isinstance(data, xray.DataArray):
         lat = get_coord(data, 'lat')
         lon = get_coord(data, 'lon')
-        name, attrs, coords, dims_list = xr.meta(data)
+        name, attrs, coords, dims_list = xrh.meta(data)
         vals = data.values.copy()
     else:
         vals = data
@@ -1134,14 +1134,14 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
             raise ValueError('Latitude and longitude arrays must be provided '
                 'if data is not an xray.DataArray.')
         latname, lonname = 'lat', 'lon'
-        coords = xr.coords_init(data)
-        coords = xr.coords_assign(coords, -1, lonname, lon)
-        coords = xr.coords_assign(coords, -2, latname, lat)
+        coords = xrh.coords_init(data)
+        coords = xrh.coords_assign(coords, -1, lonname, lon)
+        coords = xrh.coords_assign(coords, -2, latname, lat)
         data_out = xray.DataArray(data, coords=coords)
         attrs = {}
     else:
         data_out = data
-        name, attrs, coords, _ = xr.meta(data)
+        name, attrs, coords, _ = xrh.meta(data)
         latname = get_coord(data, 'lat', 'name')
         lonname = get_coord(data, 'lon', 'name')
         lon = get_coord(data, 'lon')
@@ -1271,7 +1271,7 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
     if isinstance(data, xray.DataArray):
         lat = get_coord(data, 'lat')
         lon = get_coord(data, 'lon')
-        name, attrs, coords, _ = xr.meta(data)
+        name, attrs, coords, _ = xrh.meta(data)
         vals = data.values.copy()
         # -- Pressure levels in Pascals
         plev = get_coord(data, 'plev')
@@ -1343,7 +1343,7 @@ def near_surface(data, pdim=-3, return_inds=False):
     if isinstance(data, xray.DataArray):
         i_DataArray = True
         data = data.copy()
-        name, attrs, coords, _ = xr.meta(data)
+        name, attrs, coords, _ = xrh.meta(data)
         title = 'Near-surface data extracted from pressure level data'
         attrs = utils.odict_insert(attrs, 'title', title, pos=0)
         pname = get_coord(data, 'plev', 'name')
@@ -1435,7 +1435,7 @@ def interp_plevels(data, plev_new, plev_in=None, pdim=-3, kind='linear'):
     if isinstance(data, xray.DataArray):
         i_DataArray = True
         data = data.copy()
-        name, attrs, coords, _ = xr.meta(data)
+        name, attrs, coords, _ = xrh.meta(data)
         title = 'Pressure-level data interpolated onto new pressure grid'
         attrs = utils.odict_insert(attrs, 'title', title, pos=0)
         pname = get_coord(data, 'plev', 'name')
@@ -1522,7 +1522,7 @@ def int_pres(data, plev=None, pdim=-3, pmin=0, pmax=1e6):
     if isinstance(data, xray.DataArray):
         i_DataArray = True
         data = data.copy()
-        name, _, coords, _ = xr.meta(data)
+        name, _, coords, _ = xrh.meta(data)
         attrs = collections.OrderedDict()
         title = 'Vertically integrated by dp/g'
         attrs['title'] = title
@@ -1541,8 +1541,8 @@ def int_pres(data, plev=None, pdim=-3, pmin=0, pmax=1e6):
         i_DataArray = False
         # Pack into DataArray to easily extract pressure level subset
         pname = 'plev'
-        coords = xr.coords_init(data)
-        coords = xr.coords_assign(coords, pdim, pname, plev)
+        coords = xrh.coords_init(data)
+        coords = xrh.coords_assign(coords, pdim, pname, plev)
         data = xray.DataArray(data, coords=coords)
 
     # Extract subset and integrate
@@ -1604,7 +1604,7 @@ def split_timedim(data, n, slowfast=True, timename=None, time0_name='time0',
         i_DataArray = True
         if timename is None:
             timename = get_coord(data, 'time', 'name')
-        name, attrs, coords, dim_names = xr.meta(data)
+        name, attrs, coords, dim_names = xrh.meta(data)
         dim_names = list(dim_names)
         dim_names.remove(timename)
         coords = utils.odict_delete(coords, timename)
@@ -1700,7 +1700,7 @@ def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
                 raise ValueError(msg % (method, n))
         elif isinstance(method, str) and method.lower() == 'mean':
             if isinstance(data, xray.DataArray):
-                _, attrs, _, _ = xr.meta(data)
+                _, attrs, _, _ = xrh.meta(data)
                 data_out = data_out.mean(axis=0)
                 data_out.attrs = attrs
             else:

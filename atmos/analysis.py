@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 import scipy.stats
 
 import atmos.utils as utils
-import atmos.xrhelper as xr
+import atmos.xrhelper as xrh
 
 # ======================================================================
 # SPECTRAL ANALYSIS
@@ -341,7 +341,7 @@ def regress_field(data, index, axis=-1):
         raise ValueError('Input data has too many dimensions. Max 5-D.')
 
     if isinstance(data, xray.DataArray):
-        name, attrs, coords, dimnames = xr.meta(data)
+        name, attrs, coords, dimnames = xrh.meta(data)
         coords = utils.odict_delete(coords, dimnames[axis])
         dimnames = list(dimnames)
         dimnames.pop(axis)
