@@ -13,7 +13,7 @@ import pandas as pd
 import collections
 import scipy.interpolate as interp
 from mpl_toolkits import basemap
-import xarray as xray
+import xarray as xr
 from xarray import Dataset
 import time
 
@@ -23,7 +23,7 @@ import atmos.xrhelper as xrh
 from atmos.constants import const as constants
 
 # ======================================================================
-# NDARRAYS AND XRAY.DATAARRAYS
+# NDARRAYS AND xr.DATAARRAYS
 # ======================================================================
 
 # ----------------------------------------------------------------------
@@ -180,7 +180,7 @@ def rolling_mean(data, nroll, axis=-1, center=True, **kwargs):
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
+    data : ndarray or xr.DataArray
         Input data.
     nroll : int
         Size of window for rolling mean.
@@ -204,7 +204,7 @@ def rolling_mean(data, nroll, axis=-1, center=True, **kwargs):
     if ndim > 5:
         raise ValueError('Input data has too many dimensions. Max 5-D.')
 
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         name, attrs, coords, dimnames = xrh.meta(data)
         vals = data.values.copy()
     else:
@@ -236,8 +236,8 @@ def rolling_mean(data, nroll, axis=-1, center=True, **kwargs):
     # Roll axis back to its original position
     rolling = np.rollaxis(rolling, -1, axis)
 
-    if isinstance(data, xray.DataArray):
-        rolling = xray.DataArray(rolling, name=name, coords=coords,
+    if isinstance(data, xr.DataArray):
+        rolling = xr.DataArray(rolling, name=name, coords=coords,
                                  dims=dimnames, attrs=attrs)
 
     return rolling
@@ -249,7 +249,7 @@ def gradient(data, vec, axis=-1):
 
     Parameters
     ----------
-    data : np.ndarray or xray.DataArray
+    data : np.ndarray or xr.DataArray
         Input data.
     vec : 1-dimensional np.ndarray
         Array of coordinates corresponding to axis of differentiation.
@@ -258,7 +258,7 @@ def gradient(data, vec, axis=-1):
 
     Returns
     -------
-    grad : np.ndarray or xray.DataArray
+    grad : np.ndarray or xr.DataArray
     """
     # Maximum number of dimensions handled by this code
     nmax = 5
@@ -267,7 +267,7 @@ def gradient(data, vec, axis=-1):
     if ndim > 5:
         raise ValueError('Input data has too many dimensions. Max 5-D.')
 
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         name, attrs, coords, dimnames = xrh.meta(data)
         vals = data.values.copy()
     else:
@@ -299,8 +299,8 @@ def gradient(data, vec, axis=-1):
     # Roll axis back to its original position
     grad = np.rollaxis(grad, -1, axis)
 
-    if isinstance(data, xray.DataArray):
-        grad = xray.DataArray(grad, coords=coords, dims=dimnames)
+    if isinstance(data, xr.DataArray):
+        grad = xr.DataArray(grad, coords=coords, dims=dimnames)
 
     return grad
 
@@ -361,7 +361,7 @@ def precip_units(units):
 def precip_convert(precip, units_in, units_out):
     """Convert precipitation from units_in to units_out."""
 
-    if isinstance(precip, xray.DataArray):
+    if isinstance(precip, xr.DataArray):
         name, attrs, coords, dims = xrh.meta(precip)
         attrs['units'] = units_out
         i_DataArray = True
@@ -385,7 +385,7 @@ def precip_convert(precip, units_in, units_out):
         raise ValueError(msg % (units_in, units_out))
 
     if i_DataArray:
-        precip_out = xray.DataArray(precip_out, name=name, dims=dims,
+        precip_out = xr.DataArray(precip_out, name=name, dims=dims,
                                     coords=coords, attrs=attrs)
 
     return precip_out
@@ -401,7 +401,7 @@ def get_coord(data, coord_name, return_type='values'):
 
     Parameters
     ----------
-    data : xray.DataArray
+    data : xr.DataArray
         Data array to search for latitude coords.
     coord_name : str
         Coordinate to extract.  Can be the exact ID of the variable or
@@ -481,7 +481,7 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True, search=True,
 
     Parameters
     ----------
-    data : xray.DataArray or xray.Dataset
+    data : xr.DataArray or xr.Dataset
         Data source for extraction.
     subset_dict : dict of 2-tuples
         Dimensions and subsets to extract.  Each entry in subset_dict
@@ -511,7 +511,7 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True, search=True,
 
     Returns
     -------
-        sub : xray.DataArray or xray.Dataset
+        sub : xr.DataArray or xr.Dataset
     """
 
     if search:
@@ -530,7 +530,7 @@ def dim_mean(data, dimname, lower=None, upper=None, minfrac=0.5):
 
     Parameters
     ----------
-    data : xray.DataArray or xray.Dataset
+    data : xr.DataArray or xr.Dataset
         Data to average.
     dimname : str
         Dimension to average along.  Can be a generic name (e.g. 'lon')
@@ -543,7 +543,7 @@ def dim_mean(data, dimname, lower=None, upper=None, minfrac=0.5):
 
     Returns
     -------
-    databar : xray.DataArray or xray.Dataset
+    databar : xr.DataArray or xr.Dataset
     """
 
     def one_variable(var, dimname, dimvals, minfrac):
@@ -567,7 +567,7 @@ def dim_mean(data, dimname, lower=None, upper=None, minfrac=0.5):
         var = var.mean(dim=dimname)
         name, _, coords, dims = xrh.meta(var)
         vals = np.ma.masked_array(var.values, mask).filled(np.nan)
-        var_out = xray.DataArray(vals, name=name, attrs=attrs, dims=dims,
+        var_out = xr.DataArray(vals, name=name, attrs=attrs, dims=dims,
                                  coords=coords)
 
         return var_out
@@ -583,15 +583,15 @@ def dim_mean(data, dimname, lower=None, upper=None, minfrac=0.5):
         data = subset(data, {dimname : (lower, upper)}, copy=False)
 
     dimvals = get_coord(data, coord_name=dimname)
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         databar = one_variable(data, dimname, dimvals, minfrac)
-    elif isinstance(data, xray.Dataset):
-        databar = xray.Dataset()
+    elif isinstance(data, xr.Dataset):
+        databar = xr.Dataset()
         databar.attrs = data.attrs
         for nm in data.data_vars:
             databar[nm] = one_variable(data[nm], dimname, dimvals, minfrac)
     else:
-        raise ValueError('Input data must be xray.DataArray or xray.Dataset')
+        raise ValueError('Input data must be xr.DataArray or xr.Dataset')
 
     return databar
 
@@ -603,7 +603,7 @@ def dim_mean(data, dimname, lower=None, upper=None, minfrac=0.5):
 # ----------------------------------------------------------------------
 def ncdisp(filename, verbose=True, decode_cf=False, indent=2, width=None):
     """Display the attributes of data in a netcdf file."""
-    with xray.open_dataset(filename, decode_cf=decode_cf) as ds:
+    with xr.open_dataset(filename, decode_cf=decode_cf) as ds:
         if verbose:
             xrh.ds_print(ds, indent, width)
         else:
@@ -615,12 +615,12 @@ def ncload(filename, verbose=True, unpack=True, missing_name=u'missing_value',
            offset_name=u'add_offset', scale_name=u'scale_factor',
            decode_cf=False):
     """
-    Read data from netcdf file into xray dataset.
+    Read data from netcdf file into xr dataset.
 
     If options are selected, unpacks from compressed form and/or replaces
-    missing values with NaN.  Returns data as an xray.Dataset object.
+    missing values with NaN.  Returns data as an xr.Dataset object.
     """
-    with xray.open_dataset(filename, decode_cf=decode_cf) as ds:
+    with xr.open_dataset(filename, decode_cf=decode_cf) as ds:
         print_if('****** Reading file: ' + filename + '********', verbose)
         print_if(ds, verbose, printfunc=xrh.ds_print)
         if unpack:
@@ -683,7 +683,7 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
 
     Returns:
     --------
-    data : xray.DataArray or xray.Dataset
+    data : xr.DataArray or xr.Dataset
         Data extracted from input files.
     """
 
@@ -696,7 +696,7 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
         var_ids = utils.makelist(var_ids)
 
     def get_data(path, var_ids, subset_dict, func, func_args, func_kw):
-        with xray.open_dataset(path) as ds:
+        with xr.open_dataset(path) as ds:
             if var_ids is None:
                 # All variables
                 data = ds
@@ -706,14 +706,14 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
             if subset_dict is not None:
                 data = subset(data, subset_dict, copy=False)
             if func is not None:
-                data_out = xray.Dataset()
+                data_out = xr.Dataset()
                 if func_args is None:
                     func_args = []
                 if func_kw is None:
                     func_kw = {}
                 for nm in data.data_vars:
                     vars_out = func(data[nm], *func_args, **func_kw)
-                    if not isinstance(vars_out, xray.Dataset):
+                    if not isinstance(vars_out, xr.Dataset):
                         vars_out = vars_out.to_dataset()
                     for nm2 in vars_out.data_vars:
                         data_out[nm2] = vars_out[nm2]
@@ -746,7 +746,7 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
                     raise err
 
     print_if('Concatenating data', verbose)
-    data = xray.concat(pieces, dim=concat_dim)
+    data = xr.concat(pieces, dim=concat_dim)
     print_if(None, verbose, printfunc=disptime)
 
     if squeeze:
@@ -761,7 +761,7 @@ def load_concat(paths, var_ids=None, concat_dim='TIME', subset_dict=None,
 
 # ----------------------------------------------------------------------
 def save_nc(filename, *args):
-    """Save xray.DataArray variables to a netcdf file.
+    """Save xr.DataArray variables to a netcdf file.
 
     Call Signatures
     ---------------
@@ -774,8 +774,8 @@ def save_nc(filename, *args):
     ----------
     filename : string
         File path for saving.
-    var1, var2, ... : xray.DataArrays
-        List of xray.DataArrays with compatible coordinates.
+    var1, var2, ... : xr.DataArrays
+        List of xr.DataArrays with compatible coordinates.
     """
 
     ds = xrh.vars_to_dataset(*args)
@@ -797,13 +797,13 @@ def mean_over_files(files, nms=None):
 
     Returns
     -------
-    ds_out : xray.Dataset
+    ds_out : xr.Dataset
         Dataset of variables averaged over all the input files.
     """
 
     # Initialize with first file
     print('Reading ' + files[0])
-    with xray.open_dataset(files[0]) as ds:
+    with xr.open_dataset(files[0]) as ds:
         if nms is None:
             nms = ds.data_vars.keys()
         ds_out = ds[nms].load()
@@ -811,7 +811,7 @@ def mean_over_files(files, nms=None):
     # Sum the variables from each subsequent file
     for i, filenm in enumerate(files[1:]):
         print('Reading ' + filenm)
-        with xray.open_dataset(filenm) as ds:
+        with xr.open_dataset(filenm) as ds:
             ds_out = ds_out + ds[nms]
             ds_out.load()
 
@@ -858,14 +858,14 @@ def set_lon(data, lonmax=360, lon=None, lonname=None):
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
+    data : ndarray or xr.DataArray
         Input data array with longitude as the last dimension
     lonmax : int, optional
         Maximum longitude for output data.  Set to 360 for 0-360E,
         or set to 180 for 180W-180E.
     lon : 1-D ndarray or list, optional
         Longitudes of input data. Only used if data is an ndarray.
-        If data is an xray.DataArray, then lon = data['lon']
+        If data is an xr.DataArray, then lon = data['lon']
     lonname : string, optional
         Name of longitude coordinate in data, if data is a DataArray
 
@@ -875,13 +875,13 @@ def set_lon(data, lonmax=360, lon=None, lonname=None):
         data_out, lon_out : ndarray
             The data and longitude arrays shifted to the selected
             convention.
-    If argument data is an xray.DataArray:
-        data_out : xray.DataArray
+    If argument data is an xr.DataArray:
+        data_out : xr.DataArray
             DataArray object with data and longitude values shifted to
             the selected convention.
     """
 
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         lon = get_coord(data, 'lon')
         if lonname is None:
             lonname = get_coord(data, 'lon', 'name')
@@ -900,9 +900,9 @@ def set_lon(data, lonmax=360, lon=None, lonname=None):
 
     vals_out, lon_out = basemap.shiftgrid(lon0, vals, lon, start=start)
 
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         coords[lonname].values = lon_out
-        data_out = xray.DataArray(vals_out, name=name, dims=dims_list,
+        data_out = xr.DataArray(vals_out, name=name, dims=dims_list,
                                   coords=coords, attrs=attrs)
         return data_out
     else:
@@ -916,14 +916,14 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
+    data : ndarray or xr.DataArray
         Data to interpolate, with latitude as second-last dimension,
         longitude as last dimension.  Maximum array dimensions: 5-D.
     lat_out, lon_out : 1-D float or int array
         Latitude and longitudes to interpolate onto.
     lat_in, lon_in : 1-D float or int array, optional
         Latitude and longitude arrays of input data.  Only used if data
-        is an ndarray. If data is an xray.DataArray then
+        is an ndarray. If data is an xr.DataArray then
         lat_in = data['lat'] and lon_in = data['lon']
     checkbounds : bool, optional
         If True, values of lat_out and lon_out are checked to see
@@ -943,7 +943,7 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
 
     Returns
     -------
-    data_out : ndarray or xray.DataArray
+    data_out : ndarray or xr.DataArray
         Data interpolated onto lat_out, lon_out grid
     """
 
@@ -954,15 +954,15 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
     if ndim > 5:
         raise ValueError('Input data has too many dimensions. Max 5-D.')
 
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         lat_in = get_coord(data, 'lat')
         latname = get_coord(data, 'lat', 'name')
         lon_in = get_coord(data, 'lon')
         lonname = get_coord(data, 'lon', 'name')
         name, attrs, coords, dims_list = xrh.meta(data)
-        coords[latname] = xray.DataArray(lat_out, coords={latname : lat_out},
+        coords[latname] = xr.DataArray(lat_out, coords={latname : lat_out},
                                          dims=[latname], attrs=data[latname].attrs)
-        coords[lonname] = xray.DataArray(lon_out, coords={lonname : lon_out},
+        coords[lonname] = xr.DataArray(lon_out, coords={lonname : lon_out},
                                          dims=[lonname], attrs=data[lonname].attrs)
         vals = data.values.copy()
     else:
@@ -1008,8 +1008,8 @@ def interp_latlon(data, lat_out, lon_out, lat_in=None, lon_in=None,
         vals_out = vals_out[...,::-1, :]
         lat_out = lat_out[::-1]
 
-    if isinstance(data, xray.DataArray):
-        data_out = xray.DataArray(vals_out, name=name, coords=coords,
+    if isinstance(data, xr.DataArray):
+        data_out = xr.DataArray(vals_out, name=name, coords=coords,
                                   dims=dims_list, attrs=attrs)
     else:
         data_out = vals_out
@@ -1024,12 +1024,12 @@ def mask_oceans(data, lat=None, lon=None, inlands=True, resolution='l',
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
+    data : ndarray or xr.DataArray
         Data to mask, with latitude as second-last dimension,
         longitude as last dimension.  Maximum array dimensions: 5-D.
     lat, lon : ndarray, optional
         Latitude and longitude arrays.  Only used if data is an
-        ndarray and not an xray.DataArray.
+        ndarray and not an xr.DataArray.
     inlands : bool, optional
         If False, mask only ocean points and not inland lakes.
     resolution : {'c','l','i','h', 'f'}, optional
@@ -1039,7 +1039,7 @@ def mask_oceans(data, lat=None, lon=None, inlands=True, resolution='l',
 
     Returns
     -------
-    data_out : ndarray or xray.DataArray
+    data_out : ndarray or xr.DataArray
         Data with ocean grid points set to NaN.
     """
 
@@ -1050,7 +1050,7 @@ def mask_oceans(data, lat=None, lon=None, inlands=True, resolution='l',
     if ndim > 5:
         raise ValueError('Input data has too many dimensions. Max 5-D.')
 
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         lat = get_coord(data, 'lat')
         lon = get_coord(data, 'lon')
         name, attrs, coords, dims_list = xrh.meta(data)
@@ -1092,8 +1092,8 @@ def mask_oceans(data, lat=None, lon=None, inlands=True, resolution='l',
     if lonmax == 360:
         vals_out, lon = set_lon(vals_out, lonmax=lonmax, lon=lon)
 
-    if isinstance(data, xray.DataArray):
-        data_out = xray.DataArray(vals_out, name=name, coords=coords,
+    if isinstance(data, xr.DataArray):
+        data_out = xr.DataArray(vals_out, name=name, coords=coords,
                                   dims=dims_list, attrs=attrs)
     else:
         data_out = vals_out
@@ -1108,7 +1108,7 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
+    data : ndarray or xr.DataArray
         Data to average, with latitude as second-last dimension and
         longitude as last dimension.
     lat1, lat2, lon1, lon2 : float
@@ -1116,7 +1116,7 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
         lon1 <= lon2 and lat1 <= lat2.
     lat, lon : ndarray, optional
         Latitude and longitude arrays.  Only used if data is an
-        ndarray and not an xray.DataArray.
+        ndarray and not an xr.DataArray.
     area_wtd : bool, optional
         Return the area-weighted average (weighted by cos(lat))
     land_only : bool, optional
@@ -1125,19 +1125,19 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
 
     Returns
     -------
-    avg : ndarray or xray.DataArray
+    avg : ndarray or xr.DataArray
         The data averaged over the lat-lon region.
     """
 
-    if not isinstance(data, xray.DataArray):
+    if not isinstance(data, xr.DataArray):
         if lat is None or lon is None:
             raise ValueError('Latitude and longitude arrays must be provided '
-                'if data is not an xray.DataArray.')
+                'if data is not an xr.DataArray.')
         latname, lonname = 'lat', 'lon'
         coords = xrh.coords_init(data)
         coords = xrh.coords_assign(coords, -1, lonname, lon)
         coords = xrh.coords_assign(coords, -2, latname, lat)
-        data_out = xray.DataArray(data, coords=coords)
+        data_out = xr.DataArray(data, coords=coords)
         attrs = {}
     else:
         data_out = data
@@ -1199,8 +1199,8 @@ def mean_over_geobox(data, lat1, lat2, lon1, lon2, lat=None, lon=None,
         avg = nantrapz(data_out, lat_rad, axis=-1) / area
 
     # Pack output into DataArray with the metadata that was lost in np.trapz
-    if isinstance(data, xray.DataArray) and not isinstance(avg, xray.DataArray):
-        avg = xray.DataArray(avg, name=name, coords=coords, attrs=attrs)
+    if isinstance(data, xr.DataArray) and not isinstance(avg, xr.DataArray):
+        avg = xr.DataArray(avg, name=name, coords=coords, attrs=attrs)
 
     return avg
 
@@ -1223,7 +1223,7 @@ def get_ps_clim(lat, lon, datafile='data/topo/ncep2_ps.nc'):
 
     Returns
     -------
-    ps : xray.DataArray
+    ps : xr.DataArray
         DataArray of surface pressure climatology interpolated onto
         lat-lon grid.
     """
@@ -1251,24 +1251,24 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
+    data : ndarray or xr.DataArray
         Data to correct, with pressure, latitude, longitude as the
         last three dimensions.
-    topo_ps : ndarray or xray.DataArray
+    topo_ps : ndarray or xr.DataArray
         Climatological surface pressure to use for topography, on same
         lat-lon grid as data.
     plev, lat, lon : 1-D float array, optional
         Pressure levels, latitudes and longitudes of input data.
-        Only used if data is an ndarray. If data is an xray.DataArray
+        Only used if data is an ndarray. If data is an xr.DataArray
         then plev, lat and lon are extracted from data.coords.
 
     Returns
     -------
-    data_out : ndarray or xray.DataArray
+    data_out : ndarray or xr.DataArray
         Data with grid points below topography set to NaN.
     """
 
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         lat = get_coord(data, 'lat')
         lon = get_coord(data, 'lon')
         name, attrs, coords, _ = xrh.meta(data)
@@ -1280,7 +1280,7 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
     else:
         vals = data
 
-    if isinstance(topo_ps, xray.DataArray):
+    if isinstance(topo_ps, xr.DataArray):
         if not latlon_equal(data, topo_ps):
             msg = 'Inputs data and topo_ps are not on same latlon grid.'
             raise ValueError(msg)
@@ -1296,8 +1296,8 @@ def correct_for_topography(data, topo_ps, plev=None, lat=None, lon=None):
         ibelow = ps_vals < p
         vals[...,k,ibelow] = np.nan
 
-    if isinstance(data, xray.DataArray):
-        data_out = xray.DataArray(vals, name=name, coords=coords, attrs=attrs)
+    if isinstance(data, xr.DataArray):
+        data_out = xr.DataArray(vals, name=name, coords=coords, attrs=attrs)
     else:
         data_out = vals
 
@@ -1313,7 +1313,7 @@ def near_surface(data, pdim=-3, return_inds=False):
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
+    data : ndarray or xr.DataArray
         Input data, maximum of 5 dimensions.  Pressure levels must
         be the last, second-last or third-last dimension.
     pdim : {-3, -2, -1}, optional
@@ -1325,10 +1325,10 @@ def near_surface(data, pdim=-3, return_inds=False):
 
     Returns
     -------
-    data_s[, ind_s] : ndarray or xray.DataArray[, ndarray]
+    data_s[, ind_s] : ndarray or xr.DataArray[, ndarray]
         Near-surface data [and indices of extracted data, if
-        return_inds is True]. If input data is an xray.DataArray,
-        data_s is returned as an xray.DataArray, otherwise as
+        return_inds is True]. If input data is an xr.DataArray,
+        data_s is returned as an xr.DataArray, otherwise as
         an ndarray.
     """
 
@@ -1340,7 +1340,7 @@ def near_surface(data, pdim=-3, return_inds=False):
         raise ValueError('Input data has too many dimensions. Max 5-D.')
 
     # Save metadata for output DataArray, if applicable
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         i_DataArray = True
         data = data.copy()
         name, attrs, coords, _ = xrh.meta(data)
@@ -1386,9 +1386,9 @@ def near_surface(data, pdim=-3, return_inds=False):
         data_s = data_s[0]
         ind_s = ind_s[0]
 
-    # Pack data_s into an xray.DataArray if input was in that form
+    # Pack data_s into an xr.DataArray if input was in that form
     if i_DataArray:
-        data_s = xray.DataArray(data_s, name=name, coords=coords, attrs=attrs)
+        data_s = xr.DataArray(data_s, name=name, coords=coords, attrs=attrs)
 
     # Return data only, or tuple of data plus array of indices extracted
     if return_inds:
@@ -1403,13 +1403,13 @@ def interp_plevels(data, plev_new, plev_in=None, pdim=-3, kind='linear'):
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
+    data : ndarray or xr.DataArray
         Input data, maximum of 5 dimensions.  Pressure levels must
         be the last, second-last or third-last dimension.
     plev_new : ndarray
         New pressure levels to interpolate onto.
     plev_in : ndarray
-        Original pressure levels of data.  If data is an xray.DataArray,
+        Original pressure levels of data.  If data is an xr.DataArray,
         then the values from data.coords are used.
     pdim : {-3, -2, -1}, optional
         Dimension of vertical levels in data.
@@ -1419,9 +1419,9 @@ def interp_plevels(data, plev_new, plev_in=None, pdim=-3, kind='linear'):
 
     Returns
     -------
-    data_i : ndarray or xray.DataArray
-        Interpolated data. If input data is an xray.DataArray,
-        data_i is returned as an xray.DataArray, otherwise as
+    data_i : ndarray or xr.DataArray
+        Interpolated data. If input data is an xr.DataArray,
+        data_i is returned as an xr.DataArray, otherwise as
         an ndarray.
     """
 
@@ -1432,7 +1432,7 @@ def interp_plevels(data, plev_new, plev_in=None, pdim=-3, kind='linear'):
     if ndim > 5:
         raise ValueError('Input data has too many dimensions. Max 5-D.')
 
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         i_DataArray = True
         data = data.copy()
         name, attrs, coords, _ = xrh.meta(data)
@@ -1440,7 +1440,7 @@ def interp_plevels(data, plev_new, plev_in=None, pdim=-3, kind='linear'):
         attrs = utils.odict_insert(attrs, 'title', title, pos=0)
         pname = get_coord(data, 'plev', 'name')
         plev_in = get_coord(data, 'plev')
-        coords[pname] = xray.DataArray(plev_new, coords={pname : plev_new},
+        coords[pname] = xr.DataArray(plev_new, coords={pname : plev_new},
             attrs=data.coords[pname].attrs)
     else:
         i_DataArray = False
@@ -1487,9 +1487,9 @@ def interp_plevels(data, plev_new, plev_in=None, pdim=-3, kind='linear'):
     for i in range(ndim, data_i.ndim):
         data_i = data_i[0]
 
-    # Pack data_s into an xray.DataArray if input was in that form
+    # Pack data_s into an xr.DataArray if input was in that form
     if i_DataArray:
-        data_i = xray.DataArray(data_i, name=name, coords=coords,
+        data_i = xr.DataArray(data_i, name=name, coords=coords,
                                 attrs=attrs)
 
     return data_i
@@ -1501,7 +1501,7 @@ def int_pres(data, plev=None, pdim=-3, pmin=0, pmax=1e6):
 
     Parameters
     ----------
-    data : xray.DataArray or ndarray
+    data : xr.DataArray or ndarray
         Data to be integrated, on pressure levels.
     plev : ndarray, optional
         Vertical pressure levels in Pascals.  Only used if data
@@ -1515,11 +1515,11 @@ def int_pres(data, plev=None, pdim=-3, pmin=0, pmax=1e6):
 
     Returns
     -------
-    data_int : xray.DataArray or ndarray
+    data_int : xr.DataArray or ndarray
         Mass-weighted vertical integral of data from pmin to pmax.
     """
 
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         i_DataArray = True
         data = data.copy()
         name, _, coords, _ = xrh.meta(data)
@@ -1543,7 +1543,7 @@ def int_pres(data, plev=None, pdim=-3, pmin=0, pmax=1e6):
         pname = 'plev'
         coords = xrh.coords_init(data)
         coords = xrh.coords_assign(coords, pdim, pname, plev)
-        data = xray.DataArray(data, coords=coords)
+        data = xr.DataArray(data, coords=coords)
 
     # Extract subset and integrate
     data = subset(data, {pname : (pmin, pmax)})
@@ -1554,7 +1554,7 @@ def int_pres(data, plev=None, pdim=-3, pmin=0, pmax=1e6):
         vals_int = -vals_int
 
     if i_DataArray:
-        data_int = xray.DataArray(vals_int, name=name, coords=coords,
+        data_int = xr.DataArray(vals_int, name=name, coords=coords,
                                   attrs=attrs)
     else:
         data_int = vals_int
@@ -1573,7 +1573,7 @@ def split_timedim(data, n, slowfast=True, timename=None, time0_name='time0',
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
+    data : ndarray or xr.DataArray
         Data array with time as the first dimension.
     n : int
         Number of periods per split (e.g. 12 for months).
@@ -1593,14 +1593,14 @@ def split_timedim(data, n, slowfast=True, timename=None, time0_name='time0',
 
     Returns
     -------
-    data_out : ndarray or xray.DataArray
+    data_out : ndarray or xr.DataArray
         Data array with the first dimension split into two.  If dims
         is the shape of the input data, and nt = dims[0], then:
         - If slowfast=True: data_out.shape is [nt/n, n] + dims[1:]
         - If slowfast=False: data_out.shape is [n, nt/n] + dims[1:]
     """
 
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         i_DataArray = True
         if timename is None:
             timename = get_coord(data, 'time', 'name')
@@ -1623,14 +1623,14 @@ def split_timedim(data, n, slowfast=True, timename=None, time0_name='time0',
     def time_coord(name, size, vals, coords):
         if vals is None:
             vals = np.arange(size)
-        time_arr = xray.DataArray(vals, coords={name : vals}, name=name)
+        time_arr = xr.DataArray(vals, coords={name : vals}, name=name)
         return utils.odict_insert(coords, name, time_arr)
 
     if i_DataArray:
         coords = time_coord(time0_name, data_out.shape[0], time0_vals, coords)
         coords = time_coord(time1_name, data_out.shape[1], time1_vals, coords)
         dim_names = [time0_name, time1_name] + dim_names
-        data_out = xray.DataArray(data_out, name=name, dims=dim_names,
+        data_out = xr.DataArray(data_out, name=name, dims=dim_names,
                                   coords=coords, attrs=attrs)
 
     return data_out
@@ -1660,7 +1660,7 @@ def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
 
     Parameters
     ----------
-    data : ndarray, xray.DataArray, or xray.Dataset
+    data : ndarray, xr.DataArray, or xr.Dataset
         Data array (or set of data arrays) with time as the first dimension.
     n : int
         Number of values per day (e.g. n=8 for 3-hourly data).
@@ -1681,7 +1681,7 @@ def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
 
     Returns
     -------
-    data_out : ndarray or xray.DataArray
+    data_out : ndarray or xr.DataArray
         Daily values of data (mean or subsample).
     """
 
@@ -1699,7 +1699,7 @@ def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
                 msg = 'Subsample index %d exceeds valid range 0-%d.'
                 raise ValueError(msg % (method, n))
         elif isinstance(method, str) and method.lower() == 'mean':
-            if isinstance(data, xray.DataArray):
+            if isinstance(data, xr.DataArray):
                 _, attrs, _, _ = xrh.meta(data)
                 data_out = data_out.mean(axis=0)
                 data_out.attrs = attrs
@@ -1710,8 +1710,8 @@ def daily_from_subdaily(data, n, method='mean', timename=None, dayname='day',
 
         return data_out
 
-    if isinstance(data, xray.Dataset):
-        data_out = xray.Dataset()
+    if isinstance(data, xr.Dataset):
+        data_out = xr.Dataset()
         for nm in data.data_vars:
             data_out[nm] = process_one(data[nm], n, method, timename, dayname,
                                        dayvals)
@@ -1755,7 +1755,7 @@ def combine_daily_years(varnames, files, years, yearname='Year',
 
     Returns
     -------
-    data : xray.Dataset or xray.DataArray
+    data : xr.Dataset or xr.DataArray
         Dataset with each variable as an array with year as the first
         dimension, day of year as the second dimension.  If a single
         variable is selected, then the output is a DataArray rather
@@ -1764,15 +1764,15 @@ def combine_daily_years(varnames, files, years, yearname='Year',
 
     # Read daily data from each year and concatenate
     if varnames is None:
-        with xray.open_dataset(files[0]) as ds0:
+        with xr.open_dataset(files[0]) as ds0:
             varlist = ds0.data_vars.keys()
     else:
         varlist = utils.makelist(varnames)
-    ds = xray.Dataset()
+    ds = xr.Dataset()
     for y, filn in enumerate(files):
         print('Loading ' + filn)
-        ds1 = xray.Dataset()
-        with xray.open_dataset(filn) as ds_in:
+        ds1 = xr.Dataset()
+        with xr.open_dataset(filn) as ds_in:
             if subset_dict is not None:
                 ds_in = subset(ds_in, subset_dict)
             for nm in varlist:
@@ -1787,7 +1787,7 @@ def combine_daily_years(varnames, files, years, yearname='Year',
             days = np.union1d(days, ds1[dayname].values)
             ds = ds.reindex(**{dayname : days})
             ds1 = ds1.reindex(**{dayname : days})
-            ds = xray.concat([ds, ds1], dim=yearname)
+            ds = xr.concat([ds, ds1], dim=yearname)
 
     # Collapse to single DataArray if only one variable, otherwise
     # return Dataset

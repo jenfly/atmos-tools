@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from mpl_toolkits.basemap import Basemap
-import xarray as xray
+import xarray as xr
 from datetime import datetime
 import statsmodels.api as sm
 import scipy.signal as signal
@@ -65,7 +65,7 @@ print results.summary()
 url = ('http://goldsmr3.sci.gsfc.nasa.gov/opendap/MERRA_MONTHLY/'
     'MAIMCPASM.5.2.0/1979/MERRA100.prod.assim.instM_3d_asm_Cp.197901.hdf')
 
-ds = xray.open_dataset(url)
+ds = xr.open_dataset(url)
 T = ds['T']
 ps = ds['PS']
 q = ds['QV']

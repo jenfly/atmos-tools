@@ -1,11 +1,11 @@
 """
-Utility functions for xray DataArrays and Dataset.
+Utility functions for xarray DataArrays and Dataset.
 """
 
 from __future__ import division
 import numpy as np
 import collections
-import xarray as xray
+import xarray as xr
 from xarray import Dataset
 
 from atmos.utils import print_if, disptime
@@ -17,15 +17,15 @@ import atmos.utils as utils
 
 # ----------------------------------------------------------------------
 def to_dataset(data):
-    """Return a xray.Dataset from Dataset or DataArray input."""
-    if isinstance(data, xray.DataArray):
+    """Return a xr.Dataset from Dataset or DataArray input."""
+    if isinstance(data, xr.DataArray):
         data = data.to_dataset()
     return data
 
 
 # ----------------------------------------------------------------------
 def meta(data):
-    """Return the metadata from an xray.DataArray.
+    """Return the metadata from an xr.DataArray.
 
     Returns copies of the coordinates and attributes, rather than
     views, so that the output variables can be subsequently modified
@@ -33,13 +33,13 @@ def meta(data):
 
     Parameters
     ----------
-    data : xray.DataArray
+    data : xr.DataArray
 
     Returns
     -------
     name : string
     attrs : OrderedDict
-    coords : OrderedDict of xray.DataArrays
+    coords : OrderedDict of xr.DataArrays
     dims : tuple of strings
 
     Usage
@@ -69,7 +69,7 @@ def squeeze(data, axis=None):
 
     Parameters
     ----------
-    data : xray.DataArray or xray.Dataset
+    data : xr.DataArray or xr.Dataset
         Input data.
     axis : int, optional
         Axis or list of axes to squeeze.  If None, all singleton
@@ -77,13 +77,13 @@ def squeeze(data, axis=None):
 
     Returns
     -------
-    squeezed : xray.DataArray
+    squeezed : xr.DataArray
         Data with selected dimensions removed. Metadata from removed
         dimensions is saved in squeezed.attrs.
     """
 
     def process_one(data, axis):
-        if isinstance(data, xray.DataArray):
+        if isinstance(data, xr.DataArray):
             name, attrs, coords, dims = meta(data)
 
             if axis is not None:
@@ -103,7 +103,7 @@ def squeeze(data, axis=None):
                 dims.remove(nm)
 
             # Squeeze and pack into DataArray
-            squeezed = xray.DataArray(np.squeeze(data.values, axis=dims_del),
+            squeezed = xr.DataArray(np.squeeze(data.values, axis=dims_del),
                                       dims=dims, coords=coords, name=name,
                                       attrs=attrs)
         else:
@@ -111,8 +111,8 @@ def squeeze(data, axis=None):
 
         return squeezed
 
-    if isinstance(data, xray.Dataset):
-        squeezed = xray.Dataset()
+    if isinstance(data, xr.Dataset):
+        squeezed = xr.Dataset()
         for nm in data.data_vars:
             squeezed[nm] = process_one(data[nm], axis)
     else:
@@ -122,10 +122,10 @@ def squeeze(data, axis=None):
 
 # ----------------------------------------------------------------------
 def expand_dims(data, coordnm, coordval, axis=0):
-    """Add singleton dimension to xray.DataArray.
+    """Add singleton dimension to xr.DataArray.
     """
     name, attrs, coords, dims = meta(data)
-    new_coord = xray.DataArray([coordval], name=coordnm,
+    new_coord = xr.DataArray([coordval], name=coordnm,
                                coords={coordnm : [coordval]})
     if axis == -1:
         axis = len(dims)
@@ -133,14 +133,14 @@ def expand_dims(data, coordnm, coordval, axis=0):
     dims.insert(axis, coordnm)
     coords = utils.odict_insert(coords, coordnm, new_coord, axis)
     vals = np.expand_dims(data, axis)
-    data = xray.DataArray(vals, name=name, attrs=attrs, dims=dims,
+    data = xr.DataArray(vals, name=name, attrs=attrs, dims=dims,
                           coords=coords)
     return data
 
 
 # ----------------------------------------------------------------------
 def coords_init(data):
-    """Return OrderedDict of xray.DataArray-like coords for a numpy array.
+    """Return OrderedDict of xr.DataArray-like coords for a numpy array.
 
     Parameters
     ----------
@@ -164,7 +164,7 @@ def coords_init(data):
 
 # ----------------------------------------------------------------------
 def coords_assign(coords, dim, new_name, new_val):
-    """Reassign an xray.DataArray-style coord at a given dimension.
+    """Reassign an xr.DataArray-style coord at a given dimension.
 
     Parameters
     ----------
@@ -211,7 +211,7 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True,
 
     Parameters
     ----------
-    data : xray.DataArray or xray.Dataset
+    data : xr.DataArray or xr.Dataset
         Data source for extraction.
     subset_dict : dict of 2-tuples
         Dimensions and subsets to extract.  Each entry in subset_dict
@@ -236,7 +236,7 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True,
 
     Returns
     -------
-        sub : xray.DataArray or xray.Dataset
+        sub : xr.DataArray or xr.Dataset
     """
 
     def subset_1dim(data, dim_name, lower_or_list, upper=None,
@@ -278,7 +278,7 @@ def subset(data, subset_dict, incl_lower=True, incl_upper=True,
 
 # ----------------------------------------------------------------------
 def ds_print(ds, indent=2, width=None):
-    """Print attributes of xray dataset and each of its variables."""
+    """Print attributes of xr dataset and each of its variables."""
     line = '-' * 60
 
     # Attributes for dataset as a whole
@@ -304,10 +304,10 @@ def ds_print(ds, indent=2, width=None):
 def ds_unpack(dataset, missing_name=u'missing_value', offset_name=u'add_offset',
               scale_name=u'scale_factor', verbose=False, dtype=np.float64):
     """
-    Unpack compressed data from an xray.Dataset object.
+    Unpack compressed data from an xr.Dataset object.
 
     Converts compressed int data to floats and missing values to NaN.
-    Returns the results in an xray.Dataset object.
+    Returns the results in an xr.Dataset object.
     """
     ds = dataset
     for var in ds.data_vars:
@@ -354,7 +354,7 @@ def ds_unpack(dataset, missing_name=u'missing_value', offset_name=u'add_offset',
 
 # ----------------------------------------------------------------------
 def vars_to_dataset(*args):
-    """Combine xray.DataArray variables into an xray.Dataset.
+    """Combine xr.DataArray variables into an xr.Dataset.
 
     Call Signatures
     ---------------
@@ -365,11 +365,11 @@ def vars_to_dataset(*args):
 
     Parameters
     ----------
-    var1, var2, ... : xray.DataArrays
+    var1, var2, ... : xr.DataArrays
 
     Returns
     -------
-    ds : xray.Dataset
+    ds : xr.Dataset
     """
 
     # Get the first variable and initialize the dataset with it

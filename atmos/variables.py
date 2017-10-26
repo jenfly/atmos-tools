@@ -2,7 +2,7 @@
 
 from __future__ import division
 import numpy as np
-import xarray as xray
+import xarray as xr
 import atmos.utils as utils
 import atmos.data as dat
 import atmos.xrhelper as xrh
@@ -31,19 +31,19 @@ def divergence_spherical_2d(Fx, Fy, lat=None, lon=None):
 
     Parameters
     ----------
-    Fx, Fy : ndarrays or xray.DataArrays
+    Fx, Fy : ndarrays or xr.DataArrays
         Longitude, latitude components of a vector function in
         spherical coordinates.  Latitude and longitude should be the
         second-last and last dimensions, respectively, of Fx and Fy.
         Maximum size 5-D.
     lat, lon : ndarrays, optional
         Longitude and latitude in degrees.  If these are omitted, then
-        Fx and Fy must be xray.DataArrays with latitude and longitude
+        Fx and Fy must be xr.DataArrays with latitude and longitude
         in degrees within the coordinates.
 
     Returns
     -------
-    d, d1, d2 : ndarrays or xray.DataArrays
+    d, d1, d2 : ndarrays or xr.DataArrays
         d1 = dFx/dx, d2 = dFy/dy, and d = d1 + d2.
 
     Reference
@@ -58,7 +58,7 @@ def divergence_spherical_2d(Fx, Fy, lat=None, lon=None):
     if ndim > nmax:
         raise ValueError('Input data has too many dimensions. Max 5-D.')
 
-    if isinstance(Fx, xray.DataArray):
+    if isinstance(Fx, xr.DataArray):
         i_DataArray = True
         name, attrs, coords, _ = xrh.meta(Fx)
         if lat is None:
@@ -113,9 +113,9 @@ def divergence_spherical_2d(Fx, Fy, lat=None, lon=None):
     d = d1 + d2
 
     if i_DataArray:
-        d = xray.DataArray(d, coords=coords)
-        d1 = xray.DataArray(d1, coords=coords)
-        d2 = xray.DataArray(d2, coords=coords)
+        d = xr.DataArray(d, coords=coords)
+        d1 = xr.DataArray(d1, coords=coords)
+        d2 = xr.DataArray(d2, coords=coords)
 
     return d, d1, d2
 
@@ -126,18 +126,18 @@ def vorticity(u, v, lat=None, lon=None):
 
     Parameters
     ----------
-    u, v : ndarrays or xray.DataArrays
+    u, v : ndarrays or xr.DataArrays
         Zonal and meridional winds in m/s. Latitude and longitude
         should be the second-last and last dimensions, respectively,
         of u and v.
     lat, lon : ndarrays, optional
         Latitudes and longitudes in degrees.  If omitted, then u and
-        v must be xray.DataArrays and lat, lon are extracted from
+        v must be xr.DataArrays and lat, lon are extracted from
         the metadata.
 
     Returns
     -------
-    rel_vort, abs_vort : ndarrays or xray.DataArrays
+    rel_vort, abs_vort : ndarrays or xr.DataArrays
         Vertical component of relative vorticity dv/dx - du/dy
         and absolute vorticity f + dv/dx - du/dy, calculated in
         spherical coordinates.
@@ -158,7 +158,7 @@ def vorticity(u, v, lat=None, lon=None):
 
     # Coriolis parameter
     if lat is None:
-        if isinstance(u, xray.DataArray):
+        if isinstance(u, xr.DataArray):
             lat = get_coord(u, 'lat')
         else:
             raise ValueError('Lat/lon inputs must be provided when input '
@@ -168,7 +168,7 @@ def vorticity(u, v, lat=None, lon=None):
     # Absolute vorticity
     abs_vort = rel_vort + dat.biggify(f, rel_vort)
 
-    if isinstance(u, xray.DataArray):
+    if isinstance(u, xr.DataArray):
         abs_vort.name = 'abs_vort'
         abs_vort.attrs['long_name'] = 'Absolute vorticity'
         rel_vort.name = 'rel_vort'
@@ -183,18 +183,18 @@ def rossby_num(u, v, lat=None, lon=None):
 
     Parameters
     ----------
-    u, v : ndarrays or xray.DataArrays
+    u, v : ndarrays or xr.DataArrays
         Zonal and meridional winds in m/s. Latitude and longitude
         should be the second-last and last dimensions, respectively,
         of u and v.
     lat, lon : ndarrays, optional
         Latitudes and longitudes in degrees.  If omitted, then u and
-        v must be xray.DataArrays and lat, lon are extracted from
+        v must be xr.DataArrays and lat, lon are extracted from
         the metadata.
 
     Returns
     -------
-    Ro : ndarray or xray.DataArray
+    Ro : ndarray or xr.DataArray
         Local Rossby number (Ro = -relative_vorticity / f), calculated
         in spherical coordinates.
 
@@ -208,7 +208,7 @@ def rossby_num(u, v, lat=None, lon=None):
     rel_vort, _, f = vorticity(u, v, lat, lon)
     Ro = - rel_vort / dat.biggify(f, rel_vort)
 
-    if isinstance(u, xray.DataArray):
+    if isinstance(u, xr.DataArray):
         Ro.name = 'Ro'
         Ro.attrs['long_name'] = 'Local Rossby number'
     return Ro
@@ -220,7 +220,7 @@ def potential_temp(T, p, p0=1e5):
 
     Parameters
     ----------
-    T : ndarray or xray.DataArray
+    T : ndarray or xr.DataArray
         Atmospheric temperatures in Kelvins.
     p : ndarray
         Atmospheric pressures, on same grid as T, or a 1-D array
@@ -230,7 +230,7 @@ def potential_temp(T, p, p0=1e5):
 
     Returns
     -------
-    theta : ndarray or xray.DataArray
+    theta : ndarray or xr.DataArray
         Potential temperatures in Kelvins.  If T is a DataArray, then
         theta is returned as a DataArray with the same coordinates.
         Otherwise theta is returned as an ndarray.
@@ -242,7 +242,7 @@ def potential_temp(T, p, p0=1e5):
     scale = (p0/p) ** (R/Cp).values
     theta = T * dat.biggify(scale, T)
 
-    if isinstance(T, xray.DataArray):
+    if isinstance(T, xr.DataArray):
         theta.name = 'theta'
         theta.attrs['long_name'] = 'Potential Temperature'
         theta.attrs['units'] = 'K'
@@ -256,7 +256,7 @@ def equiv_potential_temp(T, p, q, p0=1e5):
 
     Parameters
     ----------
-    T : ndarray or xray.DataArray
+    T : ndarray or xr.DataArray
         Atmospheric temperatures in Kelvins.
     p : ndarray
         Atmospheric pressures, on same grid as T, or a 1-D array
@@ -269,7 +269,7 @@ def equiv_potential_temp(T, p, q, p0=1e5):
 
     Returns
     -------
-    theta_e : ndarray or xray.DataArray
+    theta_e : ndarray or xr.DataArray
         Equivalent potential temperatures in Kelvins.  If T is a
         DataArray, then theta_e is returned as a DataArray with the
         same coordinates. Otherwise theta_e is returned as an ndarray.
@@ -289,7 +289,7 @@ def equiv_potential_temp(T, p, q, p0=1e5):
     theta = potential_temp(T, p, p0)
     theta_e = theta * np.exp((L*q) / (Cp*T))
 
-    if isinstance(T, xray.DataArray):
+    if isinstance(T, xr.DataArray):
         theta_e.name = 'theta_e'
         theta_e.attrs['long_name'] = 'Equivalent Potential Temperature'
         theta_e.attrs['units'] = 'K'
@@ -314,13 +314,13 @@ def moisture_flux_conv(uq, vq, lat=None, lon=None, plev=None, pdim=-3,
 
     Parameters
     ----------
-    uq : ndarray or xray.DataArray
+    uq : ndarray or xr.DataArray
         Zonal moisture flux, with latitude as the second-last dimension,
         longitude as the last dimension.
         i.e. zonal wind (m/s) * specific humidity (kg/kg)
         If already_int is True, then uq is already vertically integrated.
         Otherwise, uq is on vertical pressure levels.
-    vq : ndarray or xray.DataArray
+    vq : ndarray or xr.DataArray
         Meridional moisture flux, with latitude as the second-last dimension,
         longitude as the last dimension.
         i.e. meridional wind (m/s) * specific humidity (kg/kg)
@@ -328,7 +328,7 @@ def moisture_flux_conv(uq, vq, lat=None, lon=None, plev=None, pdim=-3,
         Otherwise, vq is on vertical pressure levels.
     lat, lon : ndarray, optional
         Latitudes and longitudes in degrees.  If omitted, then uq and
-        vq must be xray.DataArrays and the coordinates are extracted
+        vq must be xr.DataArrays and the coordinates are extracted
         from them.
     plev : ndarray, optional
         Pressure levels in Pascals.  If omitted, then extracted from
@@ -349,11 +349,11 @@ def moisture_flux_conv(uq, vq, lat=None, lon=None, plev=None, pdim=-3,
     Returns
     -------
     If return_comp is False:
-    mfc : ndarray or xray.DataArray
+    mfc : ndarray or xr.DataArray
         Vertically integrated moisture flux convergence in mm/day.
 
     If return_comp is True:
-    mfc, mfc_x, mfc_y, uq_int, vq_int : ndarrays or xray.DataArrays
+    mfc, mfc_x, mfc_y, uq_int, vq_int : ndarrays or xr.DataArrays
         Vertically integrated moisture flux convergence in mm/day
         (total, x- and y- components) and vertically integrated
         moisture fluxes.
@@ -373,7 +373,7 @@ def moisture_flux_conv(uq, vq, lat=None, lon=None, plev=None, pdim=-3,
     mfc_x = -dat.precip_convert(mfc_x, 'kg/m2/s', 'mm/day')
     mfc_y = -dat.precip_convert(mfc_y, 'kg/m2/s', 'mm/day')
 
-    if isinstance(mfc, xray.DataArray):
+    if isinstance(mfc, xr.DataArray):
         mfc.name = 'Vertically integrated moisture flux convergence'
         mfc.attrs['units'] = 'mm/day'
 
@@ -390,19 +390,19 @@ def streamfunction(v, lat=None, pres=None, pdim=None, scale=1e-9,
 
     Parameters
     ----------
-    v : ndarray or xray.DataArray
+    v : ndarray or xr.DataArray
         Meridional wind speed in m/s.
     lat : ndarray, optional
         Array of latitude in degrees.  If omitted, lat is extracted
-        from xray.DataArray input v.
+        from xr.DataArray input v.
     pres : ndarray, optional
         Pressures in Pa.  Can be a vector for pressure-level data, or
         a grid of pressures of the same shape as v.  If omitted, pres
-        is extracted from xray.DataArray input v.
+        is extracted from xr.DataArray input v.
     pdim : {-3, -2}, optional
         Dimension of v corresponding to vertical levels.  Can be either
         the second-last or third-last dimension.  If omitted, pdim is
-        extracted from xray.DataArray v.
+        extracted from xr.DataArray v.
     scale : float, optional
         Scale factor for output, e.g. 1e-9 to output streamfunction in
         10^9 kg/s.
@@ -412,14 +412,14 @@ def streamfunction(v, lat=None, pres=None, pdim=None, scale=1e-9,
         range is going to be included).
     Returns
     -------
-    psi : ndarray or xray.DataArray
+    psi : ndarray or xr.DataArray
         Eulerian mass stream function in units of 1/scale kg/s.
     """
 
     R = constants.radius_earth.values
     g = constants.g.values
 
-    if isinstance(v, xray.DataArray):
+    if isinstance(v, xr.DataArray):
         i_DataArray = True
         name, attrs, coords, _ = xrh.meta(v)
         if lat is None:
@@ -475,7 +475,7 @@ def streamfunction(v, lat=None, pres=None, pdim=None, scale=1e-9,
         psi = psi * sector_scale
 
     if i_DataArray:
-        psi = xray.DataArray(psi, name='Eulerian mass streamfunction',
+        psi = xr.DataArray(psi, name='Eulerian mass streamfunction',
             coords=coords)
         psi.attrs['units'] = '%.1e kg/s' % (1/scale)
 

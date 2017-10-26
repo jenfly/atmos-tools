@@ -7,7 +7,7 @@ import math
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
-import xarray as xray
+import xarray as xr
 from atmos.utils import print_if
 import atmos.data as dat
 import atmos.utils as utils
@@ -178,7 +178,7 @@ def cinterval(data, n_pref=20, symmetric=False, cint_pref=[1, 2, 3, 4, 5, 10],
 
     Parameters
     ----------
-    data : np.ndarray or xray.DataArray
+    data : np.ndarray or xr.DataArray
         Data to be contoured.
     n_pref : int, optional
         Preferred number of contours.  The contour interval is chosen
@@ -201,7 +201,7 @@ def cinterval(data, n_pref=20, symmetric=False, cint_pref=[1, 2, 3, 4, 5, 10],
     cint : float
     """
 
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         data = data.values
     if symmetric:
         spread = 2 * np.nanpercentile(np.abs(data), percentile)
@@ -222,7 +222,7 @@ def climits(data, symmetric=True, percentile=99.9):
     """Return colorbar limits to use for all data variables in a set.
     """
 
-    if isinstance(data, xray.Dataset):
+    if isinstance(data, xr.Dataset):
         data = data.to_array()
 
     cmin = np.nanpercentile(data, 100 - percentile)
@@ -296,11 +296,11 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
+    data : ndarray or xr.DataArray
         Data to be plotted.
     lat, lon : ndarray, optional
         Latitude and longitude arrays.  Only used if data is an ndarray.
-        If data is an xray.DataArray then lat = data['lat'] and
+        If data is an xr.DataArray then lat = data['lat'] and
         lon = data['lon']
     m : Basemap object, optional
         Basemap to plot on.  If omitted, then a map is created with
@@ -324,7 +324,7 @@ def pcolor_latlon(data, lat=None, lon=None, m=None, cmap='RdBu_r',
     cb : plt.colorbar object
     """
 
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         lat = dat.get_coord(data, 'lat')
         lon = dat.get_coord(data, 'lon')
         vals = np.squeeze(data.values)
@@ -358,11 +358,11 @@ def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
+    data : ndarray or xr.DataArray
         Data to be plotted.
     lat, lon : ndarray, optional
         Latitude and longitude arrays.  Only used if data is an ndarray.
-        If data is an xray.DataArray then lat = data['lat'] and
+        If data is an xr.DataArray then lat = data['lat'] and
         lon = data['lon']
     clev : scalar or array of ints or floats, optional
         Contour spacing (scalar) or contour levels (array).
@@ -390,7 +390,7 @@ def contourf_latlon(data, lat=None, lon=None, clev=None, m=None, cmap='RdBu_r',
     m : Basemap object
     """
 
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         lat = dat.get_coord(data, 'lat')
         lon = dat.get_coord(data, 'lon')
 
@@ -426,11 +426,11 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
+    data : ndarray or xr.DataArray
         Data to be plotted.
     lat, lon : ndarray, optional
         Latitude and longitude arrays.  Only used if data is an ndarray.
-        If data is an xray.DataArray then lat = data['lat'] and
+        If data is an xr.DataArray then lat = data['lat'] and
         lon = data['lon']
     clev : scalar or array of ints or floats, optional
         Contour spacing (scalar) or contour levels (array).
@@ -455,7 +455,7 @@ def contour_latlon(data, lat=None, lon=None, clev=None, m=None, colors='black',
     cs : plt.contour object
     """
 
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         lat = dat.get_coord(data, 'lat')
         lon = dat.get_coord(data, 'lon')
 
@@ -530,22 +530,22 @@ def pcolor_latpres(data, lat=None, plev=None, init=True, cmap='RdBu_r',
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
+    data : ndarray or xr.DataArray
         Data to be contoured.
     lat : ndarray, optional
-        Latitude (degrees).  If data is an xray.DataArray, lat is
+        Latitude (degrees).  If data is an xr.DataArray, lat is
         extracted from data['lat'].
     plev : ndarray, optional
-        Pressure levels.  If data is an xray.DataArray, plev is
+        Pressure levels.  If data is an xr.DataArray, plev is
         extracted from data['plev'].
     init : bool, optional
         If True, initialize plot axes and topography with init_latpres().
     cmap : string or colormap object, optional
         Colormap to use.
-    topo : ndarray or xray.DataArray, optional
+    topo : ndarray or xr.DataArray, optional
         Topography to shade (average surface pressure in units of plev).
         If topo is an ndarray, it must be on the same latitude grid as
-        data.  If topo is an xray.DataArray, its latitude grid is
+        data.  If topo is an xr.DataArray, its latitude grid is
         extracted from topo['lat']. Only used if init is True.
     topo_clr : string or mpl_color, optional
         Color to fill topographic profile. Only used if init is True.
@@ -562,7 +562,7 @@ def pcolor_latpres(data, lat=None, plev=None, init=True, cmap='RdBu_r',
     """
 
     # Data to be plotted
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         lat = dat.get_coord(data, 'lat')
         plev = dat.get_coord(data, 'plev')
         vals = np.squeeze(data.values)
@@ -584,7 +584,7 @@ def pcolor_latpres(data, lat=None, plev=None, init=True, cmap='RdBu_r',
         # Topography data
         if isinstance(topo, np.ndarray) or isinstance(topo, list):
             topo_ps, topo_lat = topo, lat
-        elif isinstance(topo, xray.DataArray):
+        elif isinstance(topo, xr.DataArray):
             topo_ps, topo_lat = topo.values, topo['lat']
         else:
             topo_ps, topo_lat = None, None
@@ -606,13 +606,13 @@ def contourf_latpres(data, lat=None, plev=None, clev=None, init=True,
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
+    data : ndarray or xr.DataArray
         Data to be contoured.
     lat : ndarray, optional
-        Latitude (degrees).  If data is an xray.DataArray, lat is
+        Latitude (degrees).  If data is an xr.DataArray, lat is
         extracted from data['lat'].
     plev : ndarray, optional
-        Pressure levels.  If data is an xray.DataArray, plev is
+        Pressure levels.  If data is an xr.DataArray, plev is
         extracted from data['plev'].
     clev : float or ndarray, optional
         Contour levels (ndarray) or spacing interval (float)
@@ -622,10 +622,10 @@ def contourf_latpres(data, lat=None, plev=None, clev=None, init=True,
         Colormap to use.
     symmetric : bool, optional
         Set contour levels to be symmetric about zero.
-    topo : ndarray or xray.DataArray, optional
+    topo : ndarray or xr.DataArray, optional
         Topography to shade (average surface pressure in units of plev).
         If topo is an ndarray, it must be on the same latitude grid as
-        data.  If topo is an xray.DataArray, its latitude grid is
+        data.  If topo is an xr.DataArray, its latitude grid is
         extracted from topo['lat']. Only used if init is True.
     topo_clr : string or mpl_color, optional
         Color to fill topographic profile. Only used if init is True.
@@ -638,7 +638,7 @@ def contourf_latpres(data, lat=None, plev=None, clev=None, init=True,
     """
 
     # Data to be contoured
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         lat = dat.get_coord(data, 'lat')
         plev = dat.get_coord(data, 'plev')
 
@@ -661,7 +661,7 @@ def contourf_latpres(data, lat=None, plev=None, clev=None, init=True,
         # Topography data
         if isinstance(topo, np.ndarray) or isinstance(topo, list):
             topo_ps, topo_lat = topo, lat
-        elif isinstance(topo, xray.DataArray):
+        elif isinstance(topo, xr.DataArray):
             topo_ps, topo_lat = topo.values, topo['lat']
         else:
             topo_ps, topo_lat = None, None
@@ -686,13 +686,13 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
+    data : ndarray or xr.DataArray
         Data to be contoured.
     lat : ndarray, optional
-        Latitude (degrees).  If data is an xray.DataArray, lat is
+        Latitude (degrees).  If data is an xr.DataArray, lat is
         extracted from data['lat'].
     plev : ndarray, optional
-        Pressure levels.  If data is an xray.DataArray, plev is
+        Pressure levels.  If data is an xr.DataArray, plev is
         extracted from data['plev'].
     clev : float or ndarray, optional
         Contour levels (ndarray) or spacing interval (float)
@@ -700,10 +700,10 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
         If True, initialize plot axes and topography with init_latpres().
     colors: string or mpl_color, optional
         Contour line color.
-    topo : ndarray or xray.DataArray, optional
+    topo : ndarray or xr.DataArray, optional
         Topography to shade (average surface pressure in units of plev).
         If topo is an ndarray, it must be on the same latitude grid as
-        data.  If topo is an xray.DataArray, its latitude grid is
+        data.  If topo is an xr.DataArray, its latitude grid is
         extracted from topo['lat']. Only used if init is True.
     topo_clr : string or mpl_color, optional
         Color to fill topographic profile. Only used if init is True.
@@ -726,7 +726,7 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
     """
 
     # Data to be contoured
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         lat = dat.get_coord(data, 'lat')
         plev = dat.get_coord(data, 'plev')
 
@@ -736,7 +736,7 @@ def contour_latpres(data, lat=None, plev=None, clev=None, init=True,
         # Topography data
         if isinstance(topo, np.ndarray) or isinstance(topo, list):
             topo_ps, topo_lat = topo, lat
-        elif isinstance(topo, xray.DataArray):
+        elif isinstance(topo, xr.DataArray):
             topo_ps, topo_lat = topo.values, topo['lat']
         else:
             topo_ps, topo_lat = None, None
@@ -776,7 +776,7 @@ def stipple_pts(pts_mask, xname, yname, xsample=1, ysample=1, ax=None,
 
     Parameters
     ----------
-    pts_mask: xray.DataArray
+    pts_mask: xr.DataArray
         Masking array of points to exclude from stippling.
     xname, yname : str
         Name of x and y dimensions in pts_mask.

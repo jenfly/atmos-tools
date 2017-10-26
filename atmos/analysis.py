@@ -9,7 +9,7 @@ Functions for atmospheric data analysis.
 from __future__ import division
 import numpy as np
 import collections
-import xarray as xray
+import xarray as xr
 import pandas as pd
 import matplotlib.pyplot as plt
 import scipy.stats
@@ -64,7 +64,7 @@ class Fourier:
         """
 
         # Make sure we're working with an ndarray and not a DataArray
-        if isinstance(y, xray.DataArray):
+        if isinstance(y, xr.DataArray):
             y = y.values
 
         self.attrs = {'data_name' : data_name, 'time_units' : time_units,
@@ -319,9 +319,9 @@ def regress_field(data, index, axis=-1):
 
     Parameters
     ----------
-    data : ndarray or xray.DataArray
+    data : ndarray or xr.DataArray
         Input data.
-    index : ndarray or xray.DataArray
+    index : ndarray or xr.DataArray
         Index values to regress against. Length must match length of
         data along specified axis.
     axis : int, optional
@@ -329,7 +329,7 @@ def regress_field(data, index, axis=-1):
 
     Returns
     -------
-    reg_data : xray.Dataset
+    reg_data : xr.Dataset
         Dataset containing correlation coefficients, slopes, and p-values.
     """
 
@@ -340,7 +340,7 @@ def regress_field(data, index, axis=-1):
     if ndim > 5:
         raise ValueError('Input data has too many dimensions. Max 5-D.')
 
-    if isinstance(data, xray.DataArray):
+    if isinstance(data, xr.DataArray):
         name, attrs, coords, dimnames = xrh.meta(data)
         coords = utils.odict_delete(coords, dimnames[axis])
         dimnames = list(dimnames)
@@ -380,16 +380,16 @@ def regress_field(data, index, axis=-1):
             reg[nm] = reg[nm][0]
 
 
-    reg_data = xray.Dataset()
-    if isinstance(data, xray.DataArray):
-        reg_data['r'] = xray.DataArray(reg['r'] , name='r', coords=coords,
+    reg_data = xr.Dataset()
+    if isinstance(data, xr.DataArray):
+        reg_data['r'] = xr.DataArray(reg['r'] , name='r', coords=coords,
                                        dims=dimnames)
     else:
-        reg_data['r'] = xray.DataArray(reg['r'] , name='r')
+        reg_data['r'] = xr.DataArray(reg['r'] , name='r')
         coords, dimnames = reg_data['r'].coords, reg_data['r'].dims
 
     for nm in ['m', 'p']:
-        reg_data[nm] = xray.DataArray(reg[nm] , name=nm, coords=coords,
+        reg_data[nm] = xr.DataArray(reg[nm] , name=nm, coords=coords,
                                       dims=dimnames)
     long_names = {'r' : 'correlation coefficient', 'm' : 'slope',
                   'p' : 'p-value'}
