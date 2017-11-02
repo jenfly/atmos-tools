@@ -1,0 +1,19 @@
+name: atmos
+channels:
+- conda-forge
+dependencies:
+- python=2.7
+- pip
+- ipython
+- jupyter
+- notebook
+- numpy
+- scipy
+- matplotlib
+- pandas
+- netcdf4
+- xarray
+- basemap
+- proj4
+- cartopy
+- PyPDF2
